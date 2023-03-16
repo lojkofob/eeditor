@@ -80,7 +80,7 @@ var options = {
             __callErrorEveryTime: 0
         },
 
-        __supportedLangs: 'de,en,es,fr,pt,ru,ja'.split(',')
+        __supportedLangs: ['en']
 
     },
 

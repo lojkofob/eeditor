@@ -1,0 +1,16 @@
+*.apk
+.gitm*
+.gitk*
+.npm*
+.tra*
+.zu*
+.co*
+.idea/*
+*.log
+tmp/*
+local.php
+
+# osx noise
+.DS_Store
+
+.vscode/

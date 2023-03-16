@@ -349,8 +349,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     return tex;
 
 }
-
-
+ 
 var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
     var t = this;
     t.____progress = 0;
@@ -360,16 +359,17 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
     t.____onLoad = onLoad;
     t.____onError = onError;
     t.__id = __loadTasksId++;
+     
     mergeObj(t, options.__loadingPolicies);
     //debug
     //     consoleLog( 'created task', t );
     //undebug
 }, {
 
-    __progress: function () { return this.____progress; },
+    __progress() { return this.____progress; },
 
     //debug
-    __stringify: function () {
+    __stringify() {
         return '<LoadTaskOne' + this.__id + '>';
     },
     //undebug
@@ -390,7 +390,7 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
         t.__requests = 0;
     }),
 
-    __onLoadingError: function () {
+    __onLoadingError() {
         var t = this;
         return wrapFunctionInTryCatch(function (e) {
             //debug
@@ -424,7 +424,7 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
         });
     },
 
-    __abort: function () {
+    __abort() {
         var t = this;
         //debug
         //         consoleLog('abort task ', t);
@@ -436,7 +436,7 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
         }
     },
 
-    __run: function (dataFromPreviousTask) {
+    __run(dataFromPreviousTask) {
         //debug
         //         consoleLog( 'runned task', this );
         //undebug
@@ -526,7 +526,10 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
                     break;
 
                 case TASKS_PLAYER:
-                    if (typeof PLAYER == undefinedType) return;
+                    if (typeof PLAYER == undefinedType) {
+                        onLoad();
+                    }
+                    return;
                     PLAYER.__load(onLoad);
                     break;
 
@@ -551,12 +554,12 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
     constructor: LoadTask,
 
     //debug
-    __stringify: function () {
+    __stringify() {
         return '<LoadTask' + this.__id + '>';
     },
     //undebug
 
-    __addOnCompleted: function (f, toBegin) {
+    __addOnCompleted(f, toBegin) {
         if (toBegin) {
             this.__completed.splice(0, 0, f);
         } else {
@@ -564,14 +567,14 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         }
     },
 
-    __loadTaskOne: function (type, data, onLoad, onError) {
+    __loadTaskOne(type, data, onLoad, onError) {
         if (data || isFunction(type)) {
             onError = onError || this.__onSubTaskError();
             this.__subTasks.push(new LoadTaskOne(type, data, this, onLoad, onError));
         }
     },
 
-    __onSubTaskError: function () {
+    __onSubTaskError() {
         var t = this;
         return function (e) {
             var subtask = this;
@@ -587,7 +590,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         }
     },
 
-    __abort: function () {
+    __abort() {
         $each(this.__subTasks.slice(), function (st) {
             if (st && st.__abort) {
                 st.__abort();
@@ -637,7 +640,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         }
     },
 
-    __run: function (list) {
+    __run(list) {
 
         var t = this;
         t.__subTasks = [];
@@ -899,7 +902,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                         var opts = {
                             __name: options.__baseSoundsFolder + l[1], 
                             __onLoad: l[2], 
-                            __dir: dirname(options.__projectServerPath + options.__baseSoundsFolder + l[1])
+                            __dir: dirname( /* options.__projectServerPath + */ options.__baseSoundsFolder + l[1])
                         };
                         
                         getJson(opts.__name, function (json) {
@@ -980,7 +983,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         return t;
     },
 
-    __nextSubTask: function (dataFromPreviousTask) {
+    __nextSubTask(dataFromPreviousTask) {
         var t = this, nextTask = t.__subTasks[t.__currentSubTask++];
         if (nextTask) {
             nextTask.__run(dataFromPreviousTask);
@@ -990,37 +993,40 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
     },
 
-    __progress: function (a) {
+    __progress(a) {
         var t = this;
         if (t.__subTasks) {
+            
             if (!t.__subTasks.length) {
                 t.____progress = 1;
             } else {
                 t.____progress = $count(t.__subTasks, function (subtask) {
                     return subtask.__progress();
                 }) / t.__subTasks.length;
-            }
+            } 
+             
         }
 
         return t.____progress;
     },
 
-    __onLoadProgress: function (a) {
+    __onLoadProgress(a) {
 
         var t = this;
 
         if (t.__disableProgress) return;
+                    
         var progress = a || t.__progress();
         if (progress != t.__lastProgress) {
             t.__lastProgress = progress;
 
             if (t.__onProgress)
                 t.__onProgress(progress);
-
+            
             if (progress == 1) {
-
+                
                 if (t.__errors && t.__onError) {
-
+                    
                     t.__onError(t.__errors);
 
                 }
@@ -1061,7 +1067,7 @@ var ParallelTasks = makeClass(function ParallelTasks(params) {
         }, params));
 }, {
 
-    __push: function (task) {
+    __push(task) {
         this.__needCount++;
         if (isFunction(task)) {
             this.a.push(task);
@@ -1069,12 +1075,12 @@ var ParallelTasks = makeClass(function ParallelTasks(params) {
         return this;
     },
 
-    __then: function (callback) {
+    __then(callback) {
         this.__callback = callback;
         return this;
     },
 
-    __run: function () {
+    __run() {
         var t = this;
         looperPost(function () {
             $fcall(t.a);
@@ -1082,12 +1088,12 @@ var ParallelTasks = makeClass(function ParallelTasks(params) {
         return this;
     },
 
-    __pushArray: function (a) {
+    __pushArray(a) {
         this.__needCount += a.length;
         return this;
     },
 
-    __storyOneCallbackData: function (dataid) {
+    __storyOneCallbackData(dataid) {
         var t = this;
         return function (data) {
             t.__data[dataid] = data;
@@ -1095,7 +1101,7 @@ var ParallelTasks = makeClass(function ParallelTasks(params) {
         }
     },
 
-    __storyAllCallbackData: function (dataid) {
+    __storyAllCallbackData(dataid) {
         var t = this;
         return function () {
             t.__data[dataid] = arguments;
@@ -1103,7 +1109,7 @@ var ParallelTasks = makeClass(function ParallelTasks(params) {
         }
     },
 
-    __inc: function () {
+    __inc() {
         var t = this;
         looperPost(function () {
             t.__count++;
