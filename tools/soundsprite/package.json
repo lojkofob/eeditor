@@ -1,0 +1,58 @@
+{
+  "name": "soundsprite",
+  "description": "Concat small audio files into single file and export in many formats.",
+  "keywords": [
+    "audio",
+    "audio-sprite",
+    "sound-sprite",
+    "stagexl",
+    "howler",
+    "ffmpeg"
+  ],
+  "author": {
+    "name": "Alex Gann",
+    "email": "alex@realbluesky.com"
+  },
+  "version": "0.2.7",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/realbluesky/soundsprite/master/LICENSE"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/realbluesky/soundsprite.git"
+  },
+  "main": "./soundsprite.js",
+  "bin": {
+    "soundsprite": "./soundsprite.js"
+  },
+  "dependencies": {
+    "optimist": "~0.3.4",
+    "winston": "~0.6.2",
+    "underscore": "~1.3.3",
+    "async": "~0.1.22"
+  },
+  "devDependencies": {
+    "mocha": "~1.4.2"
+  },
+  "engines": {
+    "node": ">=0.8"
+  },
+  "optionalDependencies": {},
+  "scripts": {
+    "test": "mocha"
+  },
+  "readme": "### What?\r\n\r\n**Forked from [tonistiigi/audiosprite] (https://github.com/tonistiigi/audiosprite) to target other frameworks - all credit to original author**\r\n\r\nThis is a `ffmpeg` wrapper that will take in **multiple audio files** and combines them **into a single file**.  The final file will be exported in `mp3`, `webm`, `opus`, `m4a` and `caf`(IMA-ADPCM) to support as many devices as possible. This tool will also generate a `JSON` file that is compatible with [goldfire/howler.js](https://github.com/goldfire/howler.js) framework.\r\n\r\nThis project is also targeting [bp74/StageXL] (https://github.com/bp74/StageXL) - implementation pending.\r\n\r\n### Why?\r\n\r\niOS, Windows Phone and some Android phones have very limited HTML5 audio support. They only support playing single file at a time and loading in new files requires user interaction and has a big latency. To overcome this there is a technique to combine all audio into single file and only play/loop certain parts of that file. [goldfire/howler.js](https://github.com/goldfire/howler.js) is a audio framework that uses this technique. \r\n\r\n###Installation\r\n\r\n```\r\nnpm install -g soundsprite\r\n```\r\n\r\n#### Hints for Windows users\r\n\r\n- You need to install [Node.js](https://www.nodejs.org/)\r\n- Use [Git Bash](http://git-scm.com/download/win) instead of Command Line or Powershell\r\n- Download [ffmpeg](http://ffmpeg.zeranoe.com/builds/) and include it in your path `export PATH=$PATH:path/to/ffmpeg/bin`\r\n- IMA-ADPCM(the fastest iPhone format) will only be generated if you are using OSX.\r\n\r\n###Usage\r\n\r\n```\r\n> soundsprite --help\r\ninfo: Usage: soundsprite [options] file1.mp3 file2.mp3 *.wav\r\ninfo: Options:\r\n  --output, -o      Name for the output file.                                    [default: \"output\"]\r\n  --export, -e      Limit exported file types. Comma separated extension list.   [default: \"\"]\r\n  --log, -l         Log level (debug, info, notice, warning, error).             [default: \"info\"]\r\n  --autoplay, -a    Autoplay sprite name                                         [default: null]\r\n  --silence, -s     Add special \"silence\" track with specified duration.         [default: 0]\r\n  --samplerate, -r  Sample rate.                                                 [default: 44100]\r\n  --channels, -c    Number of channels (1=mono, 2=stereo).                       [default: 1]\r\n  --rawparts, -p    Include raw slices(for Web Audio API) in specified formats.  [default: \"\"]\r\n  --help, -h        Show this help message.\r\n\r\n\r\n> soundsprite --autoplay bg_loop --output mygameaudio bg_loop.wav *.mp3\r\ninfo: File added OK file=bg_loop.wav\r\ninfo: 1.25s silence gap added OK\r\ninfo: File added OK file=click.mp3\r\ninfo: 1.70s silence gap added OK\r\ninfo: Exported caf OK file=mygameaudio.caf\r\ninfo: Exported ac3 OK file=mygameaudio.opus\r\ninfo: Exported mp3 OK file=mygameaudio.mp3\r\ninfo: Exported m4a OK file=mygameaudio.m4a\r\ninfo: Exported ogg OK file=mygameaudio.webm\r\ninfo: Exported json OK file=mygameaudio.json\r\ninfo: All done\r\n\r\n\r\n> cat mygameaudio.json\r\n{\r\n  \"urls\": [\r\n    \"mygameaudio.caf\",\r\n    \"mygameaudio.opus\",\r\n    \"mygameaudio.mp3\",\r\n    \"mygameaudio.m4a\",\r\n    \"mygameaudio.webm\"\r\n  ],\r\n  \"sprite\": {\r\n    \"bg_loop\": [0, 3.75, true],\r\n    \"click\": [4, 0.3]\r\n  }\r\n}\r\n```\r\n\r\n####Custom silent track\r\n\r\nOn some cases starting and pausing a file has bigger latency than just setting playhead position. You may get better results if your file is always playing. `--silence <duration>` option will generate extra track named *silence* that you can play instead of pausing the file.\r\n\r\n####Usage with [goldfire/howler.js](https://github.com/goldfire/howler.js) framework.\r\n\r\nGenerated JSON file can be passed straight into `Howl` constructor. Check out [Howler.js documentation] (http://goldfirestudios.com/blog/104/howler.js-Modern-Web-Audio-Javascript-Library) for more info.\r\n\r\n```javascript\r\nvar settings = /* JSON generated by audiosprite*/;\r\nvar sound = new Howl(settings);\r\n```\r\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/realbluesky/soundsprite/issues"
+  },
+  "_id": "soundsprite@0.2.7",
+  "dist": {
+    "shasum": "1e9b0246cb00cbcdb6e1b68becee0568c2df4009"
+  },
+  "_from": "soundsprite@",
+  "_resolved": "https://registry.npmjs.org/soundsprite/-/soundsprite-0.2.7.tgz"
+}

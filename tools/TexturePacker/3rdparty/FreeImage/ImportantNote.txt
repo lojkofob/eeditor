@@ -1,0 +1,1 @@
+Тип BOOL автозаменён на тип BOOL_FreeImage

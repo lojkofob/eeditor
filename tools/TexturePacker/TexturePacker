@@ -1,0 +1,29 @@
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+if [ "$(uname)" == "Darwin" ]; then
+  TexturePacker=$DIR/build/TexturePacker
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+  TexturePacker=$DIR/build/TexturePacker
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+  TexturePacker=$DIR/build/Release/TexturePacker.exe
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
+  TexturePacker=$DIR/build/Release/TexturePacker.exe
+fi
+
+# auto build if binary not exist
+if [[ ! -f "$TexturePacker" ]]; then
+    EDIR=`pwd`
+    cd $DIR && make && cd $EDIR
+fi
+   
+echo $TexturePacker $@
+$TexturePacker $@
+

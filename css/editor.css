@@ -1,0 +1,17 @@
+* {margin:0;padding:0}
+body, html { overflow:hidden; }
+
+
+.EditFieldsWithKitten {
+    outline: none !important;
+    border: none !important;
+    background-color:transparent;
+    position: absolute;
+    resize: none;
+    white-space: normal;
+    line-height: 0.99;
+}
+
+.nospinbut::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
