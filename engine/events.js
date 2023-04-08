@@ -899,4 +899,71 @@ function addEventListeners(elem) {
 
 
 
+///// gamepad
+
+var Gamepads = makeClass(function(){
+    var t = this;
+
+    t.__devices = {};
+
+    t.__gamepads = {};
+
+    t.__haveEvents = "ongamepadconnected" in __window;
+
+    addEventListenersToElement(__window, 
+        setNonObfuscatedParams({},
+            "gamepadconnected", (e) => { t.__addGamepad(e.gamepad); },
+            "gamepaddisconnected", e => { t.__removeGamepad(e.gamepad) }
+        ));
+
+    updatable.__push(t);
+
+}, {
+
+    __addGamepad(gamepad) {
+        if (gamepad) {
+            this.__devices[gamepad.index] = gamepad;
+            consoleLog("gamepad", gamepad.index, "connected");
+            consoleLog(gamepad);
+        }
+    },
+    
+    __removeGamepad(gamepad) {
+        if (gamepad) {
+            delete this.__devices[gamepad.index];
+            consoleLog("gamepad", gamepad.index, "disconnected")
+        }
+    },
+    
+    __update() {
+        var t = this;
+        if (!t.__haveEvents) {
+            $each(navigator.getGamepads(), gamepad => {
+                // Can be null if disconnected during the session
+                if (gamepad) {
+                    if (gamepad.index in this.__devices) {
+                        t.__devices[gamepad.index] = gamepad;
+                    } else {
+                        t.__addGamepad(gamepad);
+                    }
+                }
+            });
+        }
+    
+        $each(t.__devices, device => {
+            var gp = t.__gamepads[device.index];
+            if (!gp){
+                gp = t.__gamepads[device.index] = { __buttons: {}, __axes:{} };
+            }
+
+            $each(device.buttons, (b, i) => {
+                gp.__buttons[i] = typeof b == "object" ? b.pressed : b;
+            });
+    
+            $each(device.axes, (val, i) => {
+                gp.__axes[i] = (val == -1 || val == 1) ? val : 0;
+            });
+        }); 
+    } 
+});
 

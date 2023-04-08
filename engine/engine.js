@@ -1202,10 +1202,11 @@ function computeAtlasTexture(atlas) {
             //debug
             frame.atlas = atlas;
             frame.__atlas = atlas;
-            frame.realFilename = n.split('?')[0];
-            if (isNumeric(frame.realFilename))
-                frame.realFilename = frame.realFilename + '.png';
             //undebug
+
+            frame.__realFilename = n.split('?')[0];
+            if (isNumeric(frame.__realFilename))
+                frame.__realFilename = frame.__realFilename + '.png';
 
             if (atlas.__atlasFramePrefix)
                 n = atlas.__atlasFramePrefix + n;

@@ -339,11 +339,8 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
         __isSimpleImage: true,
         tex: tex,
         __uvsBuffers: [],
-        __loading: 1
-        //debug
-        , realFilename: url.split ? url.split('?')[0] : url
-        //undebug
-
+        __loading: 1,
+        __realFilename: url.split ? url.split('?')[0] : url
     };
 
     return tex;
@@ -379,10 +376,14 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
         if (t.____onLoad) {
             t.____onLoad(j, t.__data);
         }
-        //debug
-        //         consoleLog( 'loaded', t );
-        //undebug
+
+        
         t.____progress = 1;
+
+        //debug
+        //    consoleLog( 'loaded', t );
+        //undebug
+        
         if (t.__baseTask) {
             t.__baseTask.__onLoadProgress();
         }
@@ -1024,7 +1025,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                 t.__onProgress(progress);
             
             if (progress == 1) {
-                
+            
                 if (t.__errors && t.__onError) {
                     
                     t.__onError(t.__errors);

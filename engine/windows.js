@@ -75,7 +75,7 @@ function __showWindow__(_window){
     
     if (_window.c) _window.c();
     
-    var wnd = _window.W = new Node( _window.n, _window.u );
+    var wnd = _window.W = new Node( _window.n );
     
     wnd.__realClose = function(){
         
@@ -140,7 +140,7 @@ function __showWindow__(_window){
 
 
 
-function showWindow(name, onShow, afterShow, useOldToNewConvert, params){
+function showWindow(name, onShow, afterShow, params){
     
     params = params || {};
     
@@ -148,7 +148,7 @@ function showWindow(name, onShow, afterShow, useOldToNewConvert, params){
         , uniqWindow = !params.__notUniq  //уникально ли это окно или может дублироваться
         , firstWindow = nameOfQueue && __wm__queues__[nameOfQueue]
         , thisTypeOfWindowExistInQueue = firstWindow ? $find( __wm__queues__[nameOfQueue], function(w){ return w.n == name && w.W } ) : 0
-        , _window = { w:onShow, n:name, u:useOldToNewConvert, q:nameOfQueue, c: params.__beforeCreateCb }; 
+        , _window = { w:onShow, n:name, q:nameOfQueue, c: params.__beforeCreateCb }; 
         
     if (uniqWindow && thisTypeOfWindowExistInQueue)
         return;

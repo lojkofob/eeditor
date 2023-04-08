@@ -99,7 +99,7 @@ function plainForm(p1, p2, p3) { // общее уравнение плоскос
 }
 
 
-function Node(j, useOldToNewConvert) {
+function Node(j) {
     j = j || {};
 
     var t = this;
@@ -120,7 +120,7 @@ function Node(j, useOldToNewConvert) {
     }
     //undebug
 
-    t.__init(j, 0, useOldToNewConvert);
+    t.__init(j, 0);
 
     //debug
     if (tmpClass) {
@@ -611,13 +611,13 @@ mergeObj(NodePrototype, {
         this.__userData = mergeObjectDeep(this.__userData || {}, v);
     },
 
-    __init: function (j, soft, useOldToNewConvert) {
+    __init: function (j, soft) {
         var t = this;
         if (j) {
 
             if (isString(j)) {
                 j = getLayoutByName(j);
-                if (j && useOldToNewConvert && isArray(j))
+                if (j && isArray(j) && j.length == 1)
                     j = j[0];
             } else
                 if (isFunction(j)) {
@@ -1207,7 +1207,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __render: function () {
+    __render() {
         var t = this;
 
         if (t.parent) { t.__opacityDeep = t.__alphaDeep * t.parent.__opacityDeep; }

@@ -113,7 +113,7 @@ void main() {
     } 
 
 
-    
+    c2.rgb *= color;
     gl_FragColor = c2 * opacity;
     
 } 
