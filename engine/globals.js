@@ -1,5 +1,5 @@
 
-function wrapFunctionInTryCatch(fn){ return fn }
+function wrapFunctionInTryCatch(fn) { return fn }
 
 
 //vars to not obfuscate 
@@ -92,8 +92,9 @@ function getAppVersion() {
 }
 
 
-var consoleError = function () { }, consoleWarn = function () { }, consoleLog = function () { };
+var consoleError = function () { }, consoleWarn = function () { }, consoleLog = function () { }, consoleDebug = function () { };
 //cheats
+consoleDebug = function () { console.error.apply(console, arguments); debugger; }
 consoleError = console.error.bind(console);
 consoleWarn = console.warn.bind(console);
 consoleLog = console.log.bind(console); //function(){ if ( isString( arguments[0] ) &&  arguments[0].startsWith('js_Ana') ) console.log.apply(console, arguments); } 
@@ -304,7 +305,7 @@ function randomFloatSpread(range) { return range * (0.5 - random()); }
 function randomSign() { return random() < 0.5 ? -1 : 1; }
 function randomInt(_min, _max) { return floor(random() * (_max - _min + 1)) + _min; }
 function randomBool() { return random() < 0.5; }
-function randomArrayMember(a) { return a[ randomInt(0, a.length - 1) ] }
+function randomArrayMember(a) { return a[randomInt(0, a.length - 1)] }
 
 function roundByStep(d, _round) {
     return round(d / _round) * _round;
@@ -844,7 +845,7 @@ function toFixedDeep(obj, d) {
     if (isNumeric(obj)) obj = Number(Number(obj).toFixed(d));
     else if (typeof obj == 'object') for (var i in obj) obj[i] = toFixedDeep(obj[i], d);
     return obj;
-} 
+}
 
 function explodeString(str, delimeter) {
     if (!str) return [];
@@ -1259,6 +1260,7 @@ function makeClass(construct, protoMethods, properties, baseClassProto, wrapMeth
 
     if (baseClassProto) {
         protoMethods = mergeObj(ObjectCreate(baseClassProto.prototype || baseClassProto), protoMethods);
+        if (!construct) construct = function () { baseClassProto.apply(this, arguments) }
     }
 
     if (wrapMethods) {

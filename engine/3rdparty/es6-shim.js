@@ -3,16 +3,16 @@
 // For more details and documentation:
 // https://github.com/paulmillr/es6-shim/
 var setPrototypeOf = 'setPrototypeOf';
-(function(undefined) {
+(function (undefined) {
   'use strict';
 
-  var isCallableWithoutNew = function(func) {
+  var isCallableWithoutNew = function (func) {
     try { func(); }
     catch (e) { return false; }
     return true;
   };
 
-  var arePropertyDescriptorsSupported = function() {
+  var arePropertyDescriptorsSupported = function () {
     try {
       Object.defineProperty({}, 'x', {});
       return true;
@@ -21,19 +21,18 @@ var setPrototypeOf = 'setPrototypeOf';
     }
   };
 
-  var startsWithRejectsRegex = function() {
-    var rejectsRegex = false;
+  var startsWithRejectsRegex = function () {
     if (String.prototype.startsWith) {
       try {
         '/a/'.startsWith(/a/);
       } catch (e) { /* this is spec compliant */
-        rejectsRegex = true;
+        return true;
       }
     }
-    return rejectsRegex;
+    return false;
   };
 
-  var main = function() {
+  var main = function () {
     var globals = (typeof global === 'undefined') ? window : global;
     var global_isFinite = globals.isFinite;
     var supportsDescriptors = !!Object.defineProperty && arePropertyDescriptorsSupported();
@@ -45,8 +44,8 @@ var setPrototypeOf = 'setPrototypeOf';
 
     // Define configurable, writable and non-enumerable props
     // if they don’t exist.
-    var defineProperties = function(object, map) {
-      Object.keys(map).forEach(function(name) {
+    var defineProperties = function (object, map) {
+      Object.keys(map).forEach(function (name) {
         var method = map[name];
         if (name in object) return;
         if (supportsDescriptors) {
@@ -63,20 +62,20 @@ var setPrototypeOf = 'setPrototypeOf';
     };
 
     var ES = {
-      CheckObjectCoercible: function(x) {
+      CheckObjectCoercible: function (x) {
         if (x == null) throw TypeError('Cannot call method on ' + x);
         return x;
       },
 
-      ToInt32: function(x) {
+      ToInt32: function (x) {
         return x >> 0;
       },
 
-      ToUint32: function(x) {
+      ToUint32: function (x) {
         return x >>> 0;
       },
 
-      toInteger: function(value) {
+      toInteger: function (value) {
         var number = +value;
         if (Number.isNaN(number)) return 0;
         if (number === 0 || !Number.isFinite(number)) return number;
@@ -85,14 +84,14 @@ var setPrototypeOf = 'setPrototypeOf';
     };
 
     defineProperties(String, {
-      fromCodePoint: function() {
+      fromCodePoint: function () {
         var points = _slice.call(arguments, 0, arguments.length);
         var result = [];
         var next;
         for (var i = 0, length = points.length; i < length; i++) {
           next = Number(points[i]);
           if (!Object.is(next, ES.toInteger(next)) ||
-              next < 0 || next > 0x10FFFF) {
+            next < 0 || next > 0x10FFFF) {
             throw new RangeError('Invalid code point ' + next);
           }
 
@@ -107,7 +106,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return result.join('');
       },
 
-      raw: function() {
+      raw: function () {
         var callSite = arguments.length > 0 ? arguments[0] : undefined;
         var substitutions = _slice.call(arguments, 1, arguments.length);
         var cooked = Object(callSite);
@@ -145,15 +144,15 @@ var setPrototypeOf = 'setPrototypeOf';
     var StringShims = {
       // Fast repeat, uses the `Exponentiation by squaring` algorithm.
       // Perf: http://jsperf.com/string-repeat2/2
-      repeat: (function() {
-        var repeat = function(s, times) {
+      repeat: (function () {
+        var repeat = function (s, times) {
           if (times < 1) return '';
           if (times % 2) return repeat(s, times - 1) + s;
           var half = repeat(s, times / 2);
           return half + half;
         };
 
-        return function(times) {
+        return function (times) {
           var thisStr = String(ES.CheckObjectCoercible(this));
           times = ES.toInteger(times);
           if (times < 0 || times === Infinity) {
@@ -163,7 +162,7 @@ var setPrototypeOf = 'setPrototypeOf';
         };
       })(),
 
-      startsWith: function(searchStr) {
+      startsWith: function (searchStr) {
         var thisStr = String(ES.CheckObjectCoercible(this));
         if (_toString.call(searchStr) === '[object RegExp]') throw new TypeError('Cannot call method "startsWith" with a regex');
         searchStr = String(searchStr);
@@ -172,7 +171,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return thisStr.slice(start, start + searchStr.length) === searchStr;
       },
 
-      endsWith: function(searchStr) {
+      endsWith: function (searchStr) {
         var thisStr = String(ES.CheckObjectCoercible(this));
         if (_toString.call(searchStr) === '[object RegExp]') throw new TypeError('Cannot call method "endsWith" with a regex');
         searchStr = String(searchStr);
@@ -183,13 +182,13 @@ var setPrototypeOf = 'setPrototypeOf';
         return thisStr.slice(end - searchStr.length, end) === searchStr;
       },
 
-      contains: function(searchString) {
+      contains: function (searchString) {
         var position = arguments.length > 1 ? arguments[1] : undefined;
         // Somehow this trick makes method 100% compat with the spec.
         return _indexOf.call(this, searchString, position) !== -1;
       },
 
-      codePointAt: function(pos) {
+      codePointAt: function (pos) {
         var thisStr = String(ES.CheckObjectCoercible(this));
         var position = ES.toInteger(pos);
         var length = thisStr.length;
@@ -211,7 +210,7 @@ var setPrototypeOf = 'setPrototypeOf';
     }
 
     defineProperties(Array, {
-      from: function(iterable) {
+      from: function (iterable) {
         var mapFn = arguments.length > 1 ? arguments[1] : undefined;
         var thisArg = arguments.length > 2 ? arguments[2] : undefined;
 
@@ -236,13 +235,13 @@ var setPrototypeOf = 'setPrototypeOf';
         return result;
       },
 
-      of: function() {
+      of: function () {
         return Array.from(arguments);
       }
     });
 
     defineProperties(globals, {
-      ArrayIterator: function(array, kind) {
+      ArrayIterator: function (array, kind) {
         this.i = 0;
         this.array = array;
         this.kind = kind;
@@ -250,7 +249,7 @@ var setPrototypeOf = 'setPrototypeOf';
     });
 
     defineProperties(globals.ArrayIterator.prototype, {
-      next: function() {
+      next: function () {
         var i = this.i;
         this.i = i + 1;
         var array = this.array;
@@ -279,7 +278,7 @@ var setPrototypeOf = 'setPrototypeOf';
     });
 
     defineProperties(Array.prototype, {
-      copyWithin: function(target, start) {
+      copyWithin: function (target, start) {
         var o = Object(this);
         var len = Math.max(ES.toInteger(o.length), 0);
         var to = target < 0 ? Math.max(len + target, 0) : Math.min(target, len);
@@ -305,7 +304,7 @@ var setPrototypeOf = 'setPrototypeOf';
         }
         return o;
       },
-      fill: function(value) {
+      fill: function (value) {
         var len = this.length;
         var start = arguments.length > 1 ? ES.toInteger(arguments[1]) : 0;
         var end = arguments.length > 2 ? ES.toInteger(arguments[2]) : len;
@@ -318,7 +317,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return this;
       },
 
-      find: function(predicate) {
+      find: function (predicate) {
         var list = Object(this);
         var length = ES.ToUint32(list.length);
         if (length === 0) return undefined;
@@ -333,7 +332,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return undefined;
       },
 
-      findIndex: function(predicate) {
+      findIndex: function (predicate) {
         var list = Object(this);
         var length = ES.ToUint32(list.length);
         if (length === 0) return -1;
@@ -348,15 +347,15 @@ var setPrototypeOf = 'setPrototypeOf';
         return -1;
       },
 
-      keys: function() {
+      keys: function () {
         return new ArrayIterator(this, "key");
       },
 
-      values: function() {
+      values: function () {
         return new ArrayIterator(this, "value");
       },
 
-      entries: function() {
+      entries: function () {
         return new ArrayIterator(this, "entry");
       }
     });
@@ -370,11 +369,11 @@ var setPrototypeOf = 'setPrototypeOf';
       parseInt: globals.parseInt,
       parseFloat: globals.parseFloat,
 
-      isFinite: function(value) {
+      isFinite: function (value) {
         return typeof value === 'number' && global_isFinite(value);
       },
 
-      isSafeInteger: function(value) {
+      isSafeInteger: function (value) {
         return typeof value === 'number' &&
           !Number.isNaN(value) &&
           Number.isFinite(value) &&
@@ -382,7 +381,7 @@ var setPrototypeOf = 'setPrototypeOf';
           Math.abs(value) <= Number.MAX_SAFE_INTEGER;
       },
 
-      isNaN: function(value) {
+      isNaN: function (value) {
         // NaN !== NaN, but they are identical.
         // NaNs are the only non-reflexive value, i.e., if x !== x,
         // then x is NaN.
@@ -394,7 +393,7 @@ var setPrototypeOf = 'setPrototypeOf';
     });
 
     defineProperties(Number.prototype, {
-      clz: function() {
+      clz: function () {
         var number = +this;
         if (!number || !Number.isFinite(number)) return 32;
         number = number < 0 ? Math.ceil(number) : Math.floor(number);
@@ -405,15 +404,15 @@ var setPrototypeOf = 'setPrototypeOf';
 
     if (supportsDescriptors) {
       defineProperties(Object, {
-        getOwnPropertyDescriptors: function(subject) {
+        getOwnPropertyDescriptors: function (subject) {
           var descs = {};
-          Object.getOwnPropertyNames(subject).forEach(function(propName) {
+          Object.getOwnPropertyNames(subject).forEach(function (propName) {
             descs[propName] = Object.getOwnPropertyDescriptor(subject, propName);
           });
           return descs;
         },
 
-        getPropertyDescriptor: function(subject, name) {
+        getPropertyDescriptor: function (subject, name) {
           var pd = Object.getOwnPropertyDescriptor(subject, name);
           var proto = Object.getPrototypeOf(subject);
           while (pd === undefined && proto !== null) {
@@ -423,11 +422,11 @@ var setPrototypeOf = 'setPrototypeOf';
           return pd;
         },
 
-        getPropertyNames: function(subject) {
+        getPropertyNames: function (subject) {
           var result = Object.getOwnPropertyNames(subject);
           var proto = Object.getPrototypeOf(subject);
 
-          var addProperty = function(property) {
+          var addProperty = function (property) {
             if (result.indexOf(property) === -1) {
               result.push(property);
             }
@@ -441,17 +440,17 @@ var setPrototypeOf = 'setPrototypeOf';
         },
 
         // 19.1.3.1
-        assign: function(target, source) {
-          return Object.keys(source).reduce(function(target, key) {
+        assign: function (target, source) {
+          return Object.keys(source).reduce(function (target, key) {
             target[key] = source[key];
             return target;
           }, target);
         },
 
         // 19.1.3.15
-        mixin: function(target, source) {
+        mixin: function (target, source) {
           var props = Object.getOwnPropertyNames(source);
-          return props.reduce(function(target, property) {
+          return props.reduce(function (target, property) {
             var descriptor = Object.getOwnPropertyDescriptor(source, property);
             return Object.defineProperty(target, property, descriptor);
           }, target);
@@ -461,65 +460,65 @@ var setPrototypeOf = 'setPrototypeOf';
       // 19.1.3.9
       // shim from https://gist.github.com/WebReflection/5593554
       var ooo = {};
-      ooo[setPrototypeOf] = (function(Object, magic) {
-          var set;
+      ooo[setPrototypeOf] = (function (Object, magic) {
+        var set;
 
-          var checkArgs = function(O, proto) {
-            if (typeof O !== 'object' || O === null) {
-              throw new TypeError('cannot set prototype on a non-object');
-            }
-            if (typeof proto !== 'object') {
-              throw new TypeError('can only set prototype to an object or null');
-            }
-          };
-
-          var setPrototypeOf = function(O, proto) {
-            checkArgs(O, proto);
-            set.call(O, proto);
-            return O;
-          };
-
-          try {
-            // this works already in Firefox and Safari
-            set = Object.getOwnPropertyDescriptor(Object.prototype, magic).set;
-            set.call({}, null);
-          } catch (e) {
-            if (Object.prototype !== {}[magic]) {
-              // IE < 11 cannot be shimmed
-              return;
-            }
-            // probably Chrome or some old Mobile stock browser
-            set = function(proto) {
-              this[magic] = proto;
-            };
-            // please note that this will **not** work
-            // in those browsers that do not inherit
-            // __proto__ by mistake from Object.prototype
-            // in these cases we should probably throw an error
-            // or at least be informed about the issue
-            setPrototypeOf.polyfill = setPrototypeOf(
-              setPrototypeOf({}, null),
-              Object.prototype
-            ) instanceof Object;
-            // setPrototypeOf.polyfill === true means it works as meant
-            // setPrototypeOf.polyfill === false means it's not 100% reliable
-            // setPrototypeOf.polyfill === undefined
-            // or
-            // setPrototypeOf.polyfill ==  null means it's not a polyfill
-            // which means it works as expected
-            // we can even delete Object.prototype.__proto__;
+        var checkArgs = function (O, proto) {
+          if (typeof O !== 'object' || O === null) {
+            throw new TypeError('cannot set prototype on a non-object');
           }
-          return setPrototypeOf;
-        })(Object, '__proto__');
-        defineProperties(Object, ooo);
+          if (typeof proto !== 'object') {
+            throw new TypeError('can only set prototype to an object or null');
+          }
+        };
+
+        var setPrototypeOf = function (O, proto) {
+          checkArgs(O, proto);
+          set.call(O, proto);
+          return O;
+        };
+
+        try {
+          // this works already in Firefox and Safari
+          set = Object.getOwnPropertyDescriptor(Object.prototype, magic).set;
+          set.call({}, null);
+        } catch (e) {
+          if (Object.prototype !== {}[magic]) {
+            // IE < 11 cannot be shimmed
+            return;
+          }
+          // probably Chrome or some old Mobile stock browser
+          set = function (proto) {
+            this[magic] = proto;
+          };
+          // please note that this will **not** work
+          // in those browsers that do not inherit
+          // __proto__ by mistake from Object.prototype
+          // in these cases we should probably throw an error
+          // or at least be informed about the issue
+          setPrototypeOf.polyfill = setPrototypeOf(
+            setPrototypeOf({}, null),
+            Object.prototype
+          ) instanceof Object;
+          // setPrototypeOf.polyfill === true means it works as meant
+          // setPrototypeOf.polyfill === false means it's not 100% reliable
+          // setPrototypeOf.polyfill === undefined
+          // or
+          // setPrototypeOf.polyfill ==  null means it's not a polyfill
+          // which means it works as expected
+          // we can even delete Object.prototype.__proto__;
+        }
+        return setPrototypeOf;
+      })(Object, '__proto__');
+      defineProperties(Object, ooo);
     }
 
     defineProperties(Object, {
-      getOwnPropertyKeys: function(subject) {
+      getOwnPropertyKeys: function (subject) {
         return Object.keys(subject);
       },
 
-      is: function(a, b) {
+      is: function (a, b) {
         if (a === b) {
           // 0 === -0, but they are not identical.
           if (a === 0) return 1 / a === 1 / b;
@@ -530,7 +529,7 @@ var setPrototypeOf = 'setPrototypeOf';
     });
 
     var MathShims = {
-      acosh: function(value) {
+      acosh: function (value) {
         value = Number(value);
         if (Number.isNaN(value) || value < 1) return NaN;
         if (value === 1) return 0;
@@ -538,7 +537,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return Math.log(value + Math.sqrt(value * value - 1));
       },
 
-      asinh: function(value) {
+      asinh: function (value) {
         value = Number(value);
         if (value === 0 || !global_isFinite(value)) {
           return value;
@@ -546,7 +545,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return value < 0 ? -Math.asinh(-value) : Math.log(value + Math.sqrt(value * value + 1));
       },
 
-      atanh: function(value) {
+      atanh: function (value) {
         value = Number(value);
         if (Number.isNaN(value) || value < -1 || value > 1) {
           return NaN;
@@ -557,16 +556,16 @@ var setPrototypeOf = 'setPrototypeOf';
         return 0.5 * Math.log((1 + value) / (1 - value));
       },
 
-      cbrt: function(value) {
+      cbrt: function (value) {
         value = Number(value);
         if (value === 0) return value;
         var negate = value < 0, result;
         if (negate) value = -value;
-        result = Math.pow(value, 1/3);
+        result = Math.pow(value, 1 / 3);
         return negate ? -result : result;
       },
 
-      cosh: function(value) {
+      cosh: function (value) {
         value = Number(value);
         if (value === 0) return 1; // +0 or -0
         if (Number.isNaN(value)) return NaN;
@@ -576,7 +575,7 @@ var setPrototypeOf = 'setPrototypeOf';
         return (Math.exp(value) + Math.exp(-value)) / 2;
       },
 
-      expm1: function(value) {
+      expm1: function (value) {
         value = Number(value);
         if (value === -Infinity) return -1;
         if (!global_isFinite(value) || value === 0) return value;
@@ -591,12 +590,12 @@ var setPrototypeOf = 'setPrototypeOf';
         return result;
       },
 
-      hypot: function(x, y) {
+      hypot: function (x, y) {
         var anyNaN = false;
         var allZero = true;
         var anyInfinity = false;
         var numbers = [];
-        Array.prototype.every.call(arguments, function(arg) {
+        Array.prototype.every.call(arguments, function (arg) {
           var num = Number(arg);
           if (Number.isNaN(num)) anyNaN = true;
           else if (num === Infinity || num === -Infinity) anyInfinity = true;
@@ -619,15 +618,15 @@ var setPrototypeOf = 'setPrototypeOf';
         return largest * Math.sqrt(sum);
       },
 
-      log2: function(value) {
+      log2: function (value) {
         return Math.log(value) * Math.LOG2E;
       },
 
-      log10: function(value) {
+      log10: function (value) {
         return Math.log(value) * Math.LOG10E;
       },
 
-      log1p: function(value) {
+      log1p: function (value) {
         value = Number(value);
         if (value < -1 || Number.isNaN(value)) return NaN;
         if (value === 0 || value === Infinity) return value;
@@ -647,20 +646,20 @@ var setPrototypeOf = 'setPrototypeOf';
         return result;
       },
 
-      sign: function(value) {
+      sign: function (value) {
         var number = +value;
         if (number === 0) return number;
         if (Number.isNaN(number)) return number;
         return number < 0 ? -1 : 1;
       },
 
-      sinh: function(value) {
+      sinh: function (value) {
         value = Number(value);
         if (!global_isFinite(value) || value === 0) return value;
         return (Math.exp(value) - Math.exp(-value)) / 2;
       },
 
-      tanh: function(value) {
+      tanh: function (value) {
         value = Number(value);
         if (Number.isNaN(value) || value === 0) return value;
         if (value === Infinity) return 1;
@@ -668,20 +667,20 @@ var setPrototypeOf = 'setPrototypeOf';
         return (Math.exp(value) - Math.exp(-value)) / (Math.exp(value) + Math.exp(-value));
       },
 
-      trunc: function(value) {
+      trunc: function (value) {
         var number = Number(value);
         return number < 0 ? -Math.floor(-number) : Math.floor(number);
       },
 
-      imul: function(x, y) {
+      imul: function (x, y) {
         // taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
-        var ah  = (x >>> 16) & 0xffff;
+        var ah = (x >>> 16) & 0xffff;
         var al = x & 0xffff;
-        var bh  = (y >>> 16) & 0xffff;
+        var bh = (y >>> 16) & 0xffff;
         var bl = y & 0xffff;
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
-        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
       }
     };
     defineProperties(Math, MathShims);
@@ -710,7 +709,7 @@ var setPrototypeOf = 'setPrototypeOf';
       };
 
       var collectionShims = {
-        Map: (function() {
+        Map: (function () {
 
           var empty = {};
 
@@ -721,7 +720,7 @@ var setPrototypeOf = 'setPrototypeOf';
             this.prev = null;
           }
 
-          MapEntry.prototype.isRemoved = function() {
+          MapEntry.prototype.isRemoved = function () {
             return this.key === empty;
           };
 
@@ -732,7 +731,7 @@ var setPrototypeOf = 'setPrototypeOf';
           }
 
           MapIterator.prototype = {
-            next: function() {
+            next: function () {
               var i = this.i, kind = this.kind, head = this.head, result;
               while (i !== head) {
                 this.i = i.next;
@@ -769,13 +768,13 @@ var setPrototypeOf = 'setPrototypeOf';
           Object.defineProperty(Map.prototype, 'size', {
             configurable: true,
             enumerable: false,
-            get: function() {
+            get: function () {
               return this._size;
             }
           });
 
           defineProperties(Map.prototype, {
-            get: function(key) {
+            get: function (key) {
               var fkey = fastkey(key);
               if (fkey !== null) {
                 // fast O(1) path
@@ -791,7 +790,7 @@ var setPrototypeOf = 'setPrototypeOf';
               return undefined;
             },
 
-            has: function(key) {
+            has: function (key) {
               var fkey = fastkey(key);
               if (fkey !== null) {
                 // fast O(1) path
@@ -806,7 +805,7 @@ var setPrototypeOf = 'setPrototypeOf';
               return false;
             },
 
-            set: function(key, value) {
+            set: function (key, value) {
               var head = this._head, i = head, entry;
               var fkey = fastkey(key);
               if (fkey !== null) {
@@ -834,7 +833,7 @@ var setPrototypeOf = 'setPrototypeOf';
               this._size += 1;
             },
 
-            'delete': function(key) {
+            'delete': function (key) {
               var head = this._head, i = head;
               var fkey = fastkey(key);
               if (fkey !== null) {
@@ -858,7 +857,7 @@ var setPrototypeOf = 'setPrototypeOf';
               return false;
             },
 
-            clear: function() {
+            clear: function () {
               this._size = 0;
               this._storage = emptyObject();
               var head = this._head, i = head, p = i.next;
@@ -870,19 +869,19 @@ var setPrototypeOf = 'setPrototypeOf';
               head.next = head.prev = head;
             },
 
-            keys: function() {
+            keys: function () {
               return new MapIterator(this, "key");
             },
 
-            values: function() {
+            values: function () {
               return new MapIterator(this, "value");
             },
 
-            entries: function() {
+            entries: function () {
               return new MapIterator(this, "key+value");
             },
 
-            forEach: function(callback) {
+            forEach: function (callback) {
               var context = arguments.length > 1 ? arguments[1] : null;
               var entireMap = this;
 
@@ -898,7 +897,7 @@ var setPrototypeOf = 'setPrototypeOf';
           return Map;
         })(),
 
-        Set: (function() {
+        Set: (function () {
           // Creating a Map is expensive.  To speed up the common case of
           // Sets containing only string or numeric keys, we use an object
           // as backing storage and lazily create a full Map only when
@@ -915,7 +914,7 @@ var setPrototypeOf = 'setPrototypeOf';
           var ensureMap = function ensureMap(set) {
             if (!set['[[SetData]]']) {
               var m = set['[[SetData]]'] = new collectionShims.Map();
-              Object.keys(set._storage).forEach(function(k) {
+              Object.keys(set._storage).forEach(function (k) {
                 // fast check for leading '$'
                 if (k.charCodeAt(0) === 36) {
                   k = k.substring(1);
@@ -931,14 +930,14 @@ var setPrototypeOf = 'setPrototypeOf';
           Object.defineProperty(SetShim.prototype, 'size', {
             configurable: true,
             enumerable: false,
-            get: function() {
+            get: function () {
               ensureMap(this);
               return this['[[SetData]]'].size;
             }
           });
 
           defineProperties(SetShim.prototype, {
-            has: function(key) {
+            has: function (key) {
               var fkey;
               if (this._storage && (fkey = fastkey(key)) !== null) {
                 return !!this._storage[fkey];
@@ -947,17 +946,17 @@ var setPrototypeOf = 'setPrototypeOf';
               return this['[[SetData]]'].has(key);
             },
 
-            add: function(key) {
+            add: function (key) {
               var fkey;
               if (this._storage && (fkey = fastkey(key)) !== null) {
-                this._storage[fkey]=true;
+                this._storage[fkey] = true;
                 return;
               }
               ensureMap(this);
               return this['[[SetData]]'].set(key, key);
             },
 
-            'delete': function(key) {
+            'delete': function (key) {
               var fkey;
               if (this._storage && (fkey = fastkey(key)) !== null) {
                 delete this._storage[fkey];
@@ -967,7 +966,7 @@ var setPrototypeOf = 'setPrototypeOf';
               return this['[[SetData]]']['delete'](key);
             },
 
-            clear: function() {
+            clear: function () {
               if (this._storage) {
                 this._storage = emptyObject();
                 return;
@@ -975,26 +974,26 @@ var setPrototypeOf = 'setPrototypeOf';
               return this['[[SetData]]'].clear();
             },
 
-            keys: function() {
+            keys: function () {
               ensureMap(this);
               return this['[[SetData]]'].keys();
             },
 
-            values: function() {
+            values: function () {
               ensureMap(this);
               return this['[[SetData]]'].values();
             },
 
-            entries: function() {
+            entries: function () {
               ensureMap(this);
               return this['[[SetData]]'].entries();
             },
 
-            forEach: function(callback) {
+            forEach: function (callback) {
               var context = arguments.length > 1 ? arguments[1] : null;
               var entireSet = this;
               ensureMap(this);
-              this['[[SetData]]'].forEach(function(value, key) {
+              this['[[SetData]]'].forEach(function (value, key) {
                 callback.call(context, key, key, entireSet);
               });
             }

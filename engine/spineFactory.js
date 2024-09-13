@@ -472,7 +472,7 @@ void main(){\
                 __validToSave: 0,
                 __uniforms: {
                     u_projTrans: function () {
-                        var m = a.__projectionMatrix.clone().__multiply(a.__matrixWorld).e;
+                        var m = a.__projectionMatrix.__clone().__multiply(a.__matrixWorld).e;
                         m[14] = 0;
                         return m;
                     },

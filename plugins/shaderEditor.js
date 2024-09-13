@@ -27,232 +27,236 @@ void main() {
 
 
 let ShaderEditorPlugin = (() => {
-    
+
     consoleLog('ShaderEditorPlugin!');
-    
+
     let types = ['float', 'int', 'vec2', 'vec3', 'vec4', 'mat3', 'mat4', 'sampler2D'];
-    let typesMap = invertMap($mapArrayToObject(types, (a, i)=>i ));
-    
-    let typename = { type: 'typename', values:types };
-    
-    
-    function log(){
+    let typesMap = invertMap($mapArrayToObject(types, (a, i) => i));
+
+    let typename = { type: 'typename', values: types };
+
+
+    function log() {
         let a = Array.prototype.slice.call(arguments);
         a.unshift('ShaderEditorPlugin:');
         consoleLog.apply(console, a);
     }
-    
-    function loge(){
+
+    function loge() {
         let a = Array.prototype.slice.call(arguments);
         a.unshift('ShaderEditorPlugin:');
         consoleError.apply(console, a);
         debugger;
     }
-    
-    let ShaderEditorItemsCollection = makeClass(function(node){
+
+    let ShaderEditorItemsCollection = makeClass(function (node) {
         this.node = node;
         this.items = [];
     }, {
-        init(a){
-            if (isObject(a)){ 
+        init(a) {
+            if (isObject(a)) {
                 let t = this;
                 if (isArray(a.items)) {
                     t.clear();
-                    t.items = $filter( $map( a.items, d => { 
-                        var id = d.id; 
+                    t.items = $filter($map(a.items, d => {
+                        var id = d.id;
                         if (plugin.items[id]) {
-                            let item = new ShaderEditorItem( id, t.node, d );
+                            let item = new ShaderEditorItem(id, t.node, d);
                             return item;
-                        } 
-                    }), a=>a);
+                        }
+                    }), a => a);
                 }
             }
             return this;
         },
-        
-        eachItem(f){
-            $each((this.items||[]).slice(), f);
+
+        eachItem(f) {
+            $each((this.items || []).slice(), f);
             return this;
         },
-        
-        clear(){
-            this.eachItem( item=>item.destruct() ).items = [];
+
+        clear() {
+            this.eachItem(item => item.destruct()).items = [];
         },
-        
-        toJson(){
-            return { 
+
+        toJson() {
+            return {
                 items: $map(this.items, it => it.toJson())
             }
         },
-        push(item){
-            if (this.items.indexOf(item) == -1){
+        push(item) {
+            if (this.items.indexOf(item) == -1) {
                 this.items.push(item);
             }
         }
     }, {
-        length: createSomePropertyWithGetterAndSetter(()=>(this.items||[]).length)
+        length: createSomePropertyWithGetterAndSetter(() => (this.items || []).length)
     });
-    
-    
-    let ShaderEditorItem = makeClass(function(id, node, data){
+
+
+    let ShaderEditorItem = makeClass(function (id, node, data) {
         let itemCfg = plugin.items[id];
         this.init(itemCfg);
         this.id = id;
         this.node = node;
-        if (data){
+        if (data) {
             this.init(data);
         }
-        
+
         if (!this.uid)
             this.uid = plugin.uniqueItemId(node);
-        
+
     }, {
-        
-        init(v){
+
+        init(v) {
             mergeObj(this, v);
             this.initPanel();
             return this;
         },
-        
-        initPanel(){
+
+        initPanel() {
             let t = this;
-            if ((t.misc||0).panel && t.panel) {
+            if ((t.misc || 0).panel && t.panel) {
                 t.panel.__init(t.misc.panel);
             }
             return this;
         },
-        
-        destruct(){
+
+        destruct() {
             let t = this;
             if (t.panel) {
                 PanelsWithKitten.removePanel(t.panel);
                 delete t.panel;
             }
-            removeFromArray( this, getDeepFieldFromObject( this.node, '__userData', '__shaderEditor', 'items') || []);
+            removeFromArray(this, getDeepFieldFromObject(this.node, '__userData', '__shaderEditor', 'items') || []);
             plugin.itemDestructed(t);
             return this;
         },
-        
-        toJson(){
-            
+
+        toJson() {
+
             let t = this;
             let panel = t.panel;
-            
-            let d = { 
-                id : this.id, 
+
+            let d = {
+                id: this.id,
                 uid: this.uid,
-                data : this.data,
-                misc : {}
+                data: this.data,
+                misc: {}
             };
-            
-            if (panel){
+
+            if (panel) {
                 d.misc.panel = {
-                    __ofs: [ panel.__x, panel.__y ]
+                    __ofs: [panel.__x, panel.__y]
                 }
             }
             return d;
         },
-        
-        addPanel(){
-            
+
+        addPanel() {
+
             let t = this, toNode = t.node;
-            
+
             log('add', t.id);
-            
-            if (toNode.itemsPool[t.uid] == 1){
+
+            if (toNode.itemsPool[t.uid] == 1) {
                 toNode.itemsPool[t.uid] = this;
             }
-            
-            if (toNode.itemsPool[t.uid]!= this){
+
+            if (toNode.itemsPool[t.uid] != this) {
                 debugger;
             }
-            
+
             if (!t.data) t.data = {};
-                                     
+
             if (!toNode.__userData) toNode.__userData = {};
-            
+
             if (!(toNode.__userData.__shaderEditor instanceof ShaderEditorItemsCollection)) {
                 toNode.__userData.__shaderEditor = new ShaderEditorItemsCollection(toNode);
             }
-           
+
             toNode.__userData.__shaderEditor.push(t);
-            
-            t.panel = invokeEventWithKitten( 'Editor.showCustomPanel', { 
-                name: t.id + '#'+t.uid,
+
+            t.panel = invokeEventWithKitten('Editor.showCustomPanel', {
+                name: t.id + '#' + t.uid,
                 title: t.id,
                 acceptor: toNode,
                 object: t.data,
                 properties: t.properties
             }, 0, 1);
-                        
+
             t.panel.__needRemoveOnClose = 1;
             t.panel.__addOnDestruct(() => {
                 delete t.panel;
                 t.destruct();
-            } );
+            });
             t.panel.__validToSave = 0;
             this.initPanel();
             return this;
         }
     });
-    
-    function getVarType(type){
-        if ( typesMap[type] != undefined ){
+
+    function getVarType(type) {
+        if (typesMap[type] != undefined) {
             return typesMap[type]
         } else {
-            loge( "unknown type ", type );
-        }    
+            loge("unknown type ", type);
+        }
     }
-    
+
     let parsers = {
         typename: (a) =>
-            setNonObfuscatedParams({}, a + ' t s ;', (type, name) => { return {
-                type: getVarType(type),
-                name: name
-            }}),
-        
-        typename_value: () => 
-            setNonObfuscatedParams({}, 
+            setNonObfuscatedParams({}, a + ' t s ;', (type, name) => {
+                return {
+                    type: getVarType(type),
+                    name: name
+                }
+            }),
+
+        typename_value: () =>
+            setNonObfuscatedParams({},
                 't s ;', (a, type, name) => { return { type: getVarType(type), name: name } },
                 't s = v ;', (a, type, name, value) => { return { type: getVarType(type), name: name, value: value } }
             ),
-            
+
         func: (funcName, args) =>
-            setNonObfuscatedParams({}, 's ( v , v ) ;', (a, args) => { return {
-                input: args
-            }})
-        
+            setNonObfuscatedParams({}, 's ( v , v ) ;', (a, args) => {
+                return {
+                    input: args
+                }
+            })
+
     };
-    
+
     let functions = {
         texture2D: ['sampler2D', 'vec2']
     };
-    
+
     let plugin = makeSingleton({
-                
+
         items: {
-            
+
             attribute: {
                 parser: parsers.typename('attribute'),
                 properties: {
                     typename: typename
                 }
             },
-            
+
             uniform: {
                 parser: parsers.typename('uniform'),
                 properties: {
                     typename: typename
                 }
             },
-            
+
             varying: {
                 parser: parsers.typename('varying'),
                 properties: {
                     typename: typename
                 }
             },
-            
+
             variable: {
                 parser: parsers.typename_value(),
                 properties: {
@@ -261,118 +265,118 @@ let ShaderEditorPlugin = (() => {
                 }
             }
         }
-        
+
     }, {
-        
-        uniqueItemId(node, item){
-            if (!node.itemsPool){
+
+        uniqueItemId(node, item) {
+            if (!node.itemsPool) {
                 node.itemsPool = {};
             }
             let pool = node.itemsPool;
             let i = 0;
-            while(true){
-                if (!pool[i]){
+            while (true) {
+                if (!pool[i]) {
                     pool[i] = item || 1;
                     return i;
                 }
                 i++;
             }
         },
-        
-        itemDestructed(item){
-            if (item && item.node && item.node.itemsPool){
+
+        itemDestructed(item) {
+            if (item && item.node && item.node.itemsPool) {
                 delete item.node.itemsPool[item.uid];
             }
         },
-        
+
         addItem() {
-            
-            let toNode = this.parent ? this.parent : plugin.lastActiveNode;
-            
+
+            let toNode = this.__parent ? this.__parent : plugin.lastActiveNode;
+
             plugin.lastActiveNode = toNode;
-            
+
             AskerWithKitten.ask({
-                list: objectKeys( plugin.items ),
+                list: objectKeys(plugin.items),
                 search: 1,
-                ok: function(d){
+                ok: function (d) {
                     let item = plugin.items[d];
-                    if (item){
+                    if (item) {
                         item = new ShaderEditorItem(d, toNode);
                         item.addPanel();
                     }
                 }
             });
-            
+
         },
-        
-        activateEditorOnNode(node){
-            
-            if (!node || getDeepFieldFromObject(node, '__userData', '__shaderEditor') instanceof ShaderEditorItemsCollection )
+
+        activateEditorOnNode(node) {
+
+            if (!node || getDeepFieldFromObject(node, '__userData', '__shaderEditor') instanceof ShaderEditorItemsCollection)
                 return;
-            
+
             node.__root.__eventsDisabled = 0;
-            
+
             let she_plus = node.$('SE_plus')[0];
-            
+
             if (!she_plus) {
-                she_plus = node.__addChildBox({ 
-                    __class: 'e-btn', name:'SE_plus', sha:2, sva:0, __text:'+',
+                she_plus = node.__addChildBox({
+                    __class: 'e-btn', name: 'SE_plus', sha: 2, sva: 0, __text: '+',
                     __validToSave: 0
                 });
             }
-            
+
             she_plus.__onTap = plugin.addItem;
-            
+
             plugin.lastActiveNode = node;
-            
+
             var she = new ShaderEditorItemsCollection(node);
             if (node.__userData) {
-                she.init( node.__userData.__shaderEditor );
+                she.init(node.__userData.__shaderEditor);
             }
             else {
                 node.__userData = {};
             }
-            
+
             node.__userData.__shaderEditor = she;
             $each(she.items, it => it.addPanel());
-            
-            plugin.parseFragmentShader( globalConfigsData["shaders/base.f"] );
+
+            plugin.parseFragmentShader(globalConfigsData["shaders/base.f"]);
         },
-        
-        tokenizeShader(txt){
+
+        tokenizeShader(txt) {
             let tokens = [];
-            
+
             let tokenType;
             let tokenValue = '';
             let dOperators = '=<>/*+-';
-            function flush(){
-                if (tokenType){
-                    
-                    if (tokenType == 's'){
-                        if (typesMap[tokenValue] != undefined){
+            function flush() {
+                if (tokenType) {
+
+                    if (tokenType == 's') {
+                        if (typesMap[tokenValue] != undefined) {
                             tokenType = 't';
-                        } else 
-                        if (functions[tokenValue]) {
-                            tokenType = 'f';
-                        } 
-                        tokens.push([ tokenType, tokenValue ]);
+                        } else
+                            if (functions[tokenValue]) {
+                                tokenType = 'f';
+                            }
+                        tokens.push([tokenType, tokenValue]);
                     }
                     else
-                    if (tokenType == 'o'){
-                        tokens.push( tokenValue );
-                    }
-                    
+                        if (tokenType == 'o') {
+                            tokens.push(tokenValue);
+                        }
+
                     tokenValue = '';
                     tokenType = undefined;
                 }
             }
-            
-            for (let i = 0; i < txt.length; i++){
+
+            for (let i = 0; i < txt.length; i++) {
                 let c = txt.charAt(i);
-                let c1 = txt.charAt(i+1);
-                
-                if ((c>='0' && c<='9') || (c=='.' && c1>='0' && c1<='9')){
-                    if (tokenType == 's'){
+                let c1 = txt.charAt(i + 1);
+
+                if ((c >= '0' && c <= '9') || (c == '.' && c1 >= '0' && c1 <= '9')) {
+                    if (tokenType == 's') {
                         tokenValue += c;
                     } else {
                         if (tokenType != 'd') flush();
@@ -380,81 +384,80 @@ let ShaderEditorPlugin = (() => {
                         tokenValue += c;
                     }
                 } else
-                if ((c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_'){
-                    if (tokenType != 's') flush();
-                    tokenType = 's';
-                    tokenValue += c;
-                } else 
-                if (c==' ') {
-                    flush();
-                } else {
-                    if (tokenType != 'o') {
-                        flush();
-                    }
-                    tokenType = 'o';
-                    tokenValue += c;
-                    if (c1 == '=' && dOperators.indexOf(c) >= 0){
+                    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
+                        if (tokenType != 's') flush();
+                        tokenType = 's';
+                        tokenValue += c;
+                    } else
+                        if (c == ' ') {
+                            flush();
+                        } else {
+                            if (tokenType != 'o') {
+                                flush();
+                            }
+                            tokenType = 'o';
+                            tokenValue += c;
+                            if (c1 == '=' && dOperators.indexOf(c) >= 0) {
 
-                    } else {
-                        flush();    
-                    }
-                }
+                            } else {
+                                flush();
+                            }
+                        }
             }
-        
+
             flush();
-            
+
             tokens = plugin.replaceTokens(tokens, {
                 's * s': (a, b) => {
-                    consoleLog( a, b );
-                    return [ 'v', [ a, '*', b ] ]
+                    consoleLog(a, b);
+                    return ['v', [a, '*', b]]
                 }
             });
-            
+
             return tokens;
         },
-        
-        replaceTokens(tokens, map){
-            
-            function isTokenEqual(token, s){
+
+        replaceTokens(tokens, map) {
+
+            function isTokenEqual(token, s) {
                 return token[0] == s;
             }
-            
+
             $each(map, (f, k) => {
                 let a = k.split(' ');
-                
-                for (let i = 0; i < tokens.length; i++){
+
+                for (let i = 0; i < tokens.length; i++) {
                     let eq = 1;
-                    for (let j = 0; j< a.length; j++){
-                        if (!isTokenEqual(tokens[i+j], a[j])){
+                    for (let j = 0; j < a.length; j++) {
+                        if (!isTokenEqual(tokens[i + j], a[j])) {
                             eq = 0;
                             break;
                         }
                     }
-                    if (eq){
+                    if (eq) {
                         // TODO: 
                     }
                 }
             });
-            
+
         },
-        
-        parseFragmentShader(txt, node){
-            
+
+        parseFragmentShader(txt, node) {
+
             node = node || plugin.lastActiveNode;
-            if (node && isString(txt))
-            {
-                plugin.activateEditorOnNode(node);    
+            if (node && isString(txt)) {
+                plugin.activateEditorOnNode(node);
                 txt = plugin.minifyShaderText(txt);
                 consoleLog(txt);
-                
-                consoleLog( plugin.tokenizeShader(txt) );
-                
-                
-                
+
+                consoleLog(plugin.tokenizeShader(txt));
+
+
+
                 let data = {
-                    
-                    items:[]
-                    
+
+                    items: []
+
                 };
                 /*
                 $each(plugin.items, (itemCfg, id) => {
@@ -478,64 +481,64 @@ let ShaderEditorPlugin = (() => {
                         });
                     }
                 });*/
-                
+
                 consoleLog(data);
-                
-                
+
+
                 consoleLog(txt);
-                
-                
-                node.__userData.__shaderEditor.init(data).eachItem( item=>item.addPanel() );
-                
-                
+
+
+                node.__userData.__shaderEditor.init(data).eachItem(item => item.addPanel());
+
+
                 //debugger;
-                
+
             }
-            
+
         },
-        
-        minifyShaderText(txt){
+
+        minifyShaderText(txt) {
             if (isString(txt)) {
-                txt = txt.replace(/(#.*)/gi,'$1<<<define here>>>');
-                txt = txt.replace(/\/\/.*/gi,'');
-                txt = txt.replace(/\/\*.*\*\//gi,'');
-                txt = txt.replace(/[\n\r]/gi,' ');
-                txt = txt.replace(/\s+/gi,' ');
-                txt = txt.replace(/([^\w\d]) ([\w\d])/gi,'$1$2');
-                txt = txt.replace(/([\w\d]) ([^\w\d])/gi,'$1$2');
-                txt = txt.replace(/([^\w\d]) ([^\w\d])/gi,'$1$2');
-                txt = txt.replace(/^\s/gi,'');
-                txt = txt.replace(/\s$/gi,'');
-                txt = txt.replace(/<<<define here>>>/gi,'\\n');
+                txt = txt.replace(/(#.*)/gi, '$1<<<define here>>>');
+                txt = txt.replace(/\/\/.*/gi, '');
+                txt = txt.replace(/\/\*.*\*\//gi, '');
+                txt = txt.replace(/[\n\r]/gi, ' ');
+                txt = txt.replace(/\s+/gi, ' ');
+                txt = txt.replace(/([^\w\d]) ([\w\d])/gi, '$1$2');
+                txt = txt.replace(/([\w\d]) ([^\w\d])/gi, '$1$2');
+                txt = txt.replace(/([^\w\d]) ([^\w\d])/gi, '$1$2');
+                txt = txt.replace(/^\s/gi, '');
+                txt = txt.replace(/\s$/gi, '');
+                txt = txt.replace(/<<<define here>>>/gi, '\\n');
                 return txt;
             }
             return "";
         }
-        
- 
+
+
     });
 
-    
+
     addKeyboardMap({
         'ctrl++': 'ShaderEditorPlugin.addItem'
     });
-    
+
     addEditorEvents('ShaderEditorPlugin', {
         addItem: plugin.addItem
     });
-    
-    addEditorBehaviours({    
-    
+
+    addEditorBehaviours({
+
     });
-    
+
     BUS.__addEventListener({
-        LAYOUT_ACTIVATED(t, l){
+        LAYOUT_ACTIVATED(t, l) {
             if (l.layoutView) {
-                $each( l.layoutView.$("shaderEditor"), plugin.activateEditorOnNode.bind(plugin) );
+                $each(l.layoutView.$("shaderEditor"), plugin.activateEditorOnNode.bind(plugin));
             }
         }
     });
-    
+
     return plugin;
-    
+
 })();

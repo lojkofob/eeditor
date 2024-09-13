@@ -75,7 +75,12 @@ $enginescripts = array(
     "loadtasks",
     "localization",
     "text",
-    "timer" 
+    "timer",
+
+    "3d/3d",
+    "3d/types",
+    "3d/FBXLoader"
+
 );
 
 

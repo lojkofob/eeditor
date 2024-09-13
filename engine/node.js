@@ -41,7 +41,7 @@ function getFrameName(filename) {
 
 function ShadowPropertyPrototype(useParentUpdate) {
     return {
-        set: function (v) {
+        set(v) {
             var t = this;
             if (!v) {
                 if (t.____shadow) {
@@ -56,7 +56,7 @@ function ShadowPropertyPrototype(useParentUpdate) {
                 t.____shadow.__init(v);
             }
         },
-        get: function () { return this.____shadow; }
+        get() { return this.____shadow; }
     };
 }
 
@@ -169,7 +169,7 @@ mergeObj(NodePrototype, {
 
     isNode: 1,
 
-    __updateMatrixWorld: function (force, scrollUpdate) {
+    __updateMatrixWorld(force, scrollUpdate) {
 
         var t = this;
         // cached inverse matrix
@@ -186,10 +186,10 @@ mergeObj(NodePrototype, {
             //cheats
             renderInfo.matrixWorldUpdates++;
             //endcheats
-            if (t.parent) {
-                t.mw.__multiplyMatrices(t.parent.mw, t.__matrix);
+            if (t.__parent) {
+                t.mw.__multiplyMatrices(t.__parent.mw, t.__matrix);
             } else {
-                t.mw.copy(t.__matrix);
+                t.mw.__copy(t.__matrix);
             }
             t.__matrixWorldNeedsUpdate = 0;
             t.mw.im = 0;
@@ -215,7 +215,7 @@ mergeObj(NodePrototype, {
             if (t.__canBeFrustummed) {
                 t.__viewable = t.__isInParentScissor(x, y, t.__size);
             } else {
-                t.__viewable = t.parent ? t.parent.__viewable : 1;
+                t.__viewable = t.__parent ? t.__parent.__viewable : 1;
             }
 
         }
@@ -241,7 +241,7 @@ mergeObj(NodePrototype, {
         this.__scrollVectorNeedsUpdate = 0;
     },
 
-    __setPropertyOnSeconds: function (prop, val, sec) {
+    __setPropertyOnSeconds(prop, val, sec) {
         var t = this;
         if (!t.____setPropertyOnSecondsMap) t.____setPropertyOnSecondsMap = {};
         var v = t[prop], last = t.____setPropertyOnSecondsMap[prop];
@@ -253,11 +253,11 @@ mergeObj(NodePrototype, {
         t.____setPropertyOnSecondsMap[prop] = { v: v, t: _setTimeout(function () { t[prop] = v; delete t.____setPropertyOnSecondsMap[prop]; }, sec) };
     },
 
-    __scrollToEnd: function (animTime) {
+    __scrollToEnd(animTime) {
         return this.__scrollToPart(1, animTime);
     },
 
-    __scrollToPart: function (part, animTime) {
+    __scrollToPart(part, animTime) {
         var t = this;
         return t.__scrollTo(
             part * (t.__needScrollX ? t.__scrollMin.x : (t.__needScrollY ? t.__scrollMin.y : 0)),
@@ -265,11 +265,11 @@ mergeObj(NodePrototype, {
         )
     },
 
-    __scrollToBegin: function (animTime) {
+    __scrollToBegin(animTime) {
         return this.__scrollTo(0, animTime);
     },
 
-    __updateScroll: function (animTime) {
+    __updateScroll(animTime) {
 
         var t = this;
         if (!t.__dragStart) return;
@@ -296,7 +296,7 @@ mergeObj(NodePrototype, {
             t.__onScroll();
     },
 
-    __updateScrollX: function (animTime) {
+    __updateScrollX(animTime) {
 
         var t = this;
         if (!t.__dragStart) return;
@@ -315,7 +315,7 @@ mergeObj(NodePrototype, {
             t.__onScroll();
     },
 
-    __updateScrollY: function (animTime) {
+    __updateScrollY(animTime) {
 
         var t = this;
         if (!t.__dragStart) return;
@@ -335,9 +335,9 @@ mergeObj(NodePrototype, {
             t.__onScroll();
     },
 
-    __scrollIntoView: function (animTime, percent, dontUsePadding, padding) {
-        var t = this, p = t.parent;
-        while (p && !p.__scroll) p = p.parent;
+    __scrollIntoView(animTime, percent, dontUsePadding, padding) {
+        var t = this, p = t.__parent;
+        while (p && !p.__scroll) p = p.__parent;
         __nodeScrolledByY = 0;
         __nodeScrolledByX = 0;
         if (p) {
@@ -372,7 +372,7 @@ mergeObj(NodePrototype, {
                     , top = y - cy / 2 + pad[0]
                     , right = x + cx / 2 - pad[3]
                     , left = x - cx / 2 + pad[1]
-                    , s = p.__scrollVector ? p.__scrollVector.clone() : new Vector2()
+                    , s = p.__scrollVector ? p.__scrollVector.__clone() : new Vector2()
                     , py = percent == undefined ? (maxy > bottom ? 1 : miny < top ? 0 : percent) : percent
                     , px = percent == undefined ? (maxx > right ? 1 : minx < left ? 0 : percent) : percent;
 
@@ -440,12 +440,12 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __getScrollPosition: function () {
+    __getScrollPosition() {
         var t = this;
         return t.__needScrollX ? t.__scrollX : (t.__needScrollY ? t.__scrollY : 0)
     },
 
-    __scrollTo: function (pos, animTime) {
+    __scrollTo(pos, animTime) {
         var t = this;
         if (t.__scroll) {
 
@@ -487,14 +487,14 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __scrollBy: function (delta, animTime) {
+    __scrollBy(delta, animTime) {
         if (delta && delta.__isVector2) {
             return this.__scrollTo(new Vector2(this.__scrollX, this.__scrollY).add(delta), animTime);
         }
         return this.__scrollTo(this.__getScrollPosition() + delta, animTime);
     },
 
-    __addChildBox: function (j, name) {
+    __addChildBox(j, name) {
         if (!j) return;
 
         var t = this;
@@ -506,7 +506,7 @@ mergeObj(NodePrototype, {
 
         } else {
 
-            var child = j.isObject3D ? j : new Node();
+            var child = j.__isObject3D ? j : new Node();
 
             if (name) {
                 child.name = name;
@@ -515,7 +515,7 @@ mergeObj(NodePrototype, {
             child.__index = t.__childs.length;
             t.add(child);
 
-            if (j && !j.isObject3D) {
+            if (j && !j.__isObject3D) {
                 child.__init(j);
             }
 
@@ -530,16 +530,16 @@ mergeObj(NodePrototype, {
 
     },
 
-    __apply: function (j) { return this.__init(j, 1); },
-    init: function (j, s) { return this.__init(j, s); },
+    __apply(j) { return this.__init(j, 1); },
+    init(j, s) { return this.__init(j, s); },
 
-    __removeAlias: function (alias, name) {
+    __removeAlias(alias, name) {
         if (this.__aliases && alias && this.__aliases[name]) {
             removeFromArray(alias, this.__aliases[name]);
         }
     },
 
-    __aliased: function (name, parent) {
+    __aliased(name, parent) {
         var t = this;
         if (!t.____aliasedBy) {
             t.____aliasedBy = {};
@@ -558,7 +558,7 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __alias: function (name, multi) {
+    __alias(name, multi) {
         var t = this;
         if (!t.__aliases) t.__aliases = {};
         var all = t.__aliases[name];
@@ -575,7 +575,7 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __setAliasesData: function (obj, soft, notMulti) {
+    __setAliasesData(obj, soft, notMulti) {
         var t = this;
         if (notMulti) {
             $each(obj, function (d, k) {
@@ -607,11 +607,11 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __mergeUserData: function (v) {
+    __mergeUserData(v) {
         this.__userData = mergeObjectDeep(this.__userData || {}, v);
     },
 
-    __init: function (j, soft) {
+    __init(j, soft) {
         var t = this;
         if (j) {
 
@@ -623,7 +623,7 @@ mergeObj(NodePrototype, {
                 if (isFunction(j)) {
                     j = j.call(t);
                     if (!j) return t;
-            }
+                }
 
             var c = j.__childs, cl = j.__class;
 
@@ -665,7 +665,7 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __clone: function () {
+    __clone() {
         var c = new Node(), v;
         for (var i = 0; i < NodeCloneProperties.length; i++) {
             v = this[NodeCloneProperties[i]];
@@ -680,14 +680,14 @@ mergeObj(NodePrototype, {
         return c;
     },
 
-    __removeClass: function (c) {
+    __removeClass(c) {
         if (c && this.__hasClass(c)) {
             removeFromArray(c, this.____classes);
             this.__classes = this.____classes;
         }
     },
 
-    __addClass: function (c) {
+    __addClass(c) {
         if (c) {
             if (!this.____classes) { this.__classes = [c]; } else
                 if (this.____classes.indexOf(c) < 0) {
@@ -697,21 +697,21 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __toggleClass: function (c) {
+    __toggleClass(c) {
         if (c) {
             if (this.__hasClass(c)) this.__removeClass(c); else this.__addClass(c);
         }
     },
 
-    __hasClass: function (c) {
+    __hasClass(c) {
         return this.____classes && this.____classes.indexOf(c) >= 0;
     },
 
-    __screenPosition: function () {
+    __screenPosition() {
         return this.__getUIWorldPosition().__multiplyScalar(layoutsResolutionMult).add(__realScreenCenter);
     },
 
-    __getUIWorldPosition: function () {
+    __getUIWorldPosition() {
         var wp = this.__worldPosition, pm = this.__projectionMatrix;
 
         if (
@@ -721,12 +721,12 @@ mergeObj(NodePrototype, {
             pm.__is3D) {
             wp = new Vector3(wp.x, wp.y, this.mw.e[14]).__applyMatrix4(pm).__toVector2().__multiply(__screenCenter);
         } else {
-            wp = wp.clone();
+            wp = wp.__clone();
         }
         return wp;
     },
 
-    __getScreenBoundingBox: function (needMirror) {
+    __getScreenBoundingBox(needMirror) {
         var bb = this.__getUIWorldBoundingBox(needMirror ? -1 : 1);
         bb[0].__multiplyScalar(layoutsResolutionMult).add(__realScreenCenter);
         bb[1].__multiplyScalar(layoutsResolutionMult).add(__realScreenCenter);
@@ -737,7 +737,7 @@ mergeObj(NodePrototype, {
         return bb;
     },
 
-    __getUIWorldBoundingBox: function (ymult) {
+    __getUIWorldBoundingBox(ymult) {
         var wp = this.__worldPosition, sz = this.__size, pm = this.__projectionMatrix;
         ymult = ymult || 1;
         sz.__multiply(this.__getWorldScale());
@@ -760,7 +760,7 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __getUIWorldScale: function () {
+    __getUIWorldScale() {
         var w = this.__getUIWorldBoundingBox()
             , sz = this.__size
             , dx = w[1].x - w[0].x
@@ -768,7 +768,7 @@ mergeObj(NodePrototype, {
         return new Vector2(dx / sz.x, dy / sz.y);
     },
 
-    __getUIWorldTransformations: function () {
+    __getUIWorldTransformations() {
         //returns [ world position, world scale ] with using projectionMatrix
         var w = this.__getUIWorldBoundingBox()
             , sz = this.__size
@@ -777,11 +777,11 @@ mergeObj(NodePrototype, {
         return [new Vector2((w[1].x + w[0].x) / 2, (w[1].y + w[0].y) / 2), new Vector2(dx / sz.x, dy / sz.y)];
     },
 
-    __updateGeometry: function (forcesz) {
+    __updateGeometry(forcesz) {
         return this.__updateVertices(forcesz).__updateUVS();
     },
 
-    __removeAttributeBuffer: function (name) {
+    __removeAttributeBuffer(name) {
         var t = this;
         if (t.__buffers) {
             var b = t.__buffers[name];
@@ -794,7 +794,7 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __addAttributeBuffer: function (name, itemSize, data) {
+    __addAttributeBuffer(name, itemSize, data) {
         var t = this;
         if (!t.__buffers) t.__buffers = {};
         var b = new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data);
@@ -802,7 +802,7 @@ mergeObj(NodePrototype, {
         return b;
     },
 
-    __updateVertices: function (forcesz, dontTouchGeomSz) {
+    __updateVertices(forcesz, dontTouchGeomSz) {
 
         // TODO: flags to need verts update
 
@@ -823,11 +823,11 @@ mergeObj(NodePrototype, {
         }
         else if (t.____size) {
             if (!parentSize) {
-                parentSize = t.parent ? t.parent.__contentSize : __screenSize;
+                parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
             }
-            size = t.__adjustSmartSize(t.____size, parentSize); 
+            size = t.__adjustSmartSize(t.____size, parentSize);
         } else if (imgSize) {
-            size = imgSize.clone();
+            size = imgSize.__clone();
         }
 
         if (!size) { // wtf?
@@ -840,12 +840,12 @@ mergeObj(NodePrototype, {
         }
 
         if (t.____maxsize) {
-            if (!parentSize) parentSize = t.parent ? t.parent.__contentSize : __screenSize;
+            if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
             size.min(t.__adjustSmartSize(t.____maxsize, parentSize));
         }
 
         if (t.____minsize) {
-            if (!parentSize) parentSize = t.parent ? t.parent.__contentSize : __screenSize;
+            if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
             size.max(t.__adjustSmartSize(t.____minsize, parentSize));
         }
 
@@ -859,7 +859,7 @@ mergeObj(NodePrototype, {
             if (t.____maxImageSize) {
 
                 if (!parentSize)
-                    parentSize = t.parent ? t.parent.__contentSize : __screenSize;
+                    parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
 
                 var maxImageSize = t.__adjustSmartSize(t.____maxImageSize, parentSize)
                     , maxsizex = maxImageSize.x / imgSize.x
@@ -983,7 +983,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __updateUVS: function () {
+    __updateUVS() {
 
         var t = this, map = t.map;
 
@@ -1060,8 +1060,8 @@ mergeObj(NodePrototype, {
                             x2 += k;
                         }
                     }
-                    
-                
+
+
                     if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * imgSize.y);
                     if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * imgSize.x);
                     t.__updateVertices(new Vector2(szx, szy), 1);
@@ -1164,7 +1164,7 @@ mergeObj(NodePrototype, {
 
                 }
                 else {
-  
+
                     var getVertsArray = function () {
                         return getFrameUv(x1, x2, y1, y2, frame && frame.R, t.____uvsTransform)
                     };
@@ -1210,7 +1210,7 @@ mergeObj(NodePrototype, {
     __render() {
         var t = this;
 
-        if (t.parent) { t.__opacityDeep = t.__alphaDeep * t.parent.__opacityDeep; }
+        if (t.__parent) { t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; }
         //debug
         if (t.__needClassUpdate) {
             consoleLog('class update');
@@ -1245,7 +1245,7 @@ mergeObj(NodePrototype, {
     },
 
 
-    update: function (deep, updatusObject) {
+    update(deep, updatusObject) {
 
         var t = this;
 
@@ -1283,7 +1283,7 @@ mergeObj(NodePrototype, {
 
             t.__sizeWithFirstAndLastChild = 0;
             updatusObject = updatusObject || 0;
-            var parent = t.parent
+            var parent = t.__parent
                 , realParentSize = parent ? parent.__size : __screenSize
                 , parentPadding = parent ? parent.__padding || [0, 0, 0, 0] : [0, 0, 0, 0]
                 , size = t.__updateGeometry().__size
@@ -1572,7 +1572,7 @@ mergeObj(NodePrototype, {
     },
 
 
-    __hitTest: function (pos) {
+    __hitTest(pos) {
 
         //         return;
 
@@ -1619,7 +1619,7 @@ mergeObj(NodePrototype, {
                 b = htc.b = new Vector4(p.x, p.y, 1, 1).__applyMatrix4(ipm);
                 a.__divideScalar(a.w);
                 b.__divideScalar(b.w);
-                d = htc.d = a.clone().sub(b).normalize();
+                d = htc.d = a.__clone().sub(b).__normalize();
                 htc.p = p;
             }
 
@@ -1636,7 +1636,7 @@ mergeObj(NodePrototype, {
                 htc.p.y += pe.y;
                 // consoleLog(floor(htc.p.x), floor(htc.p.y));
             }
-            poswp = htc.p.clone();
+            poswp = htc.p.__clone();
             intersect = 1;
         }
 
@@ -1667,7 +1667,7 @@ mergeObj(NodePrototype, {
                 if (!im) {
                     im = mw.im = mw.__getInverseMatrix();
                 }
-                var pwp = poswp.clone();
+                var pwp = poswp.__clone();
                 pwp.y *= -1;
                 pwp.__applyMatrix4(im);
                 intersect = o ? pwp.x > -dsx + o.x && pwp.x < dsx + o.x && pwp.y > -dsy + o.y && pwp.y < dsy + o.y
@@ -1688,7 +1688,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __isInParentScissor: function (x, y, sz) {
+    __isInParentScissor(x, y, sz) {
 
         var t = this;
         if (sz) {
@@ -1737,7 +1737,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __onTextureLoaded: function (tex) {
+    __onTextureLoaded(tex) {
         if ((this.__img == tex.__src) || (tex.__src && tex.__src.indexOf('_b64i_') == 0)) {
             //debug
             var tmpClass = __propertiesAppliedByClass;
@@ -1754,12 +1754,12 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __onScreen: function () {
+    __onScreen() {
         var t = this;
         return t.__viewable && t.__isInParentScissor(t.__worldPosition.x, t.__worldPosition.y, t.__size) && t.__deepVisible();
     },
 
-    __destruct: function () {
+    __destruct() {
         var t = this;
         //debug
         t.__unselect();
@@ -1773,7 +1773,7 @@ mergeObj(NodePrototype, {
         t.__killAllAnimations();
 
         t.__onKey = t.__onTap = t.__drag = 0;
-        t.__effect = t.__dragonBones = t.__spine = t.__cubism = t.__shadow = t.__lottie = undefined;
+        t.__effect = t.__dragonBones = t.__spine = t.__cubism = t.__shadow = t.__lottie = t.__model3d = undefined;
 
         //debug
         t.__wheel = t.__contextMenu = 0;
@@ -1793,13 +1793,13 @@ mergeObj(NodePrototype, {
     },
 
 
-    __removeFromParent: function () {
+    __removeFromParent() {
 
         Object3DPrototype.__removeFromParent.call(this);
         this.__destruct();
     },
 
-    __clearChildNodes: function () {
+    __clearChildNodes() {
         var t = this;
         for (var i = 0; i < t.__childs.length; i++)
             t.__childs[i].__destruct();
@@ -1807,25 +1807,25 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __applyDac: function (dacId) {
+    __applyDac(dacId) {
         var t = this, dac = (t.__dac || 0)[dacId];
         if (dac) {
             t.__init(dac);
         }
     },
 
-    __finishAllAnimations: function () {
+    __finishAllAnimations() {
         finishAnim(this.__color);
         return Object3DPrototype.__finishAllAnimations.call(this);
     },
 
-    __killAllAnimations: function () {
+    __killAllAnimations() {
         killAnim(this.__color);
         delete this.____animatronix;
         return Object3DPrototype.__killAllAnimations.call(this);
     },
 
-    __killKeyframesAnimations: function (properties) {
+    __killKeyframesAnimations(properties) {
         var t = this;
         if (t.____keyframesAnimations) {
             if (isArray(properties) || isObject(properties)) {
@@ -1844,7 +1844,7 @@ mergeObj(NodePrototype, {
         return t;
     },
 
-    __animText: function (to, time, withscaling, withcolor, easing, delay, dontkill, from, force) {
+    __animText(to, time, withscaling, withcolor, easing, delay, dontkill, from, force) {
         var t = this, txt = t.__text;
         if (time === 0) {
             t.__animatedText = to;
@@ -1861,7 +1861,7 @@ mergeObj(NodePrototype, {
 
             if (withscaling) {
                 tween.__push(mergeObj(new TweenAction(t, {}, time, 0, easing, delay), {
-                    __update: function (tm, dt) {
+                    __update(tm, dt) {
                         tm -= this.s + this.d;
                         if (tm > 0) {
                             var k = 2.0 * tm * (1 - tm) * sin(tm * PI2 * (2 + mul * 3));
@@ -1899,7 +1899,7 @@ mergeObj(NodePrototype, {
         },
         */
 
-    __calculateAbsoluteWidth: function (parentWidth) {
+    __calculateAbsoluteWidth(parentWidth) {
 
         var t = this, sz = t.____size, w = 0;
         if (!sz || (sz.x == 0 && !sz.px && t.__geomSize)) {
@@ -1914,7 +1914,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __calculateAbsoluteHeight: function (parentHeight) {
+    __calculateAbsoluteHeight(parentHeight) {
 
         var t = this, sz = t.____size, h = 0;
         if (!sz || (sz.y == 0 && !sz.py && t.__geomSize)) {
@@ -1929,7 +1929,7 @@ mergeObj(NodePrototype, {
 
     },
 
-    __calculateAutoHeightFor: function (n, w, totalHeight) {
+    __calculateAutoHeightFor(n, w, totalHeight) {
 
         var t = this;
         if (t.__autoHeightBatch) {
@@ -1985,7 +1985,7 @@ mergeObj(NodePrototype, {
     },
 
 
-    __calculateAutoWidthFor: function (n, w, totalWidth) {
+    __calculateAutoWidthFor(n, w, totalWidth) {
 
         var t = this;
         if (t.__autoWidthBatch) {
@@ -2042,7 +2042,7 @@ mergeObj(NodePrototype, {
         return n.__autoWidth;
     },
 
-    __adjustSmartVal: function (val, pval, parentSizeVal, yflag) {
+    __adjustSmartVal(val, pval, parentSizeVal, yflag) {
 
         if (val != undefined) {
             if (pval == undefined) {
@@ -2051,10 +2051,10 @@ mergeObj(NodePrototype, {
                 }
             } else {
                 if (pval == 'a') {
-                    if (this.parent) {
+                    if (this.__parent) {
                         return yflag ?
-                            this.parent.__calculateAutoHeightFor(this, val, parentSizeVal) :
-                            this.parent.__calculateAutoWidthFor(this, val, parentSizeVal);
+                            this.__parent.__calculateAutoHeightFor(this, val, parentSizeVal) :
+                            this.__parent.__calculateAutoWidthFor(this, val, parentSizeVal);
                     }
                     else {
                         return parentSizeVal;
@@ -2142,7 +2142,7 @@ mergeObj(NodePrototype, {
                     }
                     else
                         if (pval == 's') {
-                            var p = this.parent;
+                            var p = this.__parent;
                             if (p) {
                                 //TODO: bug MICROM-1481
                                 var s = (yflag ? p.__availableHeight : p.__availableWidth);
@@ -2163,14 +2163,14 @@ mergeObj(NodePrototype, {
 
     },
 
-    __adjustSmartSize: function (size, parentSize) {
+    __adjustSmartSize(size, parentSize) {
         return new Vector2(
             this.__adjustSmartVal(size.x, size.px, parentSize.x, 0),
             this.__adjustSmartVal(size.y, size.py, parentSize.y, 1)
         );
     },
 
-    __getScissor: function () {
+    __getScissor() {
         var t = this;
         if (t.__needScissor && t.__verticesBuffer) {
             // TODO: may be cache ?
@@ -2204,7 +2204,7 @@ mergeObj(NodePrototype, {
 
 
 
-    __getBoundingBox: function (onlyChilds, firstAndLastChildBounding, filter) {
+    __getBoundingBox(onlyChilds, firstAndLastChildBounding, filter) {
 
         // slow function. don't use
 
@@ -2261,11 +2261,11 @@ mergeObj(NodePrototype, {
         return b;
     },
 
-    __autoUpdateMatrix: function () { ObjectDefineProperty(this, '__matrixNeedsUpdate', { get: function () { return 1 } }); },
+    __autoUpdateMatrix() { ObjectDefineProperty(this, '__matrixNeedsUpdate', { get() { return 1 } }); },
 
 
-    __getTextureProperty: function (property) { return this['m_' + property] || this['t_' + property]; },
-    __setTextureProperty: function (property, filename) {
+    __getTextureProperty(property) { return this['m_' + property] || this['t_' + property]; },
+    __setTextureProperty(property, filename) {
         var t = this;
         if (filename == undefined || isString(filename) || isNumeric(filename)) {
             t['t_' + property] = filename;
@@ -2295,7 +2295,7 @@ mergeObj(NodePrototype, {
         }
     }
 
-    , __setFrame: function (frame) {
+    , __setFrame(frame) {
 
         var t = this, map = frame.tex, image = map ? map.__image : 0;
 
@@ -2317,14 +2317,14 @@ mergeObj(NodePrototype, {
     //debug     
     , __selectable: 1,
 
-    __select: function () {
+    __select() {
         if (!this.selected && this.__selectable) {
             this.selected = true;
             BUS.__post(__ON_NODE_SELECTED, this)
         }
     },
 
-    __unselect: function () {
+    __unselect() {
         if (this.selected) {
             this.selected = false;
             BUS.__post(__ON_NODE_UNSELECTED, this);
@@ -2332,11 +2332,11 @@ mergeObj(NodePrototype, {
     },
 
 
-    __someParentSelected: function () {
+    __someParentSelected() {
         return this.__traverseParents(function (n) { return n.selected });
     },
 
-    toJsString: function () {
+    toJsString() {
         return JSON.stringify(this.toJson(), 1, 4).replace(/    "(\w*)":/g, function (a, b) { return '   ' + b + ':' });
     },
 
@@ -2366,14 +2366,14 @@ mergeObj(NodePrototype, {
             __selectable: [1],
             __drawMode: [0, 4],
 
-            f1: function (v) { return Number(v.toFixed(2)) },
-            f2: function (v) { return Number(v.toFixed(2)) },
-            f3: function (v) { return Number(v.toFixed(2)) },
-            f4: function (v) { return Number(v.toFixed(2)) },
-            f5: function (v) { return Number(v.toFixed(2)) },
-            f6: function (v) { return Number(v.toFixed(2)) },
-            f7: function (v) { return Number(v.toFixed(2)) },
-            f8: function (v) { return Number(v.toFixed(2)) },
+            f1(v) { return Number(v.toFixed(2)) },
+            f2(v) { return Number(v.toFixed(2)) },
+            f3(v) { return Number(v.toFixed(2)) },
+            f4(v) { return Number(v.toFixed(2)) },
+            f5(v) { return Number(v.toFixed(2)) },
+            f6(v) { return Number(v.toFixed(2)) },
+            f7(v) { return Number(v.toFixed(2)) },
+            f8(v) { return Number(v.toFixed(2)) },
 
             __imgRepeatX: [0],
             __imgRepeatY: [0],
@@ -2384,9 +2384,9 @@ mergeObj(NodePrototype, {
             __margin: saveBounds,
             __padding: saveBounds,
 
-            __alpha: function (v) { if (v != 1) return Number(v.toFixed(2)) },
-            __alphaDeep: function (v) { if (v != 1) return Number(v.toFixed(2)) },
-            __rotate: function (v) { if (v != 0) return Number(v.toFixed(2)) },
+            __alpha(v) { if (v != 1) return Number(v.toFixed(2)) },
+            __alphaDeep(v) { if (v != 1) return Number(v.toFixed(2)) },
+            __rotate(v) { if (v != 0) return Number(v.toFixed(2)) },
             __img: [''],
             ha: undefined,
             va: undefined,
@@ -2398,10 +2398,10 @@ mergeObj(NodePrototype, {
             __tableAlignColumnWidth: [0],
             __tableAlignRowHeight: [0],
 
-            cropx: function (v) { return round(v) },
-            cropy: function (v) { return round(v) },
-            __centerFill: function (v) { if (v) return 1 },
-            __corner: function (v) {
+            cropx(v) { return round(v) },
+            cropy(v) { return round(v) },
+            __centerFill(v) { if (v) return 1 },
+            __corner(v) {
                 if (v) {
                     v[0] = Number((v[0] || 0).toFixed(1));
                     v[1] = Number((v[1] || 0).toFixed(1));
@@ -2424,14 +2424,14 @@ mergeObj(NodePrototype, {
                     return v;
                 }
             },
-            __visible: function (v) { if (!v) return 0 },
+            __visible(v) { if (!v) return 0 },
             __blending: [1],
 
             __maxImageSize: undefined,
 
             __minsize: undefined,
             __maxsize: undefined,
- 
+
             __onTap: undefined,
 
             __onKey: undefined,
@@ -2441,12 +2441,13 @@ mergeObj(NodePrototype, {
 
             __dragonBones(v) { if (v) return v.__name },
             __spine(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
+            __model3d(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
             __cubism(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
             __lottie(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
 
             __needScissor: [0, false, undefined],
 
-            __size: function (ss) {
+            __size(ss) {
                 if (ss) {
                     var s = {};
                     var x = abs(ss.x);
@@ -2501,7 +2502,7 @@ mergeObj(NodePrototype, {
                 }
             },
 
-            __eWidth: function (ss) {
+            __eWidth(ss) {
                 if (ss) {
                     var s = {};
                     var x = abs(ss.x);
@@ -2531,7 +2532,7 @@ mergeObj(NodePrototype, {
 
             },
 
-            __eHeight: function (ss) {
+            __eHeight(ss) {
                 if (ss) {
                     var s = {};
                     var py;
@@ -2564,7 +2565,7 @@ mergeObj(NodePrototype, {
 
             __selfImgSize: undefined,
 
-            __scale: function (scale, o) {
+            __scale(scale, o) {
 
                 if (scale) {
                     var sx = Number(scale.x.toFixed(3)),
@@ -2583,7 +2584,7 @@ mergeObj(NodePrototype, {
                     }
                 }
             },
- 
+
             __transformAnchor: undefined
         }
     })(),
@@ -2959,14 +2960,14 @@ function pushNodeHandlerTo(node, v, name, fname) {
     resortEventsObjects();
 }
 
- 
+
 //сомнительный эксперимент, но пусть пока поживет
 var NodeCloneProperties = [
     '__margin', '__spacing', '__padding', '__alpha', '__size', '__img', '__fitImgX', '__fitImgY', '__imgRepeatX', '__imgRepeatY',
     'ha', 'va', 'sha', 'sva', 'cropx', 'cropy', '__scale', '__anchor', '__rotate', '__centerFill', '__transformAnchor',
     '__corner', '__visible', '__blending', '__maxImageSize', '__maxsize', '__minsize', '__color',
     '__shader', '__userData', '__animatronix',
-    '__text', '__uvsTransform', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', '__dragonBones', '__spine', '__disabled',
+    '__text', '__uvsTransform', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', '__dragonBones', '__spine', '__model3d', '__disabled',
     '__onTap', '__uniforms', '__tableAlignRows', '__tableAlignColumns', '__tableAlignColumnWidth', '__tableAlignRowHeight',
     '__drag', '__useMaxSizeForScale'
     //debug
@@ -2999,11 +3000,11 @@ var NodeCloneProperties = [
         //undebug
 
         __sizeWithFirstAndLastChild: {
-            set: function () {
+            set() {
                 delete this.____sizeWithFirstAndLastChild
             },
 
-            get: function () {
+            get() {
                 var t = this;
                 if (!t.____sizeWithFirstAndLastChild) {
                     t.____sizeWithFirstAndLastChild = t.__getBoundingBox(1, 1);
@@ -3014,7 +3015,7 @@ var NodeCloneProperties = [
         },
 
         __sizeWithChildrens: {
-            get: function () {
+            get() {
                 // slow!
                 var b = this.__getBoundingBox();
                 return b.max.sub(b.min);
@@ -3022,8 +3023,8 @@ var NodeCloneProperties = [
         },
 
         __maxImageSize: {
-            get: function () { return this.____maxImageSize; },
-            set: function (v) {
+            get() { return this.____maxImageSize; },
+            set(v) {
                 this.____maxImageSize = v; this.__dirty = 1;
                 //debug
                 if (!__propertiesAppliedByClass) this.__selfProperties.__maxImageSize = v;
@@ -3032,8 +3033,8 @@ var NodeCloneProperties = [
         },
 
         __maxsize: {
-            get: function () { return this.____maxsize; },
-            set: function (v) {
+            get() { return this.____maxsize; },
+            set(v) {
                 this.____maxsize = v; this.__dirty = 2;
                 //debug
                 if (!__propertiesAppliedByClass) this.__selfProperties.__maxsize = v;
@@ -3042,8 +3043,8 @@ var NodeCloneProperties = [
         },
 
         __minsize: {
-            get: function () { return this.____minsize; },
-            set: function (v) {
+            get() { return this.____minsize; },
+            set(v) {
                 this.____minsize = v; this.__dirty = 2;
                 //debug
                 if (!__propertiesAppliedByClass) this.__selfProperties.__minsize = v;
@@ -3052,12 +3053,12 @@ var NodeCloneProperties = [
         },
 
         __width: {
-            get: function () {
+            get() {
 
                 return this.____size ? !this.____size.px ? this.____size.x : this.__size.x : this.__size.x
 
             },
-            set: function (v) {
+            set(v) {
                 var t = this;
                 if (t.____size) {
                     t.____size.x = v;
@@ -3073,13 +3074,13 @@ var NodeCloneProperties = [
         },
 
         __height: {
-            get: function () {
+            get() {
 
                 return this.____size ? !this.____size.py ? this.____size.y : this.__size.y : this.__size.y
 
             },
 
-            set: function (v) {
+            set(v) {
                 var t = this;
                 if (t.____size) {
                     t.____size.y = v;
@@ -3094,7 +3095,7 @@ var NodeCloneProperties = [
         },
 
         __contentSize: {
-            get: function () {
+            get() {
                 var t = this, s = t.__size, p = t.____padding;
                 if (p) { s.x -= p[1] + p[3]; s.y -= p[0] + p[2]; }
                 return s;
@@ -3102,10 +3103,10 @@ var NodeCloneProperties = [
         },
 
         __layoutSize: {
-            get: function () {
+            get() {
                 var t = this;
                 if (t.____size) {
-                    return t.__adjustSmartSize(t.____size, t.parent ? t.parent.__contentSize : __screenSize);
+                    return t.__adjustSmartSize(t.____size, t.__parent ? t.__parent.__contentSize : __screenSize);
                 }
                 // if (t.__childs.length == 0) {
                 var imgSize = t.__imgSize;
@@ -3118,8 +3119,8 @@ var NodeCloneProperties = [
 
         __debugMatricesUpdates: {
 
-            get: function () { return this.____debugMatricesUpdates },
-            set: function (v) {
+            get() { return this.____debugMatricesUpdates },
+            set(v) {
 
                 this.____debugMatricesUpdates = v;
 
@@ -3128,8 +3129,8 @@ var NodeCloneProperties = [
                     this.___dmuprset = 1;
 
                     ObjectDefineProperty(this, '__matrixNeedsUpdate', {
-                        get: function () { return this.__d_matrixNeedsUpdate },
-                        set: function (vv) {
+                        get() { return this.__d_matrixNeedsUpdate },
+                        set(vv) {
                             if (vv) {
                                 if (this.__ld_mw_fu > __currentFrame - 2) {
                                     //handles multiply updates
@@ -3146,8 +3147,8 @@ var NodeCloneProperties = [
                     });
 
                     ObjectDefineProperty(this, '__matrixWorldNeedsUpdate', {
-                        get: function () { return this.__d_matrixWorldNeedsUpdate },
-                        set: function (vv) {
+                        get() { return this.__d_matrixWorldNeedsUpdate },
+                        set(vv) {
                             if (vv) {
                                 if (this.__ld_mww_fu > __currentFrame - 2) {
                                     //handles multiply updates
@@ -3175,8 +3176,8 @@ var NodeCloneProperties = [
 
 
         __selfProperties: {
-            set: function (v) { this.____selfProperties = v || {}; },
-            get: function (v) {
+            set(v) { this.____selfProperties = v || {}; },
+            get(v) {
                 if (!this.____selfProperties) this.____selfProperties = {
 
                     __margin: undefined,
@@ -3234,11 +3235,11 @@ var NodeCloneProperties = [
         },
         //undebug
         __size: {
-            get: function () {
+            get() {
                 var t = this;
-                return (t.__geomSize ? t.__geomSize : t.__layoutSize).clone();
+                return (t.__geomSize ? t.__geomSize : t.__layoutSize).__clone();
             },
-            set: function (v) {
+            set(v) {
                 var t = this, dirty, sz = t.____size;
                 if (v) {
                     if (!sz) sz = t.____size = new Vector2();
@@ -3295,7 +3296,7 @@ var NodeCloneProperties = [
         },
 
         __imgSize: {
-            get: function () {
+            get() {
                 return this.____imgSize;
             }
         },
@@ -3306,46 +3307,46 @@ var NodeCloneProperties = [
         ),
 
         __x: {
-            get: function () { return this.__offset.x; }, set: function (v) {
+            get() { return this.__offset.x; }, set(v) {
                 if (v != this.__offset.x) {
                     this.__offset.x = v;
                     this.__dirty = 3;
                     this.__needUpdateDeep = 0;
                     //debug
-                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.clone();
+                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
                     //undebug
                 }
             }
         },
         __y: {
-            get: function () { return this.__offset.y; }, set: function (v) {
+            get() { return this.__offset.y; }, set(v) {
                 if (v != this.__offset.y) {
                     this.__offset.y = v;
                     this.__dirty = 3;
                     this.__needUpdateDeep = 0;
                     //debug
-                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.clone();
+                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
                     //undebug
                 }
             }
         },
 
         __z: {
-            get: function () { return this.__offset.z; }, set: function (v) {
+            get() { return this.__offset.z; }, set(v) {
                 if (this.__offset.z != v) {
                     this.__offset.z = v;
                     this.__matrixNeedsUpdate = this.__matrixWorldNeedsUpdate = 1;
                     resortEventsObjects(this);
                     //debug
-                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.clone();
+                    if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
                     //undebug
                 }
             }
         },
 
         __ofs: { // offset
-            get: function () { return this.__offset; },
-            set: function (v) {
+            get() { return this.__offset; },
+            set(v) {
                 var tofs = this.__offset; v = v || 0;
                 if (isArray(v)) { v = { x: v[0], y: v[1], z: v[2] }; }
                 var zchanged = (tofs.z != v.z || 0);
@@ -3359,7 +3360,7 @@ var NodeCloneProperties = [
 
                     //debug
                     if (!__propertiesAppliedByClass) {
-                        this.__selfProperties.__ofs = tofs.clone();
+                        this.__selfProperties.__ofs = tofs.__clone();
                     }
                     //undebug
 
@@ -3371,25 +3372,33 @@ var NodeCloneProperties = [
         },
 
         __scalex: {
-            get: function () { return this.____scale.x; }, set: function (v) {
+            get() { return this.____scale.x; }, set(v) {
                 this.____scale.x = v; this.__matrixNeedsUpdate = 1;
                 //debug
-                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.clone();
+                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
                 //undebug
             }
         },
         __scaley: {
-            get: function () { return this.____scale.y; }, set: function (v) {
+            get() { return this.____scale.y; }, set(v) {
                 this.____scale.y = v; this.__matrixNeedsUpdate = 1;
                 //debug
-                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.clone();
+                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
+                //undebug
+            }
+        },
+        __scalez: {
+            get() { return this.____scale.z; }, set(v) {
+                this.____scale.z = v; this.__matrixNeedsUpdate = 1;
+                //debug
+                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
                 //undebug
             }
         },
 
         __skewGrad: {
-            get: function () { return this.____skew.clone().__multiplyScalar(RAD2DEG); },
-            set: function (v) {
+            get() { return this.____skew.__clone().__multiplyScalar(RAD2DEG); },
+            set(v) {
                 if (v) {
                     this.____skew.set(v.x * DEG2RAD, v.y * DEG2RAD);
                 } else {
@@ -3399,36 +3408,36 @@ var NodeCloneProperties = [
             }
         },
         __skewGradX: {
-            get: function () { return this.____skew.x * RAD2DEG; },
-            set: function (v) { this.____skew.x = v * DEG2RAD; this.__matrixNeedsUpdate = 1; }
+            get() { return this.____skew.x * RAD2DEG; },
+            set(v) { this.____skew.x = v * DEG2RAD; this.__matrixNeedsUpdate = 1; }
         },
 
         __layoutPosition: {
-            get: function () {
-                return this.__offset.clone().add(this.__offsetByParent);
+            get() {
+                return this.__offset.__clone().add(this.__offsetByParent);
             }
         },
 
         __layoutPositionX: {
-            get: function () {
+            get() {
                 return this.__offset.x + this.__offsetByParent.x;
             }
         },
 
         __layoutPositionY: {
-            get: function () {
+            get() {
                 return this.__offset.y + this.__offsetByParent.y;
             }
         },
 
         __skewGradY: {
-            get: function () { return this.____skew.y * RAD2DEG; },
-            set: function (v) { this.____skew.y = v * DEG2RAD; this.__matrixNeedsUpdate = 1; }
+            get() { return this.____skew.y * RAD2DEG; },
+            set(v) { this.____skew.y = v * DEG2RAD; this.__matrixNeedsUpdate = 1; }
         },
 
         __skew: {
-            get: function () { return this.____skew; },
-            set: function (v) {
+            get() { return this.____skew; },
+            set(v) {
                 if (v) {
                     this.____skew.set(v.x, v.y);
                 } else {
@@ -3439,50 +3448,51 @@ var NodeCloneProperties = [
         },
 
         __skewX: {
-            get: function () { return this.____skew.x; },
-            set: function (v) { this.____skew.x = v; this.__matrixNeedsUpdate = 1; }
+            get() { return this.____skew.x; },
+            set(v) { this.____skew.x = v; this.__matrixNeedsUpdate = 1; }
         },
 
         __skewY: {
-            get: function () { return this.____skew.y; },
-            set: function (v) { this.____skew.y = v; this.__matrixNeedsUpdate = 1; }
+            get() { return this.____skew.y; },
+            set(v) { this.____skew.y = v; this.__matrixNeedsUpdate = 1; }
         },
 
         __scaleF: {
-            get: function () { return this.____scale.x; },
-            set: function (v) {
+            get() { return this.____scale.x; },
+            set(v) {
                 this.____scale.set(v, v, v); this.__matrixNeedsUpdate = 1;
                 //debug
-                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.clone();
+                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
                 //undebug
             }
         },
 
         __scale: {
-            get: function () { return this.____scale.clone() },
-            set: function (v) {
+            get() { return this.____scale.__clone() },
+            set(v) {
                 var t = this;
                 if (v == undefined) v = 1;
                 if (isNumeric(v)) {
-                    t.____scale.set(v, v);
+                    t.____scale.set(v, v, v);
                 } else
                     if (isArray(v)) {
-                        t.____scale.set(v[0] || 0, v[1] || 0);
+                        t.____scale.set(v[0] || 0, v[1] || 0, v[2] || 0);
                     } else {
                         if (v.x != undefined) t.____scale.x = v.x;
                         if (v.y != undefined) t.____scale.y = v.y;
+                        if (v.z != undefined) t.____scale.z = v.z;
                     }
                 this.__matrixNeedsUpdate = 1;
 
                 //debug
-                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.clone();
+                if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
                 //undebug
             }
         },
 
         __rotate: {
-            get: function () { return this.____rotation * RAD2DEG; },
-            set: function (v) {
+            get() { return this.____rotation * RAD2DEG; },
+            set(v) {
                 this.____rotation = (v || 0) * DEG2RAD;
                 this.__matrixNeedsUpdate = 1;
                 this.__realRotate = this.____rotation;
@@ -3493,8 +3503,8 @@ var NodeCloneProperties = [
         },
 
         __img: {
-            get: function () { return this.____img; },
-            set: function (filename) {
+            get() { return this.____img; },
+            set(filename) {
                 var t = this;
                 t.____img = filename;
 
@@ -3576,7 +3586,7 @@ var NodeCloneProperties = [
                                     rl: reverseLoop,
                                     cf: -1,
                                     //debug
-                                    editorSupportedUpdate: function (needReset) {
+                                    editorSupportedUpdate(needReset) {
                                         if (needReset) this.s = 0.01;
                                         this.__update(__forceAnimTime, __forceAnimDt);
                                     },
@@ -3584,7 +3594,7 @@ var NodeCloneProperties = [
                                     __onStart: reverseLoop ? function () {
                                         this.s -= this.t / this.fc;
                                     } : 0,
-                                    __onUpdate: function (part) {
+                                    __onUpdate(part) {
                                         var t = this;
                                         //debug
                                         if (t.o.__frame && !__forceAnimDt) return;
@@ -3602,7 +3612,7 @@ var NodeCloneProperties = [
                                         }
                                     }
 
-                                    , __onCompleted: function () {
+                                    , __onCompleted() {
                                         //                                 consoleLog('completed', this.r);
                                         if (this.rl) {
                                             this.r = !this.r;
@@ -3762,8 +3772,8 @@ var NodeCloneProperties = [
         },
 
         __centerFill: {
-            get: function () { return this.____centerFill; },
-            set: function (v) {
+            get() { return this.____centerFill; },
+            set(v) {
                 this.____centerFill = v;
                 this.__dirty = 1;
                 //debug
@@ -3773,10 +3783,10 @@ var NodeCloneProperties = [
         },
 
         __corner: {
-            get: function () {
+            get() {
                 return this.____corner;
             },
-            set: function (v) {
+            set(v) {
                 this.____corner = v;
                 this.__dirty = 1;
                 //debug
@@ -3786,10 +3796,10 @@ var NodeCloneProperties = [
         },
 
         __effect: {
-            get: function () {
+            get() {
                 return this.__particleEffect;
             },
-            set: function (v) {
+            set(v) {
                 var t = this;
 
                 if (t.__particleEffect == v)
@@ -3820,10 +3830,10 @@ var NodeCloneProperties = [
         },
 
         __text: {
-            get: function () {
+            get() {
                 return this.__textMesh;
             },
-            set: function (v) {
+            set(v) {
                 var t = this;
                 if (v === undefined && t.__textMesh) {
                     t.__textMesh.__removeFromParent();
@@ -3867,13 +3877,13 @@ var NodeCloneProperties = [
         },
 
         __textString: {
-            get: function () { return this.__textMesh ? this.__textMesh.__text.replace ? this.__textMesh.__text.replace(/\\([^;]+);/g, '') : this.__textMesh.__text : ''; },
-            set: function (v) { this.__text = v }
+            get() { return this.__textMesh ? this.__textMesh.__text.replace ? this.__textMesh.__text.replace(/\\([^;]+);/g, '') : this.__textMesh.__text : ''; },
+            set(v) { this.__text = v }
         },
 
         __margin: {
-            get: function () { return this.____sizeMargin; },
-            set: function (v) { // [ top, left, right, bottom ]
+            get() { return this.____sizeMargin; },
+            set(v) { // [ top, left, right, bottom ]
                 v = __getFour__(v);
                 this.____sizeMargin = v;
                 this.__dirty = 3;
@@ -3886,8 +3896,8 @@ var NodeCloneProperties = [
         },
 
         __spacing: {
-            get: function () { return this.____spacing; },
-            set: function (v) { // [ top, left, right, bottom ]
+            get() { return this.____spacing; },
+            set(v) { // [ top, left, right, bottom ]
 
                 if (isNumeric(v)) v = [v, v, v, v];
                 this.____spacing = v;
@@ -3901,8 +3911,8 @@ var NodeCloneProperties = [
         },
 
         __padding: {
-            get: function () { return this.____padding; },
-            set: function (v) { // [ top, left, right, bottom ]
+            get() { return this.____padding; },
+            set(v) { // [ top, left, right, bottom ]
                 v = __getFour__(v);
                 this.____padding = v;
                 this.__dirty = 2;
@@ -3914,8 +3924,8 @@ var NodeCloneProperties = [
         },
 
         __dirty: {
-            set: function (v) {
-                var t = this, parent = t.parent;
+            set(v) {
+                var t = this, parent = t.__parent;
                 //debug
                 if (t.__dirtyUpdateDebug && v)
                     debugger;
@@ -3954,15 +3964,15 @@ var NodeCloneProperties = [
 
             },
 
-            get: function () {
+            get() {
                 return this.__needUpdate || this.__needUpdateDeep;
             }
 
         },
 
         __anchor: {
-            get: function () { return this.____anchor; },
-            set: function (v) {
+            get() { return this.____anchor; },
+            set(v) {
                 if (v) {
                     this.____anchor.set(v.x || 0, v.y || 0, v.z || 0);
                 } else {
@@ -3978,7 +3988,7 @@ var NodeCloneProperties = [
         },
 
         __numbersAnimatedLocalizationTextFormat: {
-            set: function (v) {
+            set(v) {
 
                 if (isNumber(v)) {
                     switch (v) {
@@ -3991,7 +4001,7 @@ var NodeCloneProperties = [
                         //numberAfterSlash = v.__numberAfterSlash;
 
                         if (digitsAfterDot)
-                            this.____animatedTextFormat = { __format: function (value) { return localizeNumberFloat(value, digitsAfterDot) } };
+                            this.____animatedTextFormat = { __format(value) { return localizeNumberFloat(value, digitsAfterDot) } };
 
                     }
                 }
@@ -4001,8 +4011,8 @@ var NodeCloneProperties = [
         },
 
         __shader: {
-            get: function () { return this.____shader; },
-            set: function (v) {
+            get() { return this.____shader; },
+            set(v) {
                 this.____shader = v;
                 this.__program = 0;
                 //debug
@@ -4013,18 +4023,18 @@ var NodeCloneProperties = [
         },
 
         __colorString: {
-            get: function () {
+            get() {
                 return color_to_string(this.__selfColor);
 
             },
-            set: function (v) {
+            set(v) {
                 this.__color = v;
             }
         },
 
         __color: {
-            get: function () { return this.__selfColor; },
-            set: function (v) {
+            get() { return this.__selfColor; },
+            set(v) {
                 var t = this;
 
                 if (v == undefined) {
@@ -4034,28 +4044,28 @@ var NodeCloneProperties = [
                     t.__selfColor.fromJson(v);
                     if (!t.map && !t.__shader) t.__shader = 'c';
                 }
-                t.__baseColor = t.__selfColor.clone();
+                t.__baseColor = t.__selfColor.__clone();
                 //debug
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = t.____classes ? v == undefined : 0;
-                    this.__selfProperties.__color = v == undefined ? undefined : this.__selfColor.clone();
+                    this.__selfProperties.__color = v == undefined ? undefined : this.__selfColor.__clone();
                 }
                 //undebug
             }
         },
 
         __colorF: {
-            get: function () { return this.__selfColor.r; },
-            set: function (v) {
+            get() { return this.__selfColor.r; },
+            set(v) {
                 this.__selfColor.__setRGB(v, v, v);
                 //debug
-                if (!__propertiesAppliedByClass) this.__selfProperties.__color = this.__selfColor.clone();
+                if (!__propertiesAppliedByClass) this.__selfProperties.__color = this.__selfColor.__clone();
                 //undebug
             }
         },
 
         ha: {
-            get: function () { return this.____ha; }, set: function (v) {
+            get() { return this.____ha; }, set(v) {
                 var t = this; t.____ha = v; this.__dirty = 2;
                 //debug
                 if (!__propertiesAppliedByClass) {
@@ -4067,7 +4077,7 @@ var NodeCloneProperties = [
         },
 
         va: {
-            get: function () { return this.____va; }, set: function (v) {
+            get() { return this.____va; }, set(v) {
                 this.____va = v; this.__dirty = 2;
                 //debug
                 if (!__propertiesAppliedByClass) {
@@ -4079,7 +4089,7 @@ var NodeCloneProperties = [
         },
 
         sha: {
-            get: function () { return this.____sha; }, set: function (v) {
+            get() { return this.____sha; }, set(v) {
                 this.____sha = v; this.__dirty = 1;
                 //debug
                 if (!__propertiesAppliedByClass) {
@@ -4090,7 +4100,7 @@ var NodeCloneProperties = [
             }
         },
         sva: {
-            get: function () { return this.____sva; }, set: function (v) {
+            get() { return this.____sva; }, set(v) {
                 this.____sva = v; this.__dirty = 1;
                 //debug
                 if (!__propertiesAppliedByClass) {
@@ -4102,23 +4112,23 @@ var NodeCloneProperties = [
         },
 
 
-        __tableAlignRows: { get: function () { return this.____tableAlignRows; }, set: function (v) { this.____tableAlignRows = v; this.__dirty = 2; } },
-        __tableAlignColumns: { get: function () { return this.____tableAlignColumns; }, set: function (v) { this.____tableAlignColumns = v; this.__dirty = 2; } },
-        __tableAlignColumnWidth: { get: function () { return this.____tableAlignColumnWidth; }, set: function (v) { this.____tableAlignColumnWidth = v; this.__dirty = 2; } },
-        __tableAlignRowHeight: { get: function () { return this.____tableAlignRowHeight; }, set: function (v) { this.____tableAlignRowHeight = v; this.__dirty = 2; } },
+        __tableAlignRows: { get() { return this.____tableAlignRows; }, set(v) { this.____tableAlignRows = v; this.__dirty = 2; } },
+        __tableAlignColumns: { get() { return this.____tableAlignColumns; }, set(v) { this.____tableAlignColumns = v; this.__dirty = 2; } },
+        __tableAlignColumnWidth: { get() { return this.____tableAlignColumnWidth; }, set(v) { this.____tableAlignColumnWidth = v; this.__dirty = 2; } },
+        __tableAlignRowHeight: { get() { return this.____tableAlignRowHeight; }, set(v) { this.____tableAlignRowHeight = v; this.__dirty = 2; } },
 
         __selfAlignment: {
-            get: function () { return [this.____sha, this.____sva]; },
-            set: function (v) { if (isArray(v)) { this.sha = v[0]; this.sva = v[1]; } else { this.sva = this.sha = v; } }
+            get() { return [this.____sha, this.____sva]; },
+            set(v) { if (isArray(v)) { this.sha = v[0]; this.sva = v[1]; } else { this.sva = this.sha = v; } }
         },
 
         __alignment: {
-            get: function () { return [this.____ha, this.____va]; },
-            set: function (v) { if (isArray(v)) { this.ha = v[0]; this.va = v[1]; } else { this.va = this.ha = v; } }
+            get() { return [this.____ha, this.____va]; },
+            set(v) { if (isArray(v)) { this.ha = v[0]; this.va = v[1]; } else { this.va = this.ha = v; } }
         },
 
         cropx: {
-            get: function () { return this.____cropx; }, set: function (v) {
+            get() { return this.____cropx; }, set(v) {
                 if (this.____cropx != v) {
                     this.____cropx = v;
                     this.__onlyScrollX = !this.____cropy;
@@ -4135,7 +4145,7 @@ var NodeCloneProperties = [
         },
 
         cropy: {
-            get: function () { return this.____cropy; }, set: function (v) {
+            get() { return this.____cropy; }, set(v) {
                 if (this.____cropy != v) {
                     this.____cropy = v;
                     this.__onlyScrollY = !this.____cropx;
@@ -4152,13 +4162,13 @@ var NodeCloneProperties = [
         },
 
         __crop: {
-            get: function () { return [this.____cropx, this.____cropy]; },
-            set: function (v) { if (isArray(v)) { this.cropx = v[0]; this.cropy = v[1]; } else { this.cropx = this.cropy = v; } }
+            get() { return [this.____cropx, this.____cropy]; },
+            set(v) { if (isArray(v)) { this.cropx = v[0]; this.cropy = v[1]; } else { this.cropx = this.cropy = v; } }
         },
 
         __visible: {
-            get: function () { return this.____visible; },
-            set: function (v) {
+            get() { return this.____visible; },
+            set(v) {
                 if (this.____visible != v) {
                     this.____visible = v;
                     this.__dirty = 3;
@@ -4171,12 +4181,12 @@ var NodeCloneProperties = [
         },
 
         __glscissor: {
-            get: function () {
+            get() {
                 var t = this;
                 if (t.__needScissor) {
                     var sciss = t.__getScissor();
                     if (t.__viewable && sciss) {
-                        sciss = sciss.clone();
+                        sciss = sciss.__clone();
                         //debug
                         if (!t.__camera) {
                             t.__camera = (t.__root || 0).camera || camera;
@@ -4213,8 +4223,8 @@ var NodeCloneProperties = [
         },
 
         __simpleAnimation: {
-            get: function () { return this.____animation; },
-            set: function (v) {
+            get() { return this.____animation; },
+            set(v) {
                 var t = this; t.____animation = v;
                 if (!options.__disableAutoanim) {
                     if (isArray(v)) {
@@ -4230,7 +4240,7 @@ var NodeCloneProperties = [
         },
 
         __transform: {
-            get: function () {
+            get() {
                 var t = this;
                 return [
                     t.__offset.x,
@@ -4240,7 +4250,7 @@ var NodeCloneProperties = [
                     t.__rotate
                 ]
             },
-            set: function (a) {
+            set(a) {
                 var t = this;
                 t.__offset.x = a[0];
                 t.__offset.y = a[1];
@@ -4251,10 +4261,10 @@ var NodeCloneProperties = [
         },
 
         __keyframes: {
-            get: function () {
+            get() {
                 return this.____keyframes;
             },
-            set: function (v) {
+            set(v) {
                 var t = this;
 
                 if (v && v.__track) {
@@ -4304,8 +4314,8 @@ var NodeCloneProperties = [
         },
 
         __animation: {
-            get: function () { return this.____animation; },
-            set: function (v) {
+            get() { return this.____animation; },
+            set(v) {
                 var t = this;
                 t.____animation = v;
                 if (!options.__disableAutoanim) {
@@ -4335,10 +4345,10 @@ var NodeCloneProperties = [
         },
 
         __fullname: {
-            get: function () {
+            get() {
                 var t = this, s = '', p;
                 while (t) {
-                    p = t.parent; s = (p ? '.' : '') + (t.name == undefined ? '[' + t.__realIndex + ']' : t.name) + s;
+                    p = t.__parent; s = (p ? '.' : '') + (t.name == undefined ? '[' + t.__realIndex + ']' : t.name) + s;
                     if (t.__isScene) break;
                     t = p;
                     if (!p) break;
@@ -4348,7 +4358,7 @@ var NodeCloneProperties = [
         },
 
         __classModificator: {
-            set: function (v) {
+            set(v) {
                 var t = this, c = t.____classes;
 
                 if (v) {
@@ -4372,11 +4382,11 @@ var NodeCloneProperties = [
                 }
                 t.____classModificator = v;
             },
-            get: function () { return this.____classModificator }
+            get() { return this.____classModificator }
         },
 
         __classes: {
-            set: function (v) {
+            set(v) {
                 //debug
 
                 var tmpClass = __propertiesAppliedByClass;
@@ -4414,11 +4424,11 @@ var NodeCloneProperties = [
                 //undebug
 
             },
-            get: function () { return this.____classes; }
+            get() { return this.____classes; }
         },
 
         __class: {
-            set: function (v) {
+            set(v) {
                 var t = this;
                 if (!v) {
                     t.__classes = v;
@@ -4431,14 +4441,14 @@ var NodeCloneProperties = [
                         }
             },
 
-            get: function () {
+            get() {
                 var c = this.__classes;
                 if (c) return c.join(', ');
             }
         },
 
         __animatedText: {
-            set: function (v) {
+            set(v) {
                 var t = this;
                 t.____animatedText = v;
                 v = floor(v);
@@ -4446,26 +4456,26 @@ var NodeCloneProperties = [
                     t.__text = t.____animatedTextFormat ? t.____animatedTextFormat.__format(v) : v;
                 }
             },
-            get: function (v) { return this.____animatedText; }
+            get(v) { return this.____animatedText; }
         },
 
         //     __shadow: ShadowPropertyPrototype(),
 
         __index: {
-            set: function (v) { this.____index = Number(v) },
-            get: function () {
+            set(v) { this.____index = Number(v) },
+            get() {
                 if (this.____index == undefined) {
-                    this.____index = this.parent ? this.parent.__childs.indexOf(this) : 0;
+                    this.____index = this.__parent ? this.__parent.__childs.indexOf(this) : 0;
                 }
                 return this.____index;
             }
         },
 
         __realIndex: {
-            set: function (v) {
+            set(v) {
                 v = Number(v);
-                if (this.parent) {
-                    var childs = this.parent.__childs;
+                if (this.__parent) {
+                    var childs = this.__parent.__childs;
                     this.____index = childs.indexOf(this);
                     v = clamp(v, 0, childs.length - 1);
                     if (v != this.____index) {
@@ -4478,13 +4488,13 @@ var NodeCloneProperties = [
                     }
                 }
             },
-            get: function () {
-                return this.____index = this.parent ? this.parent.__childs.indexOf(this) : 0;
+            get() {
+                return this.____index = this.__parent ? this.__parent.__childs.indexOf(this) : 0;
             }
         },
 
         __fitImgX: {
-            set: function (v) {
+            set(v) {
                 if (this.____fitImgX != v) {
                     this.____fitImgX = v;
                     this.__dirty = 1;
@@ -4496,13 +4506,13 @@ var NodeCloneProperties = [
                     //undebug
                 }
             },
-            get: function () {
+            get() {
                 return this.____fitImgX;
             }
         },
 
         __fitImgY: {
-            set: function (v) {
+            set(v) {
                 if (this.____fitImgY != v) {
                     this.____fitImgY = v;
                     this.__dirty = 1;
@@ -4514,22 +4524,22 @@ var NodeCloneProperties = [
                     //undebug
                 }
             },
-            get: function () {
+            get() {
                 return this.____fitImgY;
             }
         },
 
         __fitImgFlag: {
-            set: function (v) {
+            set(v) {
                 this.__fitImg = v ? 1 : 0;
             },
-            get: function () {
+            get() {
                 return this.__fitImgX || this.__fitImgY;
             }
         },
 
         __fitImg: {
-            set: function (v) {
+            set(v) {
                 if (isNumeric(v)) {
                     this.__fitImgX = this.__fitImgY = v;
                 }
@@ -4538,13 +4548,13 @@ var NodeCloneProperties = [
                     this.__fitImgY = v == undefined ? undefined : v.y || 0;
                 }
             },
-            get: function () {
+            get() {
                 return { x: this.____fitImgX, y: this.____fitImgY };
             }
         },
 
-        __prevNode: createSomePropertyWithGetterAndSetter(function () { return this.parent.__childs[this.__realIndex - 1] }),
-        __nextNode: createSomePropertyWithGetterAndSetter(function () { return this.parent.__childs[this.__realIndex + 1] }),
+        __prevNode: createSomePropertyWithGetterAndSetter(function () { return this.__parent.__childs[this.__realIndex - 1] }),
+        __nextNode: createSomePropertyWithGetterAndSetter(function () { return this.__parent.__childs[this.__realIndex + 1] }),
 
 
         __scrollX: createSomePropertyWithGetterAndSetter(
@@ -4575,7 +4585,7 @@ var NodeCloneProperties = [
         ),
 
         __scroll: {
-            set: function (v) {
+            set(v) {
                 var t = this;
 
                 if (v) {
@@ -4706,7 +4716,7 @@ var NodeCloneProperties = [
 
                     if (thumb) {
 
-                        thumb.__ofs.copy(thumb.__offsetByParent);
+                        thumb.__ofs.__copy(thumb.__offsetByParent);
                         thumb.__ofs.y *= -1;
                         thumb.__offsetByParent.set(0, 0, 0);
                         thumb.__disableAlign = 1;
@@ -4714,7 +4724,7 @@ var NodeCloneProperties = [
                         onTapHighlight(slider, thumb);
                         slider.__init({
 
-                            __canDrag: function () {
+                            __canDrag() {
                                 thumb.__y = mouse.y - slider.__screenPosition().y;
                                 if (slider.__drag(0, 0, 0, 0)) {
                                     slider.__highlight(1);
@@ -4722,7 +4732,7 @@ var NodeCloneProperties = [
                                 }
                             },
 
-                            __drag: function (x, y, dx, dy) {
+                            __drag(x, y, dx, dy) {
                                 if (!t.__scrollMin)
                                     t.__dragStart();
 
@@ -4744,7 +4754,7 @@ var NodeCloneProperties = [
                                 return 1;
                             },
 
-                            __dragEnd: function () {
+                            __dragEnd() {
                                 slider.__highlight(0, 0.3)
                             }
 
@@ -4761,7 +4771,7 @@ var NodeCloneProperties = [
 
                     if (thumb) {
 
-                        thumb.__ofs.copy(thumb.__offsetByParent);
+                        thumb.__ofs.__copy(thumb.__offsetByParent);
                         //thumb.__ofs.y *= -1;
                         thumb.__offsetByParent.set(0, 0, 0);
                         thumb.__disableAlign = 1;
@@ -4769,7 +4779,7 @@ var NodeCloneProperties = [
                         onTapHighlight(slider, thumb);
                         slider.__init({
 
-                            __canDrag: function () {
+                            __canDrag() {
                                 thumb.__x = mouse.x - slider.__screenPosition().x;
                                 if (slider.__drag(0, 0, 0, 0)) {
                                     slider.__highlight(1);
@@ -4777,7 +4787,7 @@ var NodeCloneProperties = [
                                 }
                             },
 
-                            __drag: function (x, y, dx, dy) {
+                            __drag(x, y, dx, dy) {
                                 if (!t.__scrollMin)
                                     t.__dragStart();
 
@@ -4799,7 +4809,7 @@ var NodeCloneProperties = [
                                 return 1;
                             },
 
-                            __dragEnd: function () {
+                            __dragEnd() {
                                 slider.__highlight(0, 0.3)
                             }
 
@@ -4915,7 +4925,7 @@ var NodeCloneProperties = [
                                 if (step) {
                                     if (mss) {
                                         var mm = step * mss / 2;
-                                        y = clamp(cury + clamp( t.__cumulated.y * 20, -mm, mm), 0, t.__scrollMin.y);
+                                        y = clamp(cury + clamp(t.__cumulated.y * 20, -mm, mm), 0, t.__scrollMin.y);
                                     }
                                     y = roundByStep(y, step);
                                     if (t.__scroll.__needSwipe && roundByStep(cury, step) == y) {
@@ -4934,9 +4944,9 @@ var NodeCloneProperties = [
                                     if (step) {
                                         if (mss) {
                                             var mm = step * mss / 2;
-                                            x = clamp(curx + clamp( t.__cumulated.x * 20, -mm, mm), t.__scrollMin.x, 0);
+                                            x = clamp(curx + clamp(t.__cumulated.x * 20, -mm, mm), t.__scrollMin.x, 0);
                                         }
-                                        
+
                                         x = roundByStep(x, step);
 
                                         if (t.__scroll.__needSwipe && roundByStep(curx, step) == x) {
@@ -4960,13 +4970,13 @@ var NodeCloneProperties = [
                 }
 
             },
-            get: function () { return this.____scroll; }
+            get() { return this.____scroll; }
         },
 
 
         __blending: {
-            get: function () { return this.____blending },
-            set: function (v) {
+            get() { return this.____blending },
+            set(v) {
                 if (isObject(v)) {
                     this.____registeredBlending = registerBlending(v);
                 } else {
@@ -5039,7 +5049,7 @@ var NodeCloneProperties = [
         ),
 
         //debug
- 
+
         __classesObj: createSomePropertyWithGetterAndSetter(
             function () {
                 return this.____classesObj;
@@ -5053,7 +5063,7 @@ var NodeCloneProperties = [
         __eSize: createSomePropertyWithGetterAndSetter(
             function () {
                 if (this.____size) {
-                    var v = this.____size.clone();
+                    var v = this.____size.__clone();
                     v.px = this.____size.px;
                     v.py = this.____size.py;
                     return v;
@@ -5143,7 +5153,7 @@ var NodeCloneProperties = [
                             t.__rotateAcc = 0;
                             this.____animatronix = function () {
 
-                                var wp = t.__worldPosition.clone();
+                                var wp = t.__worldPosition.__clone();
                                 var wap = t.__wap;
                                 var dt = __currentFrameDeltaTime / 1000;
                                 wap = wap.sub(wp);
@@ -5185,7 +5195,7 @@ var NodeCloneProperties = [
         }),
 
         $: {
-            value: function (selector, initObj, a) {
+            value(selector, initObj, a) {
                 var a = a || new NodeArrayIterator();
                 if (isObject(selector)) {
                     return this.$(function (n) {
@@ -5293,9 +5303,9 @@ var NodeCloneProperties = [
             }
         ),
 
-        __aliasing: { set: function (v) { this.__setAliasesData(v); } },
+        __aliasing: { set(v) { this.__setAliasesData(v); } },
 
-        __aliasing1: { set: function (v) { this.__setAliasesData(v, 0, 1); } }
+        __aliasing1: { set(v) { this.__setAliasesData(v, 0, 1); } }
 
     };
 
@@ -5347,11 +5357,11 @@ function wrapNodePropertyForNodeIterator(property) {
     if (!NodeArrayIteratorPrototype.__properties[property]) {
         NodeArrayIteratorPrototype.__properties[property] = 1;
         ObjectDefineProperty(NodeArrayIteratorPrototype, property, {
-            set: function (v) {
+            set(v) {
                 for (var i = 0, l = this.length; i < l; i++)
                     this[i][property] = v;
             },
-            get: function () {
+            get() {
                 var a = [];
                 for (var i = 0, l = this.length; i < l; i++)
                     a.push(this[i][property]);
@@ -5361,7 +5371,7 @@ function wrapNodePropertyForNodeIterator(property) {
     }
 }
 
-NodePropertiesObject.parent = NodePropertiesObject.__childs = {};
+NodePropertiesObject.__parent = NodePropertiesObject.__childs = {};
 
 for (var i in NodePrototype) wrapNodeMethodForNodeIterator(i);
 for (var i in NodePropertiesObject) wrapNodePropertyForNodeIterator(i);
@@ -5429,7 +5439,7 @@ var HTMLNode = makeClass(function (v) {
         var t = this, lp = this.__htmlElement;
         if (lp) {
             t.__updateElement(1);
-            if (!lp.parentElement) {
+            if (!lp.__parentElement) {
                 t.__addToBody();
                 t.update();
             }
@@ -5481,3 +5491,101 @@ var HTMLNode = makeClass(function (v) {
         }
     }
 }, Node);
+
+
+
+
+
+
+
+// geometry misc
+
+function onOneLine(v1x, v1y, v2x, v2y, v3x, v3y) {
+    return v1y == v2y ? v1y == v3y :
+        v1y == v3y ? 0 :
+            v1x == v2x ? v1x == v3x :
+                v1x == v3x ? 0 :
+                    (v3y - v1y) / (v2y - v1y) == (v3x - v1x) / (v2x - v1x);
+}
+
+
+function exportVertices(nodes, scale, offset) {
+
+    var r = { i: [], v: [], u: [], c: [] };
+    if (scale) r.scale = scale;
+    if (offset) r.offset = offset;
+    $each(nodes, n => {
+        var verts = n.__verticesBuffer.__array
+            , uvs = n.__uvsBuffer.__array
+            , inds = n.__indecesBuffer.__array
+            , cache = {}
+            , c = n.__color
+            , a = n.__alpha;
+
+        for (var i = 0; i < inds.length;) {
+            var i1 = inds[i++], i2 = inds[i++], i3 = inds[i++],
+                i12 = i1 * 2, i22 = i2 * 2, i32 = i3 * 2,
+                v1x = verts[i12], v1y = verts[i12 + 1],
+                v2x = verts[i22], v2y = verts[i22 + 1],
+                v3x = verts[i32], v3y = verts[i32 + 1];
+
+            if (!onOneLine(v1x, v1y, v2x, v2y, v3x, v3y)) {
+                i1 = i2 = i3 = 0;
+
+                var te = n.__matrixWorld.e, w,
+                    n11 = te[0], n12 = te[4], n14 = te[12],
+                    n21 = te[1], n22 = te[5], n24 = te[13],
+                    n41 = te[3], n42 = te[7], n44 = te[15];
+
+                w = n41 * v1x + n42 * v1y + n44;
+                v1x = (n11 * v1x + n12 * v1y + n14) / w;
+                v1y = (n21 * verts[i12] + n22 * v1y + n24) / w;
+
+                w = n41 * v2x + n42 * v2y + n44;
+                v2x = (n11 * v2x + n12 * v2y + n14) / w;
+                v2y = (n21 * verts[i22] + n22 * v2y + n24) / w;
+
+                w = n41 * v3x + n42 * v3y + n44;
+                v3x = (n11 * v3x + n12 * v3y + n14) / w;
+                v3y = (n21 * verts[i32] + n22 * v3y + n24) / w;
+
+                if (cache[v1x]) i1 = cache[v1x][v1y];
+                if (cache[v2x]) i2 = cache[v2x][v2y];
+                if (cache[v3x]) i3 = cache[v3x][v3y];
+
+                if (!i1) {
+                    i1 = r.v.length / 2;
+                    if (!cache[v1x]) cache[v1x] = {};
+                    cache[v1x][v1y] = i1;
+                    r.v.push(v1x, v1y);
+                    r.u.push(uvs[i12], uvs[i12 + 1]);
+                    r.c.push(c.r, c.g, c.b, a)
+                }
+
+                if (!i2) {
+                    i2 = r.v.length / 2;
+                    if (!cache[v2x]) cache[v2x] = {};
+                    cache[v2x][v2y] = i2;
+                    r.v.push(v2x, v2y);
+                    r.u.push(uvs[i22], uvs[i22 + 1]);
+                    r.c.push(c.r, c.g, c.b, a);
+                }
+
+                if (!i3) {
+                    i3 = r.v.length / 2;
+                    if (!cache[v3x]) cache[v3x] = {};
+                    cache[v3x][v3y] = i3;
+                    r.v.push(v3x, v3y);
+                    r.u.push(uvs[i32], uvs[i32 + 1]);
+                    r.c.push(c.r, c.g, c.b, a)
+                }
+
+                r.i.push(i1, i2, i3);
+            }
+        }
+    });
+
+    return { geometry: r };
+}
+
+

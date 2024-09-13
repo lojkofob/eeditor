@@ -1,4 +1,3 @@
-
 function getVertexShaderData(v) {
     var bsf = ((Editor.currentProject || 0).options || 0).__baseShadersFolder;
     if (bsf) {
@@ -26,7 +25,6 @@ function getFragmentShaderData(v) {
 var uc_v4 = new Vector4();
 
 NodePrototype.filter = 0;
-
 
 
 function len(list) {
@@ -96,7 +94,7 @@ $each({
     a_texcoord: { get: function () { return this.__uvsBuffer; } },
     a_position: { get: function () { return this.__verticesBuffer; } },
 
-    mouse: { get: function () { return toNodeCoords(mouse.clone()).__divide(__screenSize) } },
+    mouse: { get: function () { return toNodeCoords(mouse.__clone()).__divide(__screenSize) } },
 
     u_texture1: { get: function () { return this.__getTextureProperty('u_texture1'); }, set: function (v) { this.__setTextureProperty('u_texture1', v); } },
     u_texture2: { get: function () { return this.__getTextureProperty('u_texture2'); }, set: function (v) { this.__setTextureProperty('u_texture2', v); } },
@@ -118,7 +116,7 @@ $each({
     u_transform: {
         get: function () {
             if (this.__projectionMatrix)
-                return this.__projectionMatrix.clone().__multiply(this.mw).e
+                return this.__projectionMatrix.__clone().__multiply(this.mw).e
             return this.mw.e;
         }
     },
@@ -282,7 +280,7 @@ var ImagePreviewerWithKitten = {
         var imagePreview = EditorUIBehavioursWithKitten.imagePreview;
         if (imagePreview) {
 
-            invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.parent });
+            invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.__parent });
 
             var imgNode = imagePreview.image;
 
@@ -352,7 +350,7 @@ var ImagePreviewerWithKitten = {
                 var imagePreview = EditorUIBehavioursWithKitten.imagePreview;
                 if (imagePreview) {
 
-                    invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.parent });
+                    invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.__parent });
 
                     var imgNode = imagePreview.image;
 
@@ -540,7 +538,7 @@ var ImagePreviewerWithKitten = {
             var effectName = m[2];
             var effectPreview = EditorUIBehavioursWithKitten.effectPreview;
             if (effectPreview) {
-                invokeEventWithKitten('Editor.showPanel', { panel: effectPreview.parent });
+                invokeEventWithKitten('Editor.showPanel', { panel: effectPreview.__parent });
                 effectPreview.__effectName = effectName.split('.')[0];
                 this.open(function () {
                     activateProjectOptions();
@@ -598,7 +596,7 @@ var ImagePreviewerWithKitten = {
             var textPreview = EditorUIBehavioursWithKitten.textPreview;
             if (textPreview) {
 
-                invokeEventWithKitten('Editor.showPanel', { panel: textPreview.parent });
+                invokeEventWithKitten('Editor.showPanel', { panel: textPreview.__parent });
 
                 activateProjectOptions();
 
@@ -635,8 +633,8 @@ var ImagePreviewerWithKitten = {
             var preview = EditorUIBehavioursWithKitten.dragonBonesPreview;
             if (preview) {
 
-                invokeEventWithKitten('Editor.showPanel', { panel: preview.parent });
-                preview.parent.header.__textString = "Spine preview";
+                invokeEventWithKitten('Editor.showPanel', { panel: preview.__parent });
+                preview.__parent.header.__textString = "Spine preview";
 
                 var previewNode = preview.dbnod;
 
@@ -744,8 +742,8 @@ var ImagePreviewerWithKitten = {
             var preview = EditorUIBehavioursWithKitten.dragonBonesPreview;
             if (preview) {
 
-                invokeEventWithKitten('Editor.showPanel', { panel: preview.parent });
-                preview.parent.header.__textString = "DragonBones preview";
+                invokeEventWithKitten('Editor.showPanel', { panel: preview.__parent });
+                preview.__parent.header.__textString = "DragonBones preview";
 
                 var previewNode = preview.dbnod;
 
@@ -800,7 +798,7 @@ var ImagePreviewerWithKitten = {
 
                             if (dbs) {
                                 $each(dbs, function (d) {
-                                    var sz = d.__size.clone().__multiplyScalar(0.5).__multiply(d.____scale)
+                                    var sz = d.__size.__clone().__multiplyScalar(0.5).__multiply(d.____scale)
                                         , wp = d.__worldPosition
                                     d.left = wp.x - sz.x;
                                     d.right = wp.x + sz.x;
@@ -944,7 +942,7 @@ var ImagePreviewerWithKitten = {
                     case 'jpeg': case 'jpg':
                     case 'png': case 'webp':
                         function chpreview(p) {
-                            if (globalConfigsData.__frames[p]) return p;
+                            return globalConfigsData.__frames[p]
                         }
                         var pr = fullpath.split('.')[0];
                         var a = chpreview(pr + '_preview') || chpreview(pr + '_preview.png') || chpreview(pr);
@@ -1425,8 +1423,8 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
 
             }
 
-            
-            function onPSDUploaded(changes, sn, f, p){
+
+            function onPSDUploaded(changes, sn, f, p) {
                 changes.push({ type: 'unselect', node: sn });
                 sn.__unselect();
 
@@ -1467,8 +1465,8 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
 
                                 var img, i = (c.layer || 0).image;
                                 if (i) {
-                                    try { 
-                                        img = i.toBase64(); 
+                                    try {
+                                        img = i.toBase64();
                                     }
                                     catch (e) {
                                         consoleLog("can't get image from psd layer ", c.name);
@@ -1483,16 +1481,16 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                                         __img: img
                                     });
 
-                                    var uid = (namemap[c.name]||0);
-                                    namemap[c.name] = uid+1;
+                                    var uid = (namemap[c.name] || 0);
+                                    namemap[c.name] = uid + 1;
 
                                     if (askerOk2 == 1) {
                                         tmpp++;
-                                        var imageName = 'img/psd/' + psdName + "/" + c.name + (uid?uid:'') + ".png";
+                                        var imageName = 'img/psd/' + psdName + "/" + c.name + (uid ? uid : '') + ".png";
                                         serverCommand({
                                             command: 'fileWrite',
                                             file: imageName,
-                                            content: img.replace('data:image/png;base64,',''),
+                                            content: img.replace('data:image/png;base64,', ''),
                                             binary: 1
                                         }, r => {
                                             if (r) {
@@ -1531,7 +1529,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     consoleLog(psd.tree().export());
                 }).catch(e => onError(e));
                 */
-  
+
                 changes.push({ type: '+', node: n });
                 n.__select();
             }
@@ -1573,42 +1571,42 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                         sn.__dragonBones = dir;
                         // debugger;
                     } else
-                    if (_isSpine) {
-                        var dir;
-                        for (var i in ftsk) {
-                            dir = dirname(i).replace(/^\/(.*)\/$/, '$1');
-                            break;
-                        }
-
-                        sn.__spine = {
-                            __name: dir,
-                            __binary: ftsk['/' + dir + '/' + dir + '.skel'] ? 1 : 0,
-                            __hd: ftsk['/' + dir + '/hd/' + dir + '.png'] ? 1 : 0
-                        };
-
-                    } else {
-                        $each(ftsk, f => {
-                            var p = f.uploadPath;
-                            if (p.endsWith('.jpg') ||
-                                p.endsWith('.jpeg') ||
-                                p.endsWith('.png') ||
-                                p.endsWith('.webp')) {
-
-                                changes.push({ type: 'unselect', node: sn });
-                                sn.__unselect();
-
-                                var n = sn.__addChildBox({
-                                    __img: p + '?'
-                                }).__anim({ __alpha: [0, 1], __scaleF: [2, 1] }, 0.1);
- 
-                                changes.push({ type: '+', node: n });
-                                n.__select();
-                            } else
-                            if (p.endsWith('.psd')) {
-                                onPSDUploaded(changes, sn, f, p);
+                        if (_isSpine) {
+                            var dir;
+                            for (var i in ftsk) {
+                                dir = dirname(i).replace(/^\/(.*)\/$/, '$1');
+                                break;
                             }
-                        });
-                    }
+
+                            sn.__spine = {
+                                __name: dir,
+                                __binary: ftsk['/' + dir + '/' + dir + '.skel'] ? 1 : 0,
+                                __hd: ftsk['/' + dir + '/hd/' + dir + '.png'] ? 1 : 0
+                            };
+
+                        } else {
+                            $each(ftsk, f => {
+                                var p = f.uploadPath;
+                                if (p.endsWith('.jpg') ||
+                                    p.endsWith('.jpeg') ||
+                                    p.endsWith('.png') ||
+                                    p.endsWith('.webp')) {
+
+                                    changes.push({ type: 'unselect', node: sn });
+                                    sn.__unselect();
+
+                                    var n = sn.__addChildBox({
+                                        __img: p + '?'
+                                    }).__anim({ __alpha: [0, 1], __scaleF: [2, 1] }, 0.1);
+
+                                    changes.push({ type: '+', node: n });
+                                    n.__select();
+                                } else
+                                    if (p.endsWith('.psd')) {
+                                        onPSDUploaded(changes, sn, f, p);
+                                    }
+                            });
+                        }
 
                 }, 1);
 
@@ -1698,16 +1696,16 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     if (_isSpine) {
                         uploadPath = options.__baseSpineFolder;
                     } else
-                    if (_isDragonBones) {
-                        uploadPath = options.__baseDragonBonesFolder;
-                    }
+                        if (_isDragonBones) {
+                            uploadPath = options.__baseDragonBonesFolder;
+                        }
                 }
 
                 for (var i = 0, f; f = files[i]; i++) {
                     var type = f.type;
                     if (!f.type && f.name && f.name.endsWith('.psd')) {
                         type = 'psd';
-                        _isPsd = (_isPsd||0) + 1;
+                        _isPsd = (_isPsd || 0) + 1;
                     }
 
                     if (!skipCheck && Editor.supportedDownloadTypes.indexOf(type) < 0) {
@@ -1760,7 +1758,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
             }
 
             if (needAsker) {
-                var cancel = function() {
+                var cancel = function () {
                     for (var i in ftsk) {
                         if (ftsk[i].reader) {
                             ftsk[i].reader.abort();
@@ -1768,8 +1766,8 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     }
                 }
 
-                var psdImageAsk = function(){
-                    
+                var psdImageAsk = function () {
+
                     AskerWithKitten.ask({
                         caption: 'upload images after psd import?',
                         noinput: 1,
@@ -1778,7 +1776,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                             askerOk2 = 1;
                             updateBar();
                         },
-                        no(){ 
+                        no() {
                             askerOk2 = -1;
                             updateBar();
                         },
@@ -1797,7 +1795,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     ok() {
                         // fetch FileList object
                         askerOk = 1;
-                        if (_isPsd){
+                        if (_isPsd) {
                             psdImageAsk();
                         } else {
                             updateBar();
@@ -1807,8 +1805,8 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     cancel: cancel
                 };
 
-                if (_isPsd){
-                    askerOpts.no = function(){
+                if (_isPsd) {
+                    askerOpts.no = function () {
                         askerOk = -1;
                         psdImageAsk();
                         return 1;
@@ -2117,7 +2115,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
 
         fileManagerPanel = n;
 
-        findPanel = fileManagerPanel.parent.__alias('findPanel') || 0;
+        findPanel = fileManagerPanel.__parent.__alias('findPanel') || 0;
         findPanel.__visible = 0;
 
         focusFileEntry = function (e, params) {
@@ -2164,11 +2162,12 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     BUS.__post('FILES_UPDATED');
 
                 }
-            } else
+            } else {
                 serverCommand({ command: 'dirlist' }, function (list) {
                     Editor.currentProject.files = list;
                     updateFiles(Editor.currentProject.files);
                 });
+            }
 
         };
 

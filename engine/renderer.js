@@ -171,6 +171,8 @@ function __setGLGlobals(gl) {
     blendingsList = [
         []// NoBlending
 
+        // 1, __blendSrc __blendDst __blendEquation __blendSrcAlpha __blendDstAlpha __blendEquationAlpha
+
         , [1, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD, GL_ONE, GL_ONE, GL_FUNC_ADD] // NormalBlending
 
         , [0, GL_ONE, GL_ONE, GL_FUNC_ADD] // AdditiveBlending
@@ -251,7 +253,7 @@ function Texture(image, params) {
     _texturesCache[textureIdCount] = this;
     params = params || 0;
 
-    this.__init( mergeObj({
+    this.__init(mergeObj({
         __magFilter: GL_LINEAR,
         __minFilter: GL_LINEAR,
         __flipY: true,
@@ -264,7 +266,7 @@ function Texture(image, params) {
         __premultiplyAlpha: true,
         __unpackAlignment: 4,
         v: 0
-    }, params) );
+    }, params));
 }
 
 Texture.prototype = {
@@ -470,9 +472,9 @@ function ColorBuffer() {
         },
         __setClear: function (r, g, b, a) {
             color.set(r, g, b, a);
-            if (currentColorClear.equals(color) === false) {
+            if (currentColorClear.__equals(color) === false) {
                 gl.clearColor(r, g, b, a);
-                currentColorClear.copy(color);
+                currentColorClear.__copy(color);
             }
         },
         __reset: function () {
@@ -786,7 +788,7 @@ function WebGLRenderer(dbg) {
 
     function __scissor(scissor, useIntersect) {
 
-        if (_currentScissor.equals(scissor) === false) {
+        if (_currentScissor.__equals(scissor) === false) {
 
             if (useIntersect) {
                 scissor.x = mmax(_currentScissor.x, scissor.x);
@@ -801,7 +803,7 @@ function WebGLRenderer(dbg) {
             scissor.z = mmax(scissor.z, 0);
 
             gl.scissor(scissor.x, scissor.y, scissor.z, scissor.w);
-            _currentScissor = scissor.clone();
+            _currentScissor = scissor.__clone();
 
         }
 
@@ -809,11 +811,11 @@ function WebGLRenderer(dbg) {
 
     function __viewport(viewport) {
 
-        if (_currentViewport.equals(viewport) === false) {
+        if (_currentViewport.__equals(viewport) === false) {
 
             if (gl && gl.viewport) {
                 gl.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
-                _currentViewport.copy(viewport);
+                _currentViewport.__copy(viewport);
             }
 
         }
@@ -1500,7 +1502,7 @@ function WebGLRenderer(dbg) {
     function __render(object, camera) {
 
         _currentProjectionMatrix = camera.pm;
-         
+
         _currentRenderList = [];
 
         _scissStack.a = [];
@@ -1569,10 +1571,10 @@ function WebGLRenderer(dbg) {
         toList.push(object);
 
         if (object.__childsProjectionMatrix) {
-            _currentProjectionMatrix = _currentProjectionMatrix.clone().__multiply(object.__childsProjectionMatrix);
+            _currentProjectionMatrix = _currentProjectionMatrix.__clone().__multiply(object.__childsProjectionMatrix);
         } else
             if (object.__scrollVector) {
-                _currentProjectionMatrix = _currentProjectionMatrix.clone().__moveByVector2(object.__scrollVector);
+                _currentProjectionMatrix = _currentProjectionMatrix.__clone().__moveByVector2(object.__scrollVector);
                 _currentProjectionMatrix.__isScrollMatrix = 1;
             }
 

@@ -164,7 +164,7 @@ if (opts.type.indexOf('css')<0){
     opts.language = 'ES' + (argv.es6 ? 6 : 5);
     opts.options = [ 
       '--language_out=ECMASCRIPT_2015'
-      , '--jscomp_off=checkVars'      
+      , '--jscomp_off=checkVars'
     ];
 }
 

@@ -131,7 +131,7 @@ makeClass(MyBufferAttribute, {
 
         t.__bindBuffer();
 
-        if (programAttribute !== undefined) {
+        if (programAttribute) {
             //debug
             if (t.__debugDrawing) {
                 consoleLog('attribute passed', t.__name, t.__realsize + '/' + t.__size, t.__itemSize, t);
@@ -139,6 +139,13 @@ makeClass(MyBufferAttribute, {
             //undebug
             renderer.__enableAttribute(programAttribute);
             gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, 0, 0);
+            return t.__webglBuffer
+        } else {
+            //debug
+            if (t.__debugDrawing) {
+                consoleDebug('no attribute in program ', t.__name);
+            }
+            //undebug
         }
     }
 
@@ -202,17 +209,22 @@ makeClass(Color, {
             if (j.__isColor || isObject(j)) return this.__setRGBA(j.r, j.g, j.b, j.a);
             if (isArray(j)) return this.__setRGBA(j[0], j[1], j[2], j[3]);
             if (isNumeric(j)) return j < 1 ? this.__setScalar(j) : this.setHex(j);
-
         }
         return this;
     },
 
+    __fromJsonSRGB(j, i) {
+        i = i || 0;
+        if (isArray(j)) return this.__setRGBA(j[i], j[i + 1], j[i + 2], j[i + 3]);
+        return this;
+        // convertSRGBToLinear
+    },
 
     set(value) {
 
         if (value && value.__isColor) {
 
-            this.copy(value);
+            this.__copy(value);
 
         } else if (typeof value === 'number') {
 
@@ -404,13 +416,13 @@ makeClass(Color, {
 
     },
 
-    clone() {
+    __clone() {
 
         return new Color(this.r, this.g, this.b);
 
     },
 
-    copy(color) {
+    __copy(color) {
 
         this.r = color.r;
         this.g = color.g;
@@ -602,7 +614,7 @@ makeClass(Color, {
     },
 
 
-    equals(c) {
+    __equals(c) {
 
         return (c.r === this.r) && (c.g === this.g) && (c.b === this.b);
 
@@ -672,31 +684,25 @@ makeClass(Matrix4, {
 
     },
 
-    clone() {
+    __clone() {
 
         return new Matrix4(this.e, this.__is3D);
 
     },
 
-    copy(m) {
-
-        var te = this.e;
-        var me = m.e;
-
-        te[0] = me[0];
-        te[1] = me[1];
-        te[4] = me[4];
-        te[5] = me[5];
-        te[12] = me[12];
-        te[13] = me[13];
-        te[14] = me[14];
-
+    __copy(m) {
+        var te = this.e, me = m.e;
+        te[0] = me[0]; te[1] = me[1]; te[2] = me[2];
+        te[3] = me[3]; te[4] = me[4]; te[5] = me[5];
+        te[6] = me[6]; te[7] = me[7]; te[8] = me[8];
         return this;
-
     },
 
     __multiply(m) {
         return this.__multiplyMatrices(this, m);
+    },
+    __premultiply(m) {
+        return this.__multiplyMatrices(m, this);
     },
 
     __moveByVector2(v) {
@@ -705,6 +711,30 @@ makeClass(Matrix4, {
         te[13] += te[5] * v.y;
         return this;
     },
+
+
+    __setPosition(x, y, z) {
+
+        var te = this.e;
+
+        if (x.__isVector3) {
+
+            te[12] = x.x;
+            te[13] = x.y;
+            te[14] = x.z;
+
+        } else {
+
+            te[12] = x;
+            te[13] = y;
+            te[14] = z;
+
+        }
+
+        return this;
+
+    },
+
 
     /*
     __rotateAroundX: function( a ){
@@ -734,6 +764,7 @@ makeClass(Matrix4, {
 
     },
     */
+
     __multiplyMatrices(a, b) {
         if (a.__is3D || b.__is3D) {
             this.__is3D = 1;
@@ -744,7 +775,7 @@ makeClass(Matrix4, {
     },
 
     __multiplyMatrices3(a, b) {
-        
+
         var ae = a.e,
             be = b.e,
             te = this.e,
@@ -873,6 +904,10 @@ makeClass(Matrix4, {
 
     },
 
+    __invert() {
+        return this.__getInverseMatrix(this)
+    },
+
     __getInverseMatrix(m) {
         m = m || new Matrix4();
         if (this.__is3D) {
@@ -967,7 +1002,7 @@ makeClass(Matrix4, {
 
     },
 
-    equals(m) {
+    __equals(m) {
 
         var te = this.e, me = m.e;
 
@@ -1007,10 +1042,9 @@ makeClass(Vector2, {
         return this.set(scalar, scalar);
     },
 
-    clone() { return new Vector2(this.x, this.y); },
     __clone() { return new Vector2(this.x, this.y); },
 
-    copy(v) { this.x = v.x; this.y = v.y; return this; },
+    __copy(v) { this.x = v.x; this.y = v.y; return this; },
 
     add(v) { this.x += v.x; this.y += v.y; return this; },
     __add(v) { this.x += v.x; this.y += v.y; return this; },
@@ -1076,9 +1110,10 @@ makeClass(Vector2, {
         return sqrt(this.x * this.x + this.y * this.y);
     },
 
-    normalize() {
-        return this.__divideScalar(this.__length() || 1);
+    __manhattanLength() {
+        return abs(this.x) + abs(this.y);
     },
+
     __normalize() {
         return this.__divideScalar(this.__length() || 1);
     },
@@ -1136,7 +1171,7 @@ makeClass(Vector2, {
     },
 
 
-    equals(v) {
+    __equals(v) {
 
         return ((v.x === this.x) && (v.y === this.y));
 
@@ -1167,6 +1202,19 @@ makeClass(Vector2, {
 
         return this;
 
+    },
+
+    __cross(v) {
+
+        return this.x * v.y - this.y * v.x;
+
+    },
+
+    __fromArray(a, o) {
+        o = o || 0;
+        this.x = a[o];
+        this.y = a[o + 1];
+        return this;
     }
 
 }, {
@@ -1185,10 +1233,27 @@ function Vector3(x, y, z) {
 
 makeClass(Vector3, {
 
+    __cross(v) {
+        return this.__crossVectors(this, v);
+    },
+    __crossVectors(a, b) {
+        const ax = a.x, ay = a.y, az = a.z;
+        const bx = b.x, by = b.y, bz = b.z;
+        this.x = ay * bz - az * by;
+        this.y = az * bx - ax * bz;
+        this.z = ax * by - ay * bx;
+        return this;
+    },
+    __fromArray(a, o) {
+        o = o || 0;
+        this.x = a[o];
+        this.y = a[o + 1];
+        this.z = a[o + 2];
+        return this;
+    },
     __toVector2() { return new Vector2(this.x, this.y); },
     set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; },
     __setScalar(scalar) { return this.set(scalar, scalar, scalar); },
-    clone() { return new Vector3(this.x, this.y, this.z); },
     __clone() { return new Vector3(this.x, this.y, this.z); },
     __randomize() {
         return new Vector3(
@@ -1206,7 +1271,7 @@ makeClass(Vector3, {
         );
     },
 
-    copy(v) {
+    __copy(v) {
 
         this.x = v.x;
         this.y = v.y;
@@ -1340,9 +1405,10 @@ makeClass(Vector3, {
 
     },
 
-    normalize() {
-        return this.__divideScalar(this.__length() || 1);
+    __manhattanLength() {
+        return abs(this.x) + abs(this.y) + abs(this.z);
     },
+
     __normalize() {
         return this.__divideScalar(this.__length() || 1);
     },
@@ -1378,7 +1444,7 @@ makeClass(Vector3, {
 
     },
 
-    equals(v) {
+    __equals(v) {
 
         return ((v.x === this.x) && (v.y === this.y) && (v.z === this.z));
 
@@ -1410,10 +1476,18 @@ makeClass(Vector4, {
 
     },
 
+    __fromArray(a, o) {
+        o = o || 0;
+        this.x = a[o];
+        this.y = a[o + 1];
+        this.z = a[o + 2];
+        this.w = a[o + 3];
+        return this;
+    },
+
     __setScalar(scalar) {
         return this.set(scalar, scalar, scalar, scalar);
     },
-
 
     __randomize() {
         return new Vector4(
@@ -1433,11 +1507,11 @@ makeClass(Vector4, {
         );
     },
 
-    clone() {
+    __clone() {
         return new Vector4(this.x, this.y, this.z, this.w);
     },
 
-    copy(v) {
+    __copy(v) {
 
         this.x = v.x;
         this.y = v.y;
@@ -1548,9 +1622,10 @@ makeClass(Vector4, {
 
     },
 
-    normalize() {
-        return this.__divideScalar(this.__length() || 1);
+    __manhattanLength() {
+        return abs(this.x) + abs(this.y) + abs(this.z) + abs(this.w);
     },
+
     __normalize() {
         return this.__divideScalar(this.__length() || 1);
     },
@@ -1575,7 +1650,7 @@ makeClass(Vector4, {
     },
 
 
-    equals(v) {
+    __equals(v) {
 
         return ((v.x === this.x) && (v.y === this.y) && (v.z === this.z) && (v.w === this.w));
 

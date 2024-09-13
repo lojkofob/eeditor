@@ -543,7 +543,7 @@ function createGame(parameters) {
         'resize', onWindowResize,
         'deviceorientation', function (event) {
             // TODO: fix fluctuations 
-            var tmp = __deviceOrientation.clone();
+            var tmp = __deviceOrientation.__clone();
             __deviceOrientation.set(event.alpha || 0, event.beta || 0, event.gamma || 0);
             __deviceOrientationSpeed.__multiplyScalar(0.8).add(tmp.sub(__deviceOrientation).__multiplyScalar(0.08));
         }
@@ -907,10 +907,10 @@ function renderNodeToTexture(node, params) {
         , w = floor(sz.x)
         , h = floor(sz.y)
         , bufferTexture = params.__target || new WebGLRenderTarget(w, h, params)
-        , ss = __screenSize.clone()
-        , cc = __screenCenter.clone()
-        , rss = __realScreenSize.clone()
-        , rcc = __realScreenCenter.clone()
+        , ss = __screenSize.__clone()
+        , cc = __screenCenter.__clone()
+        , rss = __realScreenSize.__clone()
+        , rcc = __realScreenCenter.__clone()
         , tmpscale = scaleFactor
         , tmpmult = layoutsResolutionMult;
 
@@ -938,11 +938,11 @@ function renderNodeToTexture(node, params) {
     layoutsResolutionMult = tmpmult;
     scaleFactor = tmpscale;
 
-    __screenSize.copy(ss);
-    __screenCenter.copy(cc);
+    __screenSize.__copy(ss);
+    __screenCenter.__copy(cc);
 
-    __realScreenSize.copy(rss);
-    __realScreenCenter.copy(rcc);
+    __realScreenSize.__copy(rss);
+    __realScreenCenter.__copy(rcc);
 
     updateCamera(ss.x, ss.y, cam, cam.__x, cam.__y);
 
@@ -1282,6 +1282,14 @@ function destroyImage(img) {
             })
         }
     }
+}
+
+
+function enterFullScreen(elem, opts) {
+    opts = opts || { navigationUI: 'hide' };
+    elem = elem || renderer.__domElement;
+    $find(['requestFullscreen', 'msRequestFullscreen', 'mozRequestFullScreen', 'webkitRequestFullscreen'],
+        v => elem[v] ? elem[v](opts) || 1 : 0);
 
 }
 

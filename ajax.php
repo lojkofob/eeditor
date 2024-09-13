@@ -226,7 +226,17 @@ if (is_array($json)) {
         
         if ($command == 'projectsList') {
             $answ['ok'] = 1;
-            $answ['result'] = dirToArray( $projectsDir, false, true );
+            $answ['result'] = array();
+            $projects = dirToArray( $projectsDir, false, true );
+            sort($projects);
+            foreach($projects as $k => $v){
+                
+                if ($v[0] != '.') {
+                    $has_preview = file_exists($projectsDir . "/" . "preview.png");
+                    $answ['result'][$v] = array('preview' => ($has_preview ? "preview.png" : ""));
+                }
+            }
+
         }
         else 
         if ($command == 'dirlist') {

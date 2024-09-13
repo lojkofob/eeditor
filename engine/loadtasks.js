@@ -22,6 +22,7 @@ var tablesCache = {},
     TASKS_SCRIPT = 'script',
     TASKS_DRAGON_BONES = 'dragonBones',
     TASKS_SPINE = 'spine',
+    TASKS_3D = '3d',
     TASKS_RAWBUFFER = 'buffer',
     TASKS_LIVE2D = 'live2d';
 
@@ -346,7 +347,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     return tex;
 
 }
- 
+
 var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
     var t = this;
     t.____progress = 0;
@@ -356,7 +357,7 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
     t.____onLoad = onLoad;
     t.____onError = onError;
     t.__id = __loadTasksId++;
-     
+
     mergeObj(t, options.__loadingPolicies);
     //debug
     //     consoleLog( 'created task', t );
@@ -377,13 +378,13 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
             t.____onLoad(j, t.__data);
         }
 
-        
+
         t.____progress = 1;
 
         //debug
         //    consoleLog( 'loaded', t );
         //undebug
-        
+
         if (t.__baseTask) {
             t.__baseTask.__onLoadProgress();
         }
@@ -538,6 +539,8 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
         return t;
     }
 });
+
+var LoadTask__loaders = {};
 
 var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
     var t = this;
@@ -747,7 +750,18 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     });
                     break;
 
+                case TASKS_3D:
+                    var resourceName = l[1].__path
+                        , ext = fileext(resourceName);
+
+                    if (LoadTask__loaders[ext]) {
+                        LoadTask__loaders[ext](t, l)
+                    }
+                    break;
+
+
                 case TASKS_SPINE:
+
 
                     var resourceName = l[1]
                         , loadResourceName
@@ -901,11 +915,11 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                         globalConfigsData['^' + l[1]] = 1;
 
                         var opts = {
-                            __name: options.__baseSoundsFolder + l[1], 
-                            __onLoad: l[2], 
+                            __name: options.__baseSoundsFolder + l[1],
+                            __onLoad: l[2],
                             __dir: dirname( /* options.__projectServerPath + */ options.__baseSoundsFolder + l[1])
                         };
-                        
+
                         getJson(opts.__name, function (json) {
 
                             var t = this;
@@ -997,15 +1011,15 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
     __progress(a) {
         var t = this;
         if (t.__subTasks) {
-            
+
             if (!t.__subTasks.length) {
                 t.____progress = 1;
             } else {
                 t.____progress = $count(t.__subTasks, function (subtask) {
                     return subtask.__progress();
                 }) / t.__subTasks.length;
-            } 
-             
+            }
+
         }
 
         return t.____progress;
@@ -1016,18 +1030,18 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         var t = this;
 
         if (t.__disableProgress) return;
-                    
+
         var progress = a || t.__progress();
         if (progress != t.__lastProgress) {
             t.__lastProgress = progress;
 
             if (t.__onProgress)
                 t.__onProgress(progress);
-            
+
             if (progress == 1) {
-            
+
                 if (t.__errors && t.__onError) {
-                    
+
                     t.__onError(t.__errors);
 
                 }

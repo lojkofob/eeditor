@@ -7,41 +7,41 @@ function Shadow(nodeToUpdate, parentNode) {
         t.__nodeToUpdate = nodeToUpdate;
     } else {
         t.__nodeToUpdate = new Node({
-           __isShadow : 1,
-           ____validToSave: 0,
-           __notNormalNode: 1
+            __isShadow: 1,
+            ____validToSave: 0,
+            __notNormalNode: 1
         });
         t.__node = 1;
         parentNode.__addChildBox(t.__nodeToUpdate);
     }
-    
+
 }
 
-var forceAllShadowsUpdate = 0;    
-var ShadowPrototype = Shadow.prototype = { 
+var forceAllShadowsUpdate = 0;
+var ShadowPrototype = Shadow.prototype = {
     constructor: Shadow,
-    
-    __destruct: function(){
+
+    __destruct: function () {
         var t = this;
         var shadowNode = t.__nodeToUpdate;
         if (shadowNode && shadowNode.__isShadow) {
             t.__nodeToUpdate = shadowNode.__removeFromParent();
         }
     },
-    
-    __init:function(v){ 
-        if (isArray(v)){
+
+    __init: function (v) {
+        if (isArray(v)) {
             var nv = {};
-            if (v[0]!=undefined) nv.x = v[0];
-            if (v[1]!=undefined) nv.y = v[1];
-            if (v[2]!=undefined) nv.__blur = v[2];
-            if (v[3]!=undefined) nv.__color = v[3];
+            if (v[0] != undefined) nv.x = v[0];
+            if (v[1] != undefined) nv.y = v[1];
+            if (v[2] != undefined) nv.__blur = v[2];
+            if (v[3] != undefined) nv.__color = v[3];
             v = nv;
         }
         mergeObj(this, v);
     },
 
-    __update: function(){
+    __update: function () {
         /*
         if (!this.__realEnableShadow)
             return;
@@ -54,7 +54,7 @@ var ShadowPrototype = Shadow.prototype = {
         t.__needUpdate = 0;
         
         var shadowNode = t.__nodeToUpdate,
-            parentNode = shadowNode.parent;
+            parentNode = shadowNode.__parent;
         
         if (!parentNode) return;
         
@@ -71,7 +71,7 @@ var ShadowPrototype = Shadow.prototype = {
 //          consoleLog('update s', this);
         
         var box = parentNode.__getBoundingBox(),
-            sz = box.max.clone().sub(box.min);
+            sz = box.max.__clone().sub(box.min);
         
         if (!parentNode.__simpleBounding) {
             var wp = parentNode.__worldPosition
@@ -159,11 +159,11 @@ var ShadowPrototype = Shadow.prototype = {
     }
 };
 
-ObjectDefineProperties(ShadowPrototype, addProps({ 
+ObjectDefineProperties(ShadowPrototype, addProps({
     __color: 0
     , __blur: 0
     , x: 0
     , y: 0
-    , __alpha:1
-    , __blending:0
+    , __alpha: 1
+    , __blending: 0
 }));

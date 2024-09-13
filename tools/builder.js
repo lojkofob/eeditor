@@ -1,3 +1,4 @@
+const { exit } = require('process');
 
 var fs = require('fs')
     , path = require('path')
@@ -331,6 +332,10 @@ var subtargetsBuilders = {
             }
 
             var wrapfile = fs.readFileSync(dst, 'utf8');
+
+            if (d.wrap.noJscomp) {
+                wrapfile = wrapfile.substring(2113);
+            }
 
             if (!d.wrap.noFunc) {
                 wrapfile = "(function" + (d.wrapFuncName ? " " + d.wrapFuncName : "") + "(){" + header + wrapfile + "})()";

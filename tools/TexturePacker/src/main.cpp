@@ -1134,8 +1134,8 @@ int main(int argc, char *argv[])
     }
 
     // надо бы освобождать результат realpath
-    char *rp = path.empty() ? "" : realpath(path.c_str(), NULL);
-    char *drp = dstPath.empty() ? "" : realpath(dstPath.c_str(), NULL);
+    const char *rp = path.empty() ? "" : realpath(path.c_str(), NULL);
+    const char *drp = dstPath.empty() ? "" : realpath(dstPath.c_str(), NULL);
 
     dstPath = drp ? drp : "";
     path = rp ? rp : "";

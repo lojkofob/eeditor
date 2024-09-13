@@ -146,7 +146,7 @@ var cubismFactory = {
         var color = obj.__color;
 
         if (t.__clippingContextBufferForMask == null) {
-            color = color.clone();
+            color = color.__clone();
             // color.a *= opacity;
             // if (t.___isPremultipliedAlpha) {
             //     color.__multiplyScalar(color.a);
@@ -784,8 +784,8 @@ var CubismObject = (() => {
                         .__multiplyScalar(strand.Acceleration)
                         .__add(t.__wind)
                         .__multiplyScalar(delay * delay);
-                    lastPosition = strand.__position.clone();
-                    strand.__position = prevStrand.__position.clone()
+                    lastPosition = strand.__position.__clone();
+                    strand.__position = prevStrand.__position.__clone()
                         .__add(
                             // newDirection
                             strand.__position.__clone()
@@ -811,7 +811,7 @@ var CubismObject = (() => {
                     if (i < 1 || i >= strandCount) {
                         return;
                     }
-                    lastPosition = Vertices[i].__position.clone().sub(Vertices[i - 1].__position);
+                    lastPosition = Vertices[i].__position.__clone().sub(Vertices[i - 1].__position);
                     outputValue = o.t.__getValue(lastPosition, Vertices, i, o.Reflect, t.__gravity);
 
                     obj.__setParameterValueByIndex(
@@ -959,7 +959,7 @@ var CubismObject = (() => {
             var t = this;
             /*
             t.__faceTarget.set(mouse.x, mouse.y);
-            var d = t.__faceTarget.clone().sub(t.__face)
+            var d = t.__faceTarget.__clone().sub(t.__face)
                 , dl = d.__length();
             if (dl <= t.__Epsilon) {
                 return;
@@ -1374,7 +1374,7 @@ var CubismObject = (() => {
                 // t.createRenderer();
                 // t.setupTextures();
                 // t.getRenderer().startUp(lappdelegate_1.gl);
-                
+
                 this.__parent.__addChildBox(this);
 
             } catch (e) {

@@ -224,7 +224,7 @@ ObjectDefineProperties(TextPrototype,
 
     addProps(__defaultTextProperties,
         {
-            __alpha: { get() { return this.parent.__alpha }, set(){} },
+            __alpha: { get() { return this.__parent.__alpha }, set() { } },
             __colorString: colorStringProperty,
             __shadow: ShadowPropertyPrototype(1)
         },
@@ -296,7 +296,7 @@ mergeObj(TextPrototype, {
         var t = this;
         t.__lastRenderTime = TIME_NOW;
         t.__rendered = 1;
-        
+
 
         //cheats
         renderInfo.textsRendered++;
@@ -310,7 +310,7 @@ mergeObj(TextPrototype, {
                 t.__updateMatrixWorld();
         }
 
-        if (t.parent) { t.__opacityDeep = t.__alphaDeep * t.parent.__opacityDeep; }
+        if (t.__parent) { t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; }
 
         if (t.__indecesBuffer) {
             renderer.__draw(t, t.__indecesBuffer.__realsize, 'base');
@@ -379,7 +379,7 @@ mergeObj(TextPrototype, {
         var t = this, ff = t.__fontface || __defaultTextProperties.__fontface;
         if (!ff || !globalConfigsData[ff] || globalConfigsData[ff] == 1) {
             ff = __defaultTextProperties.__safeFontFace;
-        } 
+        }
         return this.__getFontMod() + fs * t.__scaleFactor + "px \"" + ff + '"';
     },
 
@@ -466,7 +466,7 @@ mergeObj(TextPrototype, {
 
                 }
 
-                t.____color = currentColor.clone();
+                t.____color = currentColor.__clone();
 
                 t.__ctx.fillStyle = color_to_string(currentColor);
 
@@ -482,7 +482,7 @@ mergeObj(TextPrototype, {
     },
 
     update: function (deep) {
-        var t = this, parent = t.parent;
+        var t = this, parent = t.__parent;
         //debug
         if (t.__debugUpdate)
             debugger;
@@ -498,7 +498,7 @@ mergeObj(TextPrototype, {
             t.__scaleFactor = scaleFactor || 1;
         }
 
-        var size = parent.__contentSize.clone();
+        var size = parent.__contentSize.__clone();
 
         if (t.__autowrap) {
             var aosz = parent.____size;
@@ -526,7 +526,7 @@ mergeObj(TextPrototype, {
 
         }
 
-        
+
         if (t.__needUpdate) {
 
             var text = t.__text;
@@ -616,7 +616,7 @@ mergeObj(TextPrototype, {
                     if (this.__autowrap) {
 
                         //debug
-                        if (this.parent.__debugWrap)
+                        if (this.__parent.__debugWrap)
                             debugger;
                         //undebug
 
@@ -919,16 +919,16 @@ mergeObj(TextPrototype, {
                 valign = ifdef(parent.va, ALIGN_CENTER);
 
             var hpad = ((parentPadding[1] || 0) - (parentPadding[3] || 0)) / 2;
-            switch(halign) {
+            switch (halign) {
                 case ALIGN_CENTER: pos.x = hpad; break;
-                case ALIGN_START: pos.x = -size.x/2 + (sa.x + hpad - sa.x1) * scale; break;
-                case ALIGN_END: pos.x = size.x/2 - (sa.x - hpad - sa.x2) * scale; break;
+                case ALIGN_START: pos.x = -size.x / 2 + (sa.x + hpad - sa.x1) * scale; break;
+                case ALIGN_END: pos.x = size.x / 2 - (sa.x - hpad - sa.x2) * scale; break;
             }
-            var vpad = ((parentPadding[2]||0)-(parentPadding[0]||0)) / 2;
-            switch(valign) {
+            var vpad = ((parentPadding[2] || 0) - (parentPadding[0] || 0)) / 2;
+            switch (valign) {
                 case ALIGN_CENTER: pos.y = sa.y * scale - sa.a * scale + vpad; break;
-                case ALIGN_START: pos.y = size.y/2 + (sa.y - 2 * sa.a) * scale + vpad; break;
-                case ALIGN_END: pos.y = -size.y/2 + sa.y * scale + vpad; break;
+                case ALIGN_START: pos.y = size.y / 2 + (sa.y - 2 * sa.a) * scale + vpad; break;
+                case ALIGN_END: pos.y = -size.y / 2 + sa.y * scale + vpad; break;
             }
 
         }

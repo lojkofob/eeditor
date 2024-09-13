@@ -1,101 +1,97 @@
 var globalEventObjectsFilter;
 
 var ev_cursor;
-var HitTestObjects = makeClass( function(f, propertyArray){
+var HitTestObjects = makeClass(function (f, propertyArray) {
     this.__b = [];
     this.f = f;
     this.__propertyArray = propertyArray;
 },
-{
-    __traverseObjects: function(checker, f){
-        if (__needResortEventsObjects) {
-            tappableObjects.__resort();
-            draggableObjects.__resort();
-            scrollableObjects.__resort();
-            keyableObjects.__resort();
-            //debug
-            wheelObjects.__resort();
-            menusObjects.__resort();
-            //undebug
-            __needResortEventsObjects = 0;
-        }
-        
-        var t = this, fltr = t.f;
-        for (var k = scenes.length - 1; k >= 0; k-- ){
-            var s = scenes[k];
+    {
+        __traverseObjects: function (checker, f) {
+            if (__needResortEventsObjects) {
+                tappableObjects.__resort();
+                draggableObjects.__resort();
+                scrollableObjects.__resort();
+                keyableObjects.__resort();
+                wheelObjects.__resort();
+                menusObjects.__resort();
+                __needResortEventsObjects = 0;
+            }
 
-            for (var i = s.__childs.length - 1; i >= 0; i-- ){
-                var r = s.__childs[i], a = r[t.__propertyArray];
-                if (!r.____visible || !r.__viewable)
-                    continue;
+            var t = this, fltr = t.f;
+            for (var k = scenes.length - 1; k >= 0; k--) {
+                var s = scenes[k];
 
-                if (!a){
-                    a = r.$( fltr );
-                    r[t.__propertyArray] = a.sort(function(a,b){
-                        return (b.__totalZ - a.__totalZ) || ( b.id - a.id )
-                    });
-                }
+                for (var i = s.__childs.length - 1; i >= 0; i--) {
+                    var r = s.__childs[i], a = r[t.__propertyArray];
+                    if (!r.____visible || !r.__viewable)
+                        continue;
 
-                if (globalEventObjectsFilter){
-                    a = $filter(a, globalEventObjectsFilter);
-                }
+                    if (!a) {
+                        a = r.$(fltr);
+                        r[t.__propertyArray] = a.sort(function (a, b) {
+                            return (b.__totalZ - a.__totalZ) || (b.id - a.id)
+                        });
+                    }
 
-                for (var j = 0; j < a.length; j++){
-                    var o = a[j];
-                    o.__checkedHitTest = checker(o);
-                    if (o.__checkedHitTest){
-                        if (f(o)){
-                            return o;
+                    if (globalEventObjectsFilter) {
+                        a = $filter(a, globalEventObjectsFilter);
+                    }
+
+                    for (var j = 0; j < a.length; j++) {
+                        var o = a[j];
+                        o.__checkedHitTest = checker(o);
+                        if (o.__checkedHitTest) {
+                            if (f(o)) {
+                                return o;
+                            }
                         }
                     }
+
                 }
-                
             }
-         }
-        
-    },
-    
-    __keyObjects: function(key, f){
-        var checker = function(n){
-            if ( n.__visibleForTap() ) {
-                var tk = n.__onKey;
-                if ( tk == 1 ) return 1;
-                if ( tk == key ) return 1;
-                if (isArray(tk) && tk.indexOf(key) >= 0 ) return 1;
-                if (isObject(tk) && tk[key] ) return 1;
-            }
-        };
-        return this.__traverseObjects(checker, f);
-    },
-     
-    __traverseHit: function(pos, f){
-        var w = new Vector2(pos.x, pos.y);
-        return this.__traverseObjects(function(o){
-            return o.__hitTest(w);
-        }, f);
-    },
-    
-    __resort: function(){
-        var p = this.__propertyArray;
-        $each(scenes, function(s) {
-            s.__eachChild(function(n){ delete n[p]; });
-        });
-    }
-    
-});
+
+        },
+
+        __keyObjects: function (key, f) {
+            var checker = function (n) {
+                if (n.__visibleForTap()) {
+                    var tk = n.__onKey;
+                    if (tk == 1) return 1;
+                    if (tk == key) return 1;
+                    if (isArray(tk) && tk.indexOf(key) >= 0) return 1;
+                    if (isObject(tk) && tk[key]) return 1;
+                }
+            };
+            return this.__traverseObjects(checker, f);
+        },
+
+        __traverseHit: function (pos, f) {
+            var w = new Vector2(pos.x, pos.y);
+            return this.__traverseObjects(function (o) {
+                return o.__hitTest(w);
+            }, f);
+        },
+
+        __resort: function () {
+            var p = this.__propertyArray;
+            $each(scenes, function (s) {
+                s.__eachChild(function (n) { delete n[p]; });
+            });
+        }
+
+    });
 
 var pointerLocked = 0
-    , __deviceOrientation = new Vector3(0,0,0)
-    , __deviceOrientationSpeed = new Vector3(0,0,0)
-        
-    , tappableObjects = new HitTestObjects(function(n){ return n.____onTapFunc; }, '__tappableObjects' )
-    , draggableObjects = new HitTestObjects(function(n){ return n.____onDragFunc; }, '__draggableObjects' )
-    , scrollableObjects = new HitTestObjects(function(n){ return n.__scrollable; }, '__scrollableObjects' )
-    //debug
-    , menusObjects = new HitTestObjects(function(n){ return n.____contextMenu }, '__menusObjects')
-    , wheelObjects = new HitTestObjects(function(n){ return n.____wheel }, '__wheelObjects')
-    //undebug
-    , keyableObjects = new HitTestObjects(function(n){ return n.__onKey }, '__keyableObjects')
+    , __deviceOrientation = new Vector3(0, 0, 0)
+    , __deviceOrientationSpeed = new Vector3(0, 0, 0)
+
+    , tappableObjects = new HitTestObjects(function (n) { return n.____onTapFunc; }, '__tappableObjects')
+    , draggableObjects = new HitTestObjects(function (n) { return n.____onDragFunc; }, '__draggableObjects')
+    , scrollableObjects = new HitTestObjects(function (n) { return n.__scrollable; }, '__scrollableObjects')
+    , menusObjects = new HitTestObjects(function (n) { return n.____contextMenu }, '__menusObjects')
+    , wheelObjects = new HitTestObjects(function (n) { return n.____wheel }, '__wheelObjects')
+    , keyableObjects = new HitTestObjects(function (n) { return n.__onKey }, '__keyableObjects')
     , curDraggingObject
     , gestures = {}
     , mouse = new Vector2()
@@ -115,18 +111,18 @@ var pointerLocked = 0
     , disableHighlightOnOver
     , pinchInProcess
     , allEventsBlocked
-, __needResortEventsObjects;
- 
- function resortEventsObjects(node){
+    , __needResortEventsObjects;
+
+function resortEventsObjects(node) {
     __needResortEventsObjects = 1;
-    if (node && !node.__root){
+    if (node && !node.__root) {
         resortSceneChilds();
     }
-    
+
 }
 
-function blockBrowserEvent(e, preventDefault){
-    if (options.__preventDefaultEvents){
+function blockBrowserEvent(e, preventDefault) {
+    if (options.__preventDefaultEvents) {
         if (e.stopPropagation) e.stopPropagation();
         if (preventDefault !== false) {
             e.preventDefault ? e.preventDefault() : (e.returnValue = false);
@@ -134,101 +130,106 @@ function blockBrowserEvent(e, preventDefault){
     }
 }
 
-function updateMouse(e, withoutBlock){
-    
+function updateMouse(e, withoutBlock) {
+
     isShiftPressed = e.shiftKey;
     isCtrlPressed = e.ctrlKey || e.metaKey;
     isAltPressed = e.altKey;
-    
+
     if (pointerLocked) {
-        mouse = __screenCenter.clone();
+        mouse = __screenCenter.__clone();
     } else {
         getEventCoords(e, mouse);
     }
-        
+
     if (!withoutBlock) {
         blockBrowserEvent(e);
     }
-    
+
     return !allEventsBlocked;
 }
 
-function __getEventCoords(e, v){
+function __getEventCoords(e, v) {
     var v = v || new Vector2();
-    if (e.offsetX!=undefined && e.offsetY!=undefined) { 
+    if (e.offsetX != undefined && e.offsetY != undefined) {
         v.x = e.offsetX;
         v.y = e.offsetY;
-    } else 
-    if (e.pageX || e.pageY) { 
-        v.x = e.pageX;
-        v.y = e.pageY;
-    } else {
-        v.x = e.clientX;
-        v.y = e.clientY;
-    }
+    } else
+        if (e.pageX || e.pageY) {
+            v.x = e.pageX;
+            v.y = e.pageY;
+        } else {
+            v.x = e.clientX;
+            v.y = e.clientY;
+        }
     v.t = 0;
     return v;
 }
 
-var getEventCoords = function(e, v){
+var getEventCoords = function (e, v) {
     var v = __getEventCoords(
-      e.targetTouches && e.targetTouches[0] ? e.targetTouches[0] :
-      e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e
-      , v);
+        e.targetTouches && e.targetTouches[0] ? e.targetTouches[0] :
+            e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e
+        , v);
     return v;
 }
 
 
-function setCurrentDraggingObject(n, withoutUpdate){
+function setCurrentDraggingObject(n, withoutUpdate) {
     curDraggingObject = n;
     if (!withoutUpdate) {
-        curDraggingObject.mousedown = mouse.clone().__divideScalar(layoutsResolutionMult);
-        curDraggingObject.__lastMousePosition = mouse.clone();
-        curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.clone();
+        curDraggingObject.mousedown = mouse.__clone().__divideScalar(layoutsResolutionMult);
+        curDraggingObject.__lastMousePosition = mouse.__clone();
+        curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.__clone();
     }
     curDraggingObject.__isDragging = 1;
-    
+
 }
 
 function onDocumentMouseDown(e) {
     isTouchEvent = 0;
     return _onDocumentMouseDown(e);
 }
-function onDocumentTouchDown(e){
+
+function onDocumentTouchDown(e) {
     isTouchEvent = 1;
-    return _onDocumentMouseDown(e);
+    if (gestures.__touchProcess) {
+        return gestures.__touchProcess(getTouches(e));
+    } else {
+        return _onDocumentMouseDown(e);
+    }
 }
 
 function _onDocumentMouseDown(e) {
 
-    mouseButtons[e.button] = 1;
-    
-//     consoleWarn('_onDocumentMouseDown', e);
-    
+    mouseButtons[e.button || 0] = 1;
+
+    //     consoleWarn('_onDocumentMouseDown', e);
+
     lastMouseDownTime = TIME_NOW;
     if (!updateMouse(e))
         return;
-        
+
     var touches = getTouches(e);
     if (touches && touches.length > 1) {
         return;
     } else {
         checkPinchEnd();
     }
-    
+
     if (gestures.__onPointerDown && gestures.__onPointerDown(mouse))
         return;
-    
+
     downTime = Date.now();
-    downPos = mouse.clone();
-    
-    draggableObjects.__startDragPosition = mouse.clone();
-    
-    lastMousePosition = mouse.clone();
-    
-    tappableObjects.__traverseHit(mouse, function(tc){
-        
-        if (tc.__skipHighlight){
+    downPos = mouse.__clone();
+
+    draggableObjects.__startDragPosition = mouse.__clone();
+
+    lastMousePosition = mouse.__clone();
+
+    tappableObjects.__traverseHit(mouse, function (tc) {
+
+        if (tc.__skipHighlight) {
             if (tc.__onPointerDown) {
                 tc.__onPointerDown();
             }
@@ -245,44 +246,44 @@ function _onDocumentMouseDown(e) {
             return 1;
         }
     });
-     
+
 }
 
 
-function brightColor(c, v){
-    return isNumeric(v) ? { r:c.r + v, g: c.g + v, b: c.b + v } :
-            isObject(v) ? { r:c.r + v.r, g: c.g + v.g, b: c.b + v.b } : c;
+function brightColor(c, v) {
+    return isNumeric(v) ? { r: c.r + v, g: c.g + v, b: c.b + v } :
+        isObject(v) ? { r: c.r + v.r, g: c.g + v.g, b: c.b + v.b } : c;
 }
 
-function highlightTargetColor(subobj, a){
-    a *= (subobj.__highlightMult||1);
+function highlightTargetColor(subobj, a) {
+    a *= (subobj.__highlightMult || 1);
     var color = subobj.__baseColor || subobj.__color;
-    return subobj.__shader == 'colorize' ? 
-            { r:color.r + 0.015 * a, g:color.g  + 0.015 * a, b:color.b + 0.015 * a } : 
-        subobj.__shader == 'hsv' ? 
-            { g:color.g - 0.2 * a, b:color.b + 0.1 * a, r: color.r } : 
-            { r:color.r + 0.2 * a, g:color.g + 0.2 * a, b: color.b + 0.2 * a }
+    return subobj.__shader == 'colorize' ?
+        { r: color.r + 0.015 * a, g: color.g + 0.015 * a, b: color.b + 0.015 * a } :
+        subobj.__shader == 'hsv' ?
+            { g: color.g - 0.2 * a, b: color.b + 0.1 * a, r: color.r } :
+            { r: color.r + 0.2 * a, g: color.g + 0.2 * a, b: color.b + 0.2 * a }
 }
 
-function highlightSubobj(subobj, a, t){
+function highlightSubobj(subobj, a, t) {
     killAnim(subobj.__color);
     if (!subobj.__baseColor) {
-        subobj.__baseColor = brightColor( subobj.__color, 0 );
+        subobj.__baseColor = brightColor(subobj.__color, 0);
     }
     t = t || 0.1;
     if (averageFPS > 30) {
-        anim( subobj.__color, highlightTargetColor(subobj, a), t );
+        anim(subobj.__color, highlightTargetColor(subobj, a), t);
     } else {
-        subobj.__color.copy( highlightTargetColor(subobj, a) );
+        subobj.__color.__copy(highlightTargetColor(subobj, a));
     }
 }
 
-function _highlight_(node, a, t){
+function _highlight_(node, a, t) {
     if (node.__highlighted != a) {
         node.__highlighted = a;
         if (node.__disabled) return;
         var dac = node.__dac;
-        if (dac){
+        if (dac) {
             switch (a) {
                 case 0:
                     node.__applyDac('out');
@@ -295,66 +296,62 @@ function _highlight_(node, a, t){
                     break;
             }
         }
-        
+
         if (node.__subobj) {
-            for (var i = 0; i< node.__subobj.length; i++) {
+            for (var i = 0; i < node.__subobj.length; i++) {
                 highlightSubobj(node.__subobj[i], a, t);
             }
         }
     }
 };
 
-function highlight(a, t){ return _highlight_(this, a, t); };
+function highlight(a, t) { return _highlight_(this, a, t); };
 
 var __highlightedOneObject__;
-function highlightOne(a, t){ 
-    if (__highlightedOneObject__ && __highlightedOneObject__ != this && a){
-        _highlight_(__highlightedOneObject__, 0 );
+function highlightOne(a, t) {
+    if (__highlightedOneObject__ && __highlightedOneObject__ != this && a) {
+        _highlight_(__highlightedOneObject__, 0);
         __highlightedOneObject__.__mouseIn = 0;
-        removeFromArray( __highlightedOneObject__, tappableObjects.__b );
+        removeFromArray(__highlightedOneObject__, tappableObjects.__b);
     }
-    if (a){
+    if (a) {
         __highlightedOneObject__ = this;
     } else
-    if (__highlightedOneObject__ == this) {
-        __highlightedOneObject__ = 0;
-    }
+        if (__highlightedOneObject__ == this) {
+            __highlightedOneObject__ = 0;
+        }
     _highlight_(this, a, t);
 };
- 
-function onTapHighlight(obj, subobj, multiHighlight){
+
+function onTapHighlight(obj, subobj, multiHighlight) {
     obj.__subobj = subobj ? isArray(subobj) || (subobj instanceof NodeArrayIterator) ? subobj : [subobj] : [obj];
     obj.__highlight = multiHighlight ? highlight : highlightOne;
     return obj;
 }
 
-function onDocumentMouseUp(e) { 
+function onDocumentMouseUp(e) {
     return _onDocumentMouseUp(e)
 }
-        
+
 //cheats 
 var specialEventHandler;
 //endcheats
 
 function _onDocumentMouseUp(e, isout) {
-    
-//     consoleWarn('_onDocumentMouseUp', e);
-    //debug
-    
+
     if (e.button == 2 && !__window.oncm) {
         __window.oncm2 = 1;
         return onContextMenu(e);
     }
-    //undebug
-    
-    mouseButtons[e.button] = 0;
-    
+
+    mouseButtons[e.button || 0] = 0;
+
     draggableObjects.__startDragPosition = 0;
-    
+
     if (!updateMouse(e))
         return;
 
-    if (highlightedObject){
+    if (highlightedObject) {
         highlightedObject.__highlight(highlightedObject.__mouseIn ? 0.5 : 0, 0.3);
 
         if (highlightedObject.__onPointerUp)
@@ -363,56 +360,52 @@ function _onDocumentMouseUp(e, isout) {
         highlightedObject = undefined;
 
     }
-        
-    if ( lasttouchesdist ){
+
+    if (lasttouchesdist) {
         lasttouchesdist = undefined;
     }
-        
-    if (curDraggingObject && curDraggingObject.__isDragging){
-//         consoleError( 'no tap because curDraggingObject!!', curDraggingObject.name);
+
+    if (curDraggingObject && curDraggingObject.__isDragging) {
+        //         consoleError( 'no tap because curDraggingObject!!', curDraggingObject.name);
         if (curDraggingObject.__dragEnd) {
             //cheats
-            if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragEnd'); 
+            if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragEnd');
             //endcheats
             curDraggingObject.__dragEnd();
         }
-        
+
         if (!curDraggingObject.__keepIsDragingThenMouseUp) {
             curDraggingObject.__isDragging = false;
         }
-        
-        curDraggingObject = null;
-        
-    } else {
-        
+
         curDraggingObject = null;
 
-        if (!isout && (Date.now() - downTime < 500) && downPos ) {
-            
-            if ( downPos.__distanceTo(mouse) < 10 ) {
+    } else {
+
+        curDraggingObject = null;
+
+        if (!isout && (Date.now() - downTime < 500) && downPos) {
+
+            if (downPos.__distanceTo(mouse) < 10) {
                 var catched = 0;
                 if (
-                //debug
-                options.__gesturesTapNotFirst ||
-                //undebug
-                (gestures.tap && !gestures.tap(mouse)) || !gestures.tap)  {
-                        
-                    
-                    //debug
+                    options.__gesturesTapNotFirst ||
+                    (gestures.tap && !gestures.tap(mouse)) || !gestures.tap) {
+
+
+
                     __window.__onTapHitTestDebug = 1;
-//                     consoleLog("__window.contextMenuFired", __window.contextMenuFired);
-                    if (__window.contextMenuFired){
+                    //                     consoleLog("__window.contextMenuFired", __window.contextMenuFired);
+                    if (__window.contextMenuFired) {
                         __window.contextMenuFired = 0;
                         catched = 1;
-                    } else
-                    //undebug
-                    {
-                        var tapEvent = mouse.clone();
-                        catched = tappableObjects.__traverseHit( mouse, function(obj){
-                            if ( isFunction( obj.____onTapFunc ) ) {
-//                                 consoleLog("obj.____onTapFunc", obj);
+                    } else {
+                        var tapEvent = mouse.__clone();
+                        catched = tappableObjects.__traverseHit(mouse, function (obj) {
+                            if (isFunction(obj.____onTapFunc)) {
+                                //                                 consoleLog("obj.____onTapFunc", obj);
                                 obj.____onTapFunc(tapEvent);
-                                if (!tapEvent.__skip){
+                                if (!tapEvent.__skip) {
                                     return 1;
                                 } else {
                                     tapEvent.__skip = 0;
@@ -420,224 +413,237 @@ function _onDocumentMouseUp(e, isout) {
                             }
                         });
                     }
-//                         if (!catched) consoleError( 'no tap because no intersect');
+                    //                         if (!catched) consoleError( 'no tap because no intersect');
 
-                    //debug
                     __window.__onTapHitTestDebug = 0;
-                    //undebug
+
                 }
-                
-                //debug
-                if ( !catched && options.__gesturesTapNotFirst){
+
+                if (!catched && options.__gesturesTapNotFirst) {
                     if (gestures.tap) {
                         gestures.tap(mouse);
                     }
                 }
-                //undebug
+
             } // else { consoleError( 'no tap because downPos so far'); }
-            
+
 
         } // else consoleError( 'no tap because Date.now() - downTime > 500', Date.now(), downTime, isout );
     }
-    
-    if (!isout && gestures.__onPointerUp) 
+
+    if (!isout && gestures.__onPointerUp)
         gestures.__onPointerUp();
 
     if (pinchInProcess) {
-       var touches =  getTouches(e);
-       if ( !touches || ( touches.length <= 1 ))  {
+        var touches = getTouches(e);
+        if (!touches || (touches.length <= 1)) {
             checkPinchEnd()
-       }
+        }
     }
- 
+
 }
 
-function onDocumentTouchOut(e){
-    _onDocumentMouseUp(e, 1);
+function onDocumentTouchEnd(e) {
+    consoleLog('touchend');
+    if (gestures.__touchProcess) {
+        return gestures.__touchProcess(getTouches(e));
+    } else {
+        return _onDocumentMouseUp(e, 0);
+    }
 }
 
-function onDocumentMouseOut(e){
+
+function onDocumentTouchOut(e) {
+    consoleLog('touchleave');
+    if (gestures.__touchProcess) {
+        return gestures.__touchProcess(getTouches(e));
+    } else {
+        return _onDocumentMouseUp(e, 1);
+    }
+}
+
+function onDocumentMouseOut(e) {
     tmpDraggingObject = 0;
     draggableObjects.__startDragPosition = 0;
-    
-    if (curDraggingObject && curDraggingObject.__keepDragThenMouseOut ) {
+
+    if (curDraggingObject && curDraggingObject.__keepDragThenMouseOut) {
         tmpDraggingObject = curDraggingObject;
         curDraggingObject.__keepIsDragingThenMouseUp = 1;
     }
-    
-    _onDocumentMouseUp(e,1);
-    
+
+    _onDocumentMouseUp(e, 1);
+
     if (tmpDraggingObject)
         tmpDraggingObject.__keepIsDragingThenMouseUp = 0;
 }
 
-function onDocumentMouseEnter(e){
-    
+function onDocumentMouseEnter(e) {
+
     if (tmpDraggingObject) {
-        if ( e.buttons ) {
+        if (e.buttons) {
             onDocumentMouseMove(e);
-            setCurrentDraggingObject( tmpDraggingObject, 1 );
+            setCurrentDraggingObject(tmpDraggingObject, 1);
         } else {
             tmpDraggingObject.__isDragging = 0;
         }
-        
+
         tmpDraggingObject = 0;
-        
+
     }
-    
+
 }
 
 
-function checkPinchEnd(){
+function checkPinchEnd() {
     if (pinchInProcess) {
         pinchInProcess = 0;
         if (gestures.pinchEnd)
-                gestures.pinchEnd();   
+            gestures.pinchEnd();
     }
 }
-    
-function getTouches(e){
+
+function getTouches(e) {
     return e.originalEvent ? e.originalEvent.touches : e.touches;
-}    
+}
 
 function onDocumentTouchMove(e) {
     isTouchEvent = 1;
-    
+
     if (!updateMouse(e))
         return;
-    
-    
-    var touches = getTouches(e);
 
-    if (touches && touches.length > 1) {
-    
-        var c = new Vector2(0,0)
-            , a = []
-            , l = touches.length;
-      
-        for (var i = 0; i< touches.length; i++ ){
-             var b = getEventCoords(touches[i]);
-             c.add(b);
-             a.push(b);
-        }
-        
-        c.__divideScalar(l);
-        
-        var d = $count(a, function(p) {
-            var x = (p.x - c.x), y = (p.y - c.y);
-            return sqrt( x*x + y*y );
-        }) / l / layoutsResolutionMult;
-        
-        if (lasttouchesdist == undefined){
-            lasttouchesdist = d;
-        }
-        
-        if (!pinchInProcess) {
-            if (gestures.pinchStart) {
-                gestures.pinchStart(e, c, d, d - lasttouchesdist);
+
+    var touches = getTouches(e);
+    if (gestures.__touchProcess) {
+        return gestures.__touchProcess(touches);
+    } else
+        if (touches && touches.length > 1) {
+
+            var c = new Vector2(0, 0)
+                , a = []
+                , l = touches.length;
+
+            for (var i = 0; i < touches.length; i++) {
+                var b = getEventCoords(touches[i]);
+                c.add(b);
+                a.push(b);
             }
-            pinchInProcess = 1;
+
+            c.__divideScalar(l);
+
+            var d = $count(a, function (p) {
+                var x = (p.x - c.x), y = (p.y - c.y);
+                return sqrt(x * x + y * y);
+            }) / l / layoutsResolutionMult;
+
+            if (lasttouchesdist == undefined) {
+                lasttouchesdist = d;
+            }
+
+            if (!pinchInProcess) {
+                if (gestures.pinchStart) {
+                    gestures.pinchStart(e, c, d, d - lasttouchesdist);
+                }
+                pinchInProcess = 1;
+            }
+
+            if (gestures.pinch) {
+                gestures.pinch(e, c, d, d - lasttouchesdist);
+            }
+
+            lasttouchesdist = d;
+
+        } else {
+
+            checkPinchEnd();
+            disableHighlightOnOver = 1;
+            _onDocumentMouseMove(e);
+
         }
-        
-        if (gestures.pinch) {
-            gestures.pinch(e, c, d, d - lasttouchesdist);
-        }
-        
-        lasttouchesdist = d;
-      
-    } else {
-    
-        checkPinchEnd();
-        disableHighlightOnOver = 1;
-        _onDocumentMouseMove(e);
-        
-    }
-  
+
 }
 
 function onDocumentMouseWheel(e) {
-    
+
     lastMouseWheelTime = TIME_NOW;
     if (!updateMouse(e))
         return;
-    
+
     var delta = e.deltaY || e.detail || e.wheelDelta;
-    if (gestures.wheel && gestures.wheel(mouse, delta)) 
+    if (gestures.wheel && gestures.wheel(mouse, delta))
         return;
-    
-    if ( scrollableObjects.__traverseHit( mouse, function(o){
-        
-            if (o.__blockScroll){
-                
-                if ( isFunction( o.__blockScroll ) ) {
-                    if ( o.__blockScroll() )
-                        return 1;
-                    
-                } else {
+
+    if (scrollableObjects.__traverseHit(mouse, function (o) {
+
+        if (o.__blockScroll) {
+
+            if (isFunction(o.__blockScroll)) {
+                if (o.__blockScroll())
                     return 1;
-                }
+
+            } else {
+                return 1;
             }
-            //debug
-            if (o.__wheel){ // wheelable object
-                return;
-            }
-            //undebug
-            if (o.__dragStart) {
-                //cheats
-                if (specialEventHandler) specialEventHandler.eventHandler(o, '__dragStart'); 
-                //endcheats
-                o.__dragStart();
-                return o.__scrollBy( 30 * sign(delta) );
-            }
-        }))
-    {
+        }
+
+        if (o.__wheel) { // wheelable object
+            return;
+        }
+
+        if (o.__dragStart) {
+            //cheats
+            if (specialEventHandler) specialEventHandler.eventHandler(o, '__dragStart');
+            //endcheats
+            o.__dragStart();
+            return o.__scrollBy(30 * sign(delta));
+        }
+    })) {
         return;
     }
 
-    //debug
-    var intersects = wheelObjects.__traverseHit( mouse, function(o){
-        return o.__wheel( sign(delta) );
+    wheelObjects.__traverseHit(mouse, function (o) {
+        return o.__wheel(sign(delta));
     });
-    //undebug
+
 }
 
-//debug
-function onContextMenu(e){
-    
+
+function onContextMenu(e) {
+
     draggableObjects.__startDragPosition = 0;
-    
+
     if (__window.oncm)
         return;
-    
+
     __window.oncm = 1;
     if (!updateMouse(e, 1))
         return;
 
-    var intersects = menusObjects.__traverseHit( mouse, function(o){
-//         consoleLog("o.____contextMenu()");
-        if ( o.____contextMenu() ) {
-//             consoleLog("__window.contextMenuFired!");
+    menusObjects.__traverseHit(mouse, function (o) {
+        //         consoleLog("o.____contextMenu()");
+        if (o.____contextMenu()) {
+            //             consoleLog("__window.contextMenuFired!");
             __window.contextMenuFired = 1;
-            looperPost(()=> {
+            looperPost(() => {
                 __window.contextMenuFired = 0;
             });
             blockBrowserEvent(e);
             return 1;
         }
     });
-    
+
     if (__window.oncm2 && __window.contextMenuFired) {
         blockBrowserEvent(e);
     }
-    
-    looperPost(()=> { __window.oncm = 0; __window.oncm2 = 0; });
+
+    looperPost(() => { __window.oncm = 0; __window.oncm2 = 0; });
 }
-//undebug
- 
-    
+
+
+
 function onDocumentMouseMove(e) {
     isTouchEvent = 0;
-    
+
     return _onDocumentMouseMove(e);
 }
 
@@ -647,84 +653,83 @@ function setCursor(cursor) {
 }
 
 function _onDocumentMouseMove(e) {
-    
-//     consoleWarn('_onDocumentMouseMove', e);
-    
+
+    //     consoleWarn('_onDocumentMouseMove', e);
+
     if (!updateMouse(e))
         return;
 
-    var mdx = (e.movementX || e.mozMovementX || e.webkitMovementX || ( mouse.x - lastMousePosition.x )) / layoutsResolutionMult,
-        mdy = (e.movementY || e.mozMovementY || e.webkitMovementY || ( mouse.y - lastMousePosition.y )) / layoutsResolutionMult;
-        
+    var mdx = (e.movementX || e.mozMovementX || e.webkitMovementX || (mouse.x - lastMousePosition.x)) / layoutsResolutionMult,
+        mdy = (e.movementY || e.mozMovementY || e.webkitMovementY || (mouse.y - lastMousePosition.y)) / layoutsResolutionMult;
+
     if (draggableObjects.__startDragPosition) {
-        
-        curDraggingObject = draggableObjects.__traverseHit( draggableObjects.__startDragPosition, function(obj){
+
+        curDraggingObject = draggableObjects.__traverseHit(draggableObjects.__startDragPosition, function (obj) {
             return !obj.__canDrag || obj.__canDrag(lastMousePosition)
         });
-         
+
         if (curDraggingObject) {
-            curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.clone();
+            curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.__clone();
             curDraggingObject.__lastMousePosition = lastMousePosition;
             draggableObjects.__startDragPosition = 0;
         }
-        
+
     }
-        
-    lastMousePosition = mouse.clone();
-    
+
+    lastMousePosition = mouse.__clone();
+
     if (curDraggingObject) {
-        
-        
+
+
         var z = 1;
         //debug
-        var c = curDraggingObject.__camera || (curDraggingObject.__root||0).camera;
+        var c = curDraggingObject.__camera || (curDraggingObject.__root || 0).camera;
         if (c) z = c.__zoom;
         //undebug
-        
-        var currentMousePosition = mouse.clone()
-            , dx = ( pointerLocked ? mdx : currentMousePosition.x - curDraggingObject.__lastMousePosition.x) / z / layoutsResolutionMult
-            , dy = ( pointerLocked ? mdy : currentMousePosition.y - curDraggingObject.__lastMousePosition.y) / z / layoutsResolutionMult
+
+        var currentMousePosition = mouse.__clone()
+            , dx = (pointerLocked ? mdx : currentMousePosition.x - curDraggingObject.__lastMousePosition.x) / z / layoutsResolutionMult
+            , dy = (pointerLocked ? mdy : currentMousePosition.y - curDraggingObject.__lastMousePosition.y) / z / layoutsResolutionMult
             , x = curDraggingObject.__lastPosition.x + dx
             , y = curDraggingObject.__lastPosition.y + dy;
-        
-//         consoleError( 'mouseMove', curDraggingObject.__lastMousePosition, 'mouse:', mouse.clone() );
-            
-        if ( dx * dx + dy * dy > (curDraggingObject.__dragDist || 100) ) {
+
+        //         consoleError( 'mouseMove', curDraggingObject.__lastMousePosition, 'mouse:', mouse.__clone() );
+
+        if (dx * dx + dy * dy > (curDraggingObject.__dragDist || 100)) {
             if (!curDraggingObject.__isDragging)
-                if (curDraggingObject.__dragStart){
+                if (curDraggingObject.__dragStart) {
                     //cheats
-                    if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragStart'); 
+                    if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragStart');
                     //endcheats
                     curDraggingObject.__dragStart(curDraggingObject.__lastPosition.x, curDraggingObject.__lastPosition.y);
                 }
-                
+
             curDraggingObject.__isDragging = true;
         }
-        
+
         if (curDraggingObject.__isDragging) {
             curDraggingObject.__lastPosition.set(x, y);
             curDraggingObject.__lastMousePosition = currentMousePosition;
-            
-            if (curDraggingObject.____onDragFunc){
+
+            if (curDraggingObject.____onDragFunc) {
                 curDraggingObject.____onDragFunc(x, y, dx, dy, e);
             }
-            
+
         }
-        
-    } 
-    
-    
-    if (!curDraggingObject && gestures.__drag && ( isTouchEvent || mouseButtons[0] ) ){
+
+    }
+
+
+    if (!curDraggingObject && gestures.__drag && (isTouchEvent || mouseButtons[0])) {
         if (gestures.__drag(mdx, mdy))
             return;
     }
 
     var cursor;
 
-    if (!curDraggingObject || e.__skip)
-    {
+    if (!curDraggingObject || e.__skip) {
         var needFilter = 0;
-        for (var i = 0; i < tappableObjects.__b.length; i++){
+        for (var i = 0; i < tappableObjects.__b.length; i++) {
             var obj = tappableObjects.__b[i];
             if (obj.__hitTest(mouse)) {
                 cursor = obj.____cursor;
@@ -738,13 +743,13 @@ function _onDocumentMouseMove(e) {
             }
 
         }
-        
+
         if (needFilter) {
-            tappableObjects.__b = $filter( tappableObjects.__b, function(obj){ return obj.__mouseIn; });
+            tappableObjects.__b = $filter(tappableObjects.__b, function (obj) { return obj.__mouseIn; });
         }
-        
-        if ( !disableHighlightOnOver ) {
-            tappableObjects.__traverseHit( mouse, function(obj){
+
+        if (!disableHighlightOnOver) {
+            tappableObjects.__traverseHit(mouse, function (obj) {
                 if (!obj.__skipHighlight) {
                     if (!obj.__mouseIn) {
                         obj.__mouseIn = 1;
@@ -760,9 +765,9 @@ function _onDocumentMouseMove(e) {
                 }
             });
         }
-    
+
         disableHighlightOnOver = 0;
-    
+
     }
 
     if (cursor && cursor != ev_cursor) {
@@ -770,7 +775,7 @@ function _onDocumentMouseMove(e) {
     } else if (ev_cursor && !cursor) {
         setCursor('');
     }
-    
+
     if (gestures.move) {
         gestures.move(mouse);
     }
@@ -778,11 +783,10 @@ function _onDocumentMouseMove(e) {
 
 
 
-//debug
 
-function keyFromKeyEvent(e){
-    var key = e.key || String.fromCharCode( e.keyCode );
-    if (e.keyCode <= 90 && e.keyCode >= 65) key = String.fromCharCode( e.keyCode );
+function keyFromKeyEvent(e) {
+    var key = e.key || String.fromCharCode(e.keyCode);
+    if (e.keyCode <= 90 && e.keyCode >= 65) key = String.fromCharCode(e.keyCode);
     key = key.toLowerCase();
     return key;
 }
@@ -793,7 +797,7 @@ function onDocumentKeyDown(e) {
     isCtrlPressed = e.ctrlKey || e.metaKey;
     isAltPressed = e.altKey;
     if (allEventsBlocked) return;
-    if (gestures.__onKeyDown && gestures.__onKeyDown(e.keyCode, keyFromKeyEvent(e), e.ctrlKey || e.metaKey, e.shiftKey, e.altKey, e)){
+    if (gestures.__onKeyDown && gestures.__onKeyDown(e.keyCode, keyFromKeyEvent(e), e.ctrlKey || e.metaKey, e.shiftKey, e.altKey, e)) {
         e.preventDefault();
     }
 
@@ -805,17 +809,17 @@ function onDocumentKeyUp(e) {
     isCtrlPressed = e.ctrlKey || e.metaKey;
     isAltPressed = e.altKey;
     if (allEventsBlocked) return;
-    
+
     var k = keyFromKeyEvent(e),
         catched = 0;
-        
-    var tapEvent = mouse.clone();
-    
-    keyableObjects.__keyObjects(k, function(nod){
+
+    var tapEvent = mouse.__clone();
+
+    keyableObjects.__keyObjects(k, function (nod) {
         var tk = nod.__onKey;
-        if ( (isFunction(tk[k]) && tk[k]()) || ( nod.____onTapFunc && nod.____onTapFunc(tapEvent) ) ) { 
+        if ((isFunction(tk[k]) && tk[k]()) || (nod.____onTapFunc && nod.____onTapFunc(tapEvent))) {
             if (!tapEvent.__skip) {
-                catched = 1; 
+                catched = 1;
                 return 1;
             } else {
                 tapEvent.__skip = 0;
@@ -823,20 +827,19 @@ function onDocumentKeyUp(e) {
         }
     });
 
-    if (catched || (gestures.__onKeyUp && gestures.__onKeyUp(e.keyCode, k, e.ctrlKey || e.metaKey, e.shiftKey, e.altKey, e)) ){
+    if (catched || (gestures.__onKeyUp && gestures.__onKeyUp(e.keyCode, k, e.ctrlKey || e.metaKey, e.shiftKey, e.altKey, e))) {
         e.preventDefault();
     }
 
 };
 
-//undebug
 
-function addEventListenerToElement(i, elem, listener){
+function addEventListenerToElement(i, elem, listener) {
     listener = wrapFunctionInTryCatch(listener);
-    return elem.addEventListener ? elem.addEventListener ( i, listener, false ) : elem.attachEvent ? elem.attachEvent( i, listener, false ) : 0;
+    return elem.addEventListener ? elem.addEventListener(i, listener, false) : elem.attachEvent ? elem.attachEvent(i, listener, false) : 0;
 }
 
-function addEventListenersToElement(elem, listeners){
+function addEventListenersToElement(elem, listeners) {
     if (!elem) return;
     for (var i in listeners) {
         addEventListenerToElement(i, elem, listeners[i]);
@@ -844,8 +847,8 @@ function addEventListenersToElement(elem, listeners){
 }
 
 function addEventListeners(elem) {
-    
-    addEventListenersToElement(elem, 
+
+    addEventListenersToElement(elem,
         setNonObfuscatedParams({},
             'mousemove', onDocumentMouseMove,
             'touchmove', onDocumentTouchMove,
@@ -853,55 +856,49 @@ function addEventListeners(elem) {
             'mousedown', onDocumentMouseDown,
             'touchstart', onDocumentTouchDown,
 
+            'touchend', onDocumentTouchEnd,
             'touchleave', onDocumentTouchOut,
-            
+
             'mouseout', onDocumentMouseOut,
             'mouseenter', onDocumentMouseEnter,
-            
             'mouseup', onDocumentMouseUp,
-            'touchend', onDocumentMouseUp,
-            
+
             'wheel', onDocumentMouseWheel
-            
-    ));
-    
-    //debug
-    addEventListenersToElement( __document, setNonObfuscatedParams({},
+
+        ));
+
+
+    var hiddenNow = false;
+    function checkVisibilityChanged() {
+        var hn = !!(__document.hidden || __document.msHidden || __document.webkitHidden);
+        if (hiddenNow != hn) {
+            hiddenNow = hn;
+            BUS.__post(__ON_VISIBILITY_CHANGED, !hiddenNow);
+        }
+    }
+
+    addEventListenersToElement(__document, setNonObfuscatedParams({},
+        'visibilitychange', checkVisibilityChanged,
+        'msvisibilitychange', checkVisibilityChanged,
+        'webkitvisibilitychange', checkVisibilityChanged,
         'keydown', onDocumentKeyDown,
         'keyup', onDocumentKeyUp,
         'contextmenu', onContextMenu
     ));
-    //undebug
-    
-    
-    var hiddenNow = false;
-    function checkVisibilityChanged(){
-        var hn = !!(__document.hidden || __document.msHidden || __document.webkitHidden);
-        if (hiddenNow != hn) {
-            hiddenNow = hn;
-            BUS.__post( __ON_VISIBILITY_CHANGED, !hiddenNow );
-        }
-    }
 
-    addEventListenersToElement(__document, setNonObfuscatedParams({}, 
-        'visibilitychange', checkVisibilityChanged,
-        'msvisibilitychange', checkVisibilityChanged,
-        'webkitvisibilitychange', checkVisibilityChanged
-    ));
-    
-    addEventListenersToElement(__window, setNonObfuscatedParams({}, 
+    addEventListenersToElement(__window, setNonObfuscatedParams({},
         'beforeunload', checkVisibilityChanged,
         'focus', checkVisibilityChanged,
         'blur', checkVisibilityChanged
     ));
-    
+
 }
 
 
 
 ///// gamepad
 
-var Gamepads = makeClass(function(){
+var Gamepads = makeClass(function () {
     var t = this;
 
     t.__devices = {};
@@ -910,7 +907,7 @@ var Gamepads = makeClass(function(){
 
     t.__haveEvents = "ongamepadconnected" in __window;
 
-    addEventListenersToElement(__window, 
+    addEventListenersToElement(__window,
         setNonObfuscatedParams({},
             "gamepadconnected", (e) => { t.__addGamepad(e.gamepad); },
             "gamepaddisconnected", e => { t.__removeGamepad(e.gamepad) }
@@ -927,14 +924,14 @@ var Gamepads = makeClass(function(){
             consoleLog(gamepad);
         }
     },
-    
+
     __removeGamepad(gamepad) {
         if (gamepad) {
             delete this.__devices[gamepad.index];
             consoleLog("gamepad", gamepad.index, "disconnected")
         }
     },
-    
+
     __update() {
         var t = this;
         if (!t.__haveEvents) {
@@ -949,21 +946,21 @@ var Gamepads = makeClass(function(){
                 }
             });
         }
-    
+
         $each(t.__devices, device => {
             var gp = t.__gamepads[device.index];
-            if (!gp){
-                gp = t.__gamepads[device.index] = { __buttons: {}, __axes:{} };
+            if (!gp) {
+                gp = t.__gamepads[device.index] = { __buttons: {}, __axes: {} };
             }
 
             $each(device.buttons, (b, i) => {
                 gp.__buttons[i] = typeof b == "object" ? b.pressed : b;
             });
-    
+
             $each(device.axes, (val, i) => {
                 gp.__axes[i] = (val == -1 || val == 1) ? val : 0;
             });
-        }); 
-    } 
+        });
+    }
 });
 

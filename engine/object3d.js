@@ -59,21 +59,21 @@ ObjectDefineProperties(Object3DPrototype,
     setNonObfuscatedParams({},
 
         'color', {
-        set: function (v) { this.__selfColor = v; },
-        get: function (v) { return this.__selfColor; }
+        set(v) { this.__selfColor = v; },
+        get(v) { return this.__selfColor; }
     },
 
-        matrixWorld, { get: function (v) { return this.mw; } },
-        projectionMatrix, { get: function (v) { return this.__projectionMatrix; } }
+        matrixWorld, { get(v) { return this.mw; } },
+        projectionMatrix, { get(v) { return this.__projectionMatrix; } }
     )
 )
 
 var Object3dPropertiesObject = {
 
-    opacity: { get: function () { return this.__alpha * this.__opacityDeep; } },
+    opacity: { get() { return this.__alpha * this.__opacityDeep; } },
 
     __matrixWorld: {
-        get: function () {
+        get() {
             if (this.____visible && this.__matrixWorldNeedsUpdate || this.__matrixNeedsUpdate)
                 this.__updateMatrixWorld();
             return this.mw;
@@ -81,8 +81,8 @@ var Object3dPropertiesObject = {
     },
 
     __anchor: {
-        get: function () { return this.____anchor; },
-        set: function (v) {
+        get() { return this.____anchor; },
+        set(v) {
             if (v) {
                 this.____anchor.set(v.x || 0, v.y || 0, v.z || 0);
             } else {
@@ -93,22 +93,22 @@ var Object3dPropertiesObject = {
     },
 
     __uniforms: {
-        get: function () {
+        get() {
             return this.____uniforms;
         },
-        set: function (a) {
+        set(a) {
             this.__createUniforms(a);
             this.____uniforms = a;
         }
     },
 
     __shader: {
-        get: function () { return this.____shader; },
-        set: function (v) { this.____shader = v; this.__program = 0; }
+        get() { return this.____shader; },
+        set(v) { this.____shader = v; this.__program = 0; }
     },
 
     __ready: {
-        get: function () {
+        get() {
             var t = this;
             if (t.__notReady) {
                 //debug
@@ -129,28 +129,26 @@ ObjectDefineProperties(Object3DPrototype, Object3dPropertiesObject);
 
 mergeObj(Object3DPrototype, {
 
-    isObject3D: true,
+    __isObject3D: true,
 
-    __visibleForTap: function () {
+    __visibleForTap() {
         var t = this;
         if (!t.____visible || !t.__viewable) {
             return 0;
         }
-        if (t.parent) {
-            return t.parent.__visibleForTap();
+        if (t.__parent) {
+            return t.__parent.__visibleForTap();
         } else {
             return t.__isScene;
         }
-        return 1;
-
     },
 
-    __deepVisible: function () {
+    __deepVisible() {
         if (!this.____visible) return false;
-        return this.parent ? this.parent.__deepVisible() : 1;
+        return this.__parent ? this.__parent.__deepVisible() : 1;
     },
 
-    __anim: function (to, time, repeat, easing, delay, agasp) {
+    __anim(to, time, repeat, easing, delay, agasp) {
         var t = this;
         if (isArray(to)) {
             if (isObject(to[0])) {
@@ -181,7 +179,7 @@ mergeObj(Object3DPrototype, {
     },
 
 
-    __addOnDestruct: function (cb) {
+    __addOnDestruct(cb) {
 
         if (!this.__onDestruct) {
             this.__onDestruct = [];
@@ -198,7 +196,7 @@ mergeObj(Object3DPrototype, {
         return this;
     },
 
-    __removeAfter: function (sec) {
+    __removeAfter(sec) {
         var t = this;
         var f = function () { if (t.__removingTimeout) _clearTimeout(t.__removingTimeout); };
         f();
@@ -207,13 +205,13 @@ mergeObj(Object3DPrototype, {
         return this;
     },
 
-    __removeFromParentFunction: function () {
+    __removeFromParentFunction() {
 
         return this.__removeFromParent.bind(this);
 
     },
 
-    __destruct: function () {
+    __destruct() {
         var t = this;
         if (t.__onDestruct) {
             if (isArray(t.__onDestruct)) {
@@ -230,54 +228,54 @@ mergeObj(Object3DPrototype, {
     },
 
 
-    __insertChildAfter: function (child, afterThat) {
+    __insertChildAfter(child, afterThat) {
         if (child && afterThat) {
             this.__insertChild(child, afterThat.__realIndex + 1);
         }
         return this;
     },
 
-    __insertChildBefore: function (child, beforeThat) {
+    __insertChildBefore(child, beforeThat) {
         if (child && beforeThat) {
             this.__insertChild(child, beforeThat.__realIndex);
         }
         return this;
     },
 
-    __insertChild: function (child, index) {
+    __insertChild(child, index) {
         if (child) {
-            var p = child.parent;
+            var p = child.__parent;
             if (p == this && child.__realIndex == index)
                 return;
 
             if (p) p.__removeChild(child);
             this.__childs.splice(index, 0, child);
             child.__dirty = this.__dirty = 3;
-            child.parent = this;
+            child.__parent = this;
             child.__root = this.__root || this;
         }
         return this;
     },
 
-    __removeChild: function (object) {
+    __removeChild(object) {
         var index = this.__childs.indexOf(object);
         if (index !== - 1) {
-            object.parent = object.__root = null;
+            object.__parent = object.__root = null;
             this.__childs.splice(index, 1);
             this.__dirty = 3;
         }
     },
 
-    __removeFromParent: function () {
+    __removeFromParent() {
 
-        if (this.parent) {
-            this.parent.__removeChild(this);
-            this.parent = 0;
+        if (this.__parent) {
+            this.__parent.__removeChild(this);
+            this.__parent = 0;
         }
 
     },
 
-    __removeChildsByFilter: function (f) {
+    __removeChildsByFilter(f) {
         var childs = this.__childs;
         for (var i = 0; i < childs.length;) {
             if (f(childs[i])) {
@@ -286,17 +284,17 @@ mergeObj(Object3DPrototype, {
         }
     },
 
-    __finishAllAnimations: function () {
+    __finishAllAnimations() {
         finishAnim(this);
         return this;
     },
 
-    __killAllAnimations: function () {
+    __killAllAnimations() {
         killAnim(this);
         return this;
     },
 
-    __getObjectByProperty: function (name, value) {
+    __getObjectByProperty(name, value) {
         if (this[name] === value) return this;
         for (var i = 0; i < this.__childs.length; i++) {
             var a = this.__childs[i].__getObjectByProperty(name, value);
@@ -304,7 +302,7 @@ mergeObj(Object3DPrototype, {
         }
     },
 
-    __getObjectsByProperty: function (name, value, a) {
+    __getObjectsByProperty(name, value, a) {
         a = a || [];
         if (this[name] === value)
             a.push(this);
@@ -315,7 +313,7 @@ mergeObj(Object3DPrototype, {
         return a;
     },
 
-    __getObjectsParentsByProperty: function (name, value, a) {
+    __getObjectsParentsByProperty(name, value, a) {
         a = a || [];
         if (this[name] === value) {
             a.push(this);
@@ -328,27 +326,27 @@ mergeObj(Object3DPrototype, {
         return a;
     },
 
-    __getObjectByName: function (name) {
+    __getObjectByName(name) {
         return this.__getObjectByProperty('name', name);
     },
 
-    __getObjectsByName: function (name, a) {
+    __getObjectsByName(name, a) {
         return this.__getObjectsByProperty('name', name, a);
     },
 
-    __createUniforms: function (uniformsList) {
+    __createUniforms(uniformsList) {
         return createUniforms(this, uniformsList);
     },
 
-    __getRoot: function () {
+    __getRoot() {
         var t = this;
-        while (t.parent) {
-            t = t.parent;
+        while (t.__parent) {
+            t = t.__parent;
         }
         return t;
     },
 
-    add: function (object) {
+    add(object) {
 
 
         for (var i = 0; i < arguments.length; i++) {
@@ -356,11 +354,11 @@ mergeObj(Object3DPrototype, {
             var object = arguments[i];
             if (object) {
 
-                if (object.parent) {
-                    object.parent.__removeChild(object);
+                if (object.__parent) {
+                    object.__parent.__removeChild(object);
                 }
 
-                object.parent = this;
+                object.__parent = this;
                 object.__parentScrollVector = this.__scrollVector || this.__parentScrollVector;
                 object.__parentScissor = this.__selfScissor || this.__parentScissor;
 
@@ -377,7 +375,7 @@ mergeObj(Object3DPrototype, {
 
     },
 
-    __getWorldScale: function () {
+    __getWorldScale() {
         var mw = this.__matrixWorld, te = mw.e;
         return new Vector3(
             sqrt(te[0] * te[0] + te[1] * te[1] + te[2] * te[2]) * (mw.determinant() < 0 ? -1 : 1),
@@ -386,21 +384,21 @@ mergeObj(Object3DPrototype, {
         );
     },
 
-    __eachChild: function (f) {
+    __eachChild(f) {
         $each(this.__childs, f);
     },
 
-    __findChild: function (f) {
+    __findChild(f) {
         return $find(this.__childs, f);
     },
 
-    __traverse: function (callback) {
+    __traverse(callback) {
         var r = callback(this);
         if (r !== undefined) return r;
         return this.__traverseChilds(callback);
     },
 
-    __traverseFilter: function (callback, filter) {
+    __traverseFilter(callback, filter) {
         if (filter(this)) {
             var r = callback(this);
             if (r !== undefined) return r;
@@ -408,7 +406,7 @@ mergeObj(Object3DPrototype, {
         }
     },
 
-    __traverseVisible: function (callback) {
+    __traverseVisible(callback) {
 
         if (!this.____visible) return;
 
@@ -425,7 +423,7 @@ mergeObj(Object3DPrototype, {
 
     },
 
-    __traverseChildsFilter: function (callback, filter) {
+    __traverseChildsFilter(callback, filter) {
         var childs = this.__childs, r;
         for (var i = 0, l = childs.length; i < l; i++) {
             r = childs[i].__traverseFilter(callback, filter);
@@ -433,7 +431,7 @@ mergeObj(Object3DPrototype, {
         }
     },
 
-    __traverseChilds: function (callback) {
+    __traverseChilds(callback) {
         var childs = this.__childs, r;
         for (var i = 0, l = childs.length; i < l; i++) {
             //debug
@@ -445,16 +443,16 @@ mergeObj(Object3DPrototype, {
         }
     },
 
-    __traverseParents: function (cb) {
-        var p = this.parent, r;
+    __traverseParents(cb) {
+        var p = this.__parent, r;
         while (p) {
             r = cb(p);
             if (r) return r;
-            p = p.parent;
+            p = p.__parent;
         }
     },
 
-    __updateMatrix: function () {
+    __updateMatrix() {
 
         var t = this,
             a = t.____anchor,
@@ -511,7 +509,7 @@ mergeObj(Object3DPrototype, {
 
             } else {
 
-                t.__baseDebugColor = t.color.clone();
+                t.__baseDebugColor = t.color.__clone();
 
             }
 
@@ -527,7 +525,7 @@ mergeObj(Object3DPrototype, {
 
     },
 
-    __updateMatrixWorld: function (force) {
+    __updateMatrixWorld(force) {
 
         if (this.__matrixNeedsUpdate) {
             //cheats
@@ -541,10 +539,10 @@ mergeObj(Object3DPrototype, {
             //cheats
             renderInfo.matrixWorldUpdates++;
             //endcheats
-            if (this.parent) {
-                this.mw.__multiplyMatrices(this.parent.mw, this.__matrix);
+            if (this.__parent) {
+                this.mw.__multiplyMatrices(this.__parent.mw, this.__matrix);
             } else {
-                this.mw.copy(this.__matrix);
+                this.mw.__copy(this.__matrix);
             }
             this.__matrixWorldNeedsUpdate = 0;
             force = 1;
