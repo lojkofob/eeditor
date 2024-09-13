@@ -132,37 +132,6 @@ function Node(j) {
 
 var NodePrototype = Node.prototype = Object.create(Object3DPrototype);
 
-
-function setupVertexAttributes(t, program) {
-    // передаем параметры в шейдер
-    renderer.__initAttributes();
-
-    //debug
-
-    (t.__verticesBuffer || 0).__debugDrawing =
-        (t.__uvsBuffer || 0).__debugDrawing =
-        (t.__colorsBuffer || 0).__debugDrawing =
-        (t.__indecesBuffer || 0).__debugDrawing = t.__debugDrawing;
-
-    //undebug
-    var programAttributes = program.attributes;
-
-    if (t.__verticesBuffer)
-        t.__verticesBuffer.__passToGL(programAttributes);
-
-    if (t.__uvsBuffer)
-        t.__uvsBuffer.__passToGL(programAttributes);
-
-    if (t.__colorsBuffer)
-        t.__colorsBuffer.__passToGL(programAttributes);
-
-    if (t.__indecesBuffer)
-        t.__indecesBuffer.__passToGL(programAttributes);
-
-    renderer.__disableUnusedAttributes();
-
-}
-
 mergeObj(NodePrototype, {
 
     constructor: Node,
@@ -1229,21 +1198,29 @@ mergeObj(NodePrototype, {
 
         t.__lastRenderTime = TIME_NOW;
 
-        if (t.__indecesBuffer) {
-
-            if (t.map || t.____shader) {
-
-                //cheats
-                renderInfo.nodesRendered++;
-                //endcheats
-                renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
-
-            }
+        if (t.__drawMe()) {
+            //cheats
+            renderInfo.nodesRendered++;
+            //endcheats
         }
+        //debug
+        else if (t.__debugDrawing) {
+            consoleDebug('failed to render node', t.name, 'no data to render!');
+        }
+        //undebug
 
         return 1;
     },
 
+    __drawMe() {
+        var t = this;
+        if (t.__indecesBuffer) {
+            if (t.map || t.____shader) {
+                renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
+                return 1;
+            }
+        }
+    },
 
     update(deep, updatusObject) {
 

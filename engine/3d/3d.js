@@ -601,9 +601,11 @@ makeClass(SkinnedMesh, {
 
     , __setupVertexAttributes(program) {
         var t = this;
-        if (t.__buffers) {
-            return 1;
+
+        if (!t.__buffers) {
+            return;
         }
+
         //debug
         (t.__verticesBuffer || 0).__debugDrawing =
             (t.__uvsBuffer || 0).__debugDrawing =
@@ -620,49 +622,51 @@ makeClass(SkinnedMesh, {
         var programAttributes = program.attributes;
 
         if (t.__verticesBuffer)
-            r |= t.__verticesBuffer.__passToGL(programAttributes);
+            t.__verticesBuffer.__passToGL(programAttributes);
 
         if (t.__uvsBuffer)
-            r |= t.__uvsBuffer.__passToGL(programAttributes);
+            t.__uvsBuffer.__passToGL(programAttributes);
 
         if (t.__colorsBuffer)
-            r |= t.__colorsBuffer.__passToGL(programAttributes);
+            t.__colorsBuffer.__passToGL(programAttributes);
 
         if (t.__indecesBuffer)
-            r |= t.__indecesBuffer.__passToGL(programAttributes);
+            t.__indecesBuffer.__passToGL(programAttributes);
 
         if (t.__skinIndexBuffer)
-            r |= t.__skinIndexBuffer.__passToGL(programAttributes);
+            t.__skinIndexBuffer.__passToGL(programAttributes);
 
         if (t.__skinWeightBuffer)
-            r |= t.__skinWeightBuffer.__passToGL(programAttributes);
+            t.__skinWeightBuffer.__passToGL(programAttributes);
 
         if (t.__normalBuffer)
-            r |= t.__normalBuffer.__passToGL(programAttributes);
+            t.__normalBuffer.__passToGL(programAttributes);
 
         if (t.__uvsBuffer0)
-            r |= t.__uvsBuffer0.__passToGL(programAttributes);
+            t.__uvsBuffer0.__passToGL(programAttributes);
 
         if (t.__uvsBuffer1)
-            r |= t.__uvsBuffer1.__passToGL(programAttributes);
+            t.__uvsBuffer1.__passToGL(programAttributes);
 
         if (t.__uvsBuffer2)
-            r |= t.__uvsBuffer2.__passToGL(programAttributes);
+            t.__uvsBuffer2.__passToGL(programAttributes);
 
         if (t.__uvsBuffer3)
-            r |= t.__uvsBuffer3.__passToGL(programAttributes);
+            t.__uvsBuffer3.__passToGL(programAttributes);
 
         return 1;
     },
 
     __drawMe() {
         var t = this;
+
         if (t.__material) {
             if (t.__indecesBuffer) {
                 renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
                 return 1;
             } else if (t.__verticesBuffer) {
-                renderer.__draw(t, t.__verticesCount || t.__verticesBuffer.__realsize);
+                debugger;
+                renderer.__draw(t, t.__verticesCount || (t.__verticesBuffer.__realsize / t.__verticesBuffer.__itemSize));
                 return 1;
             }
         }

@@ -554,6 +554,31 @@ mergeObj(Object3DPrototype, {
         for (var i = 0, l = __childs.length; i < l; i++) {
             __childs[i].__updateMatrixWorld(force);
         }
+    },
+
+    __setupVertexAttributes(program) {
+        var t = this, r = 0;
+        //debug
+        (t.__verticesBuffer || 0).__debugDrawing =
+            (t.__uvsBuffer || 0).__debugDrawing =
+            (t.__colorsBuffer || 0).__debugDrawing =
+            (t.__indecesBuffer || 0).__debugDrawing = t.__debugDrawing;
+        //undebug
+        var programAttributes = program.attributes;
+
+        if (t.__verticesBuffer)
+            r |= t.__verticesBuffer.__passToGL(programAttributes);
+
+        if (t.__uvsBuffer)
+            r |= t.__uvsBuffer.__passToGL(programAttributes);
+
+        if (t.__colorsBuffer)
+            r |= t.__colorsBuffer.__passToGL(programAttributes);
+
+        if (t.__indecesBuffer)
+            r |= t.__indecesBuffer.__passToGL(programAttributes);
+
+        return 1;
     }
 
 });

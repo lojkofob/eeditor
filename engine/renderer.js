@@ -1322,12 +1322,12 @@ function WebGLRenderer(dbg) {
 
         __resetGLState();
 
-        //debug
-        //          gl = __domElement.getContext( 'webgl2', glAttributes );
-        //          if (!gl)
-        //undebug
-
-        gl = __domElement.getContext('webgl', glAttributes) || __domElement.getContext('experimental-webgl', glAttributes);
+        gl =
+            //debug
+            __domElement.getContext('webgl2', glAttributes) ||
+            //undebug
+            __domElement.getContext('webgl', glAttributes) ||
+            __domElement.getContext('experimental-webgl', glAttributes);
 
         if (!gl) {
 
@@ -1863,16 +1863,21 @@ function WebGLRenderer(dbg) {
                     p_uniforms[uname].set(object[uname]);
             }
 
-        setupVertexAttributes(object, program);
-
         //cheats
         renderInfo.calls++;
         renderInfo.vertices += count;
         //endcheats
 
-        gl.drawElements(object.__drawMode || gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+        renderer.__initAttributes();
+
+        if (object.__setupVertexAttributes(program)) {
+            gl.drawElements(object.__drawMode || gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+        }
+
+        renderer.__disableUnusedAttributes();
+
         //debug
-        //         if (gl.getError()) debugger;
+        if (gl.getError()) debugger;
         //undebug
     }
 

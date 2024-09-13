@@ -131,7 +131,7 @@ makeClass(MyBufferAttribute, {
 
         t.__bindBuffer();
 
-        if (programAttribute) {
+        if (programAttribute !== undefined) {
             //debug
             if (t.__debugDrawing) {
                 consoleLog('attribute passed', t.__name, t.__realsize + '/' + t.__size, t.__itemSize, t);
@@ -139,7 +139,7 @@ makeClass(MyBufferAttribute, {
             //undebug
             renderer.__enableAttribute(programAttribute);
             gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, 0, 0);
-            return t.__webglBuffer
+            return t.__webglBuffer !== undefined
         } else {
             //debug
             if (t.__debugDrawing) {
