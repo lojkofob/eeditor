@@ -1,16 +1,17 @@
 
 var AttachedBindMode = 1, DetachedBindMode = 2;
 
+var Default3dCullFace = CullFaceFront;
 
 // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 const _lut = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a', '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e', '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c', '5d', '5e', '5f', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '6a', '6b', '6c', '6d', '6e', '6f', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '7a', '7b', '7c', '7d', '7e', '7f', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8a', '8b', '8c', '8d', '8e', '8f', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '9a', '9b', '9c', '9d', '9e', '9f', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'da', 'db', 'dc', 'dd', 'de', 'df', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'fa', 'fb', 'fc', 'fd', 'fe', 'ff'];
 
 function generateUUID() {
 
-    const d0 = Math.random() * 0xffffffff | 0;
-    const d1 = Math.random() * 0xffffffff | 0;
-    const d2 = Math.random() * 0xffffffff | 0;
-    const d3 = Math.random() * 0xffffffff | 0;
+    const d0 = random() * 0xffffffff | 0;
+    const d1 = random() * 0xffffffff | 0;
+    const d2 = random() * 0xffffffff | 0;
+    const d3 = random() * 0xffffffff | 0;
     const uuid = _lut[d0 & 0xff] + _lut[d0 >> 8 & 0xff] + _lut[d0 >> 16 & 0xff] + _lut[d0 >> 24 & 0xff] + '-' +
         _lut[d1 & 0xff] + _lut[d1 >> 8 & 0xff] + '-' + _lut[d1 >> 16 & 0x0f | 0x40] + _lut[d1 >> 24 & 0xff] + '-' +
         _lut[d2 & 0x3f | 0x80] + _lut[d2 >> 8 & 0xff] + '-' + _lut[d2 >> 16 & 0xff] + _lut[d2 >> 24 & 0xff] +
@@ -129,18 +130,25 @@ var __Object3dProxy = (function () {
 
         __onDataReady: function () {
             var t = this;
-            t.__parent.add(t.__scene);
+            t.__scene.__validToSave = 0;
+            t.__parent.__addChildBox(t.__scene);
         },
-
-
-        toJson: function () {
+        //debug
+        __toJson: function () {
             var t = this;
-            return $filterObject({
+            var o = {
                 __name: t.__name,
                 __path: t.__path,
-            }, a => a);
+            };
+
+            if (t.__scene) {
+                o.__sceneSave = t.__scene.__toJson();
+            }
+
+            return $filterObject(o, a => a);
         },
 
+        //undebug
 
         __destruct: function () {
             var t = this;
@@ -172,66 +180,58 @@ mergeObj(LoadTask__loaders, {
 });
 
 
-
-
 function Node3d(a) {
     var t = this;
+
     t.__is3D = 1;
-
     // t.__notNormalNode = 1;
-    t.__validToSave = 0;
-    t.__userData = {};
 
-    t.__rotation3d = new Euler();
+    t.____rotation3d = new Euler();
     t.__quaternion = new Quaternion();
 
-    t.__rotation3d.__onChangeCallback = function () {
-        t.__quaternion.setFromEuler(t.__rotation3d, false);
+    t.____rotation3d.__onChangeCallback = function () {
+        t.__quaternion.__setFromEuler(t.____rotation3d, false);
+        t.__dirty = 3;
     };
 
     t.__quaternion.__onChangeCallback = function () {
-        t.__rotation3d.__setFromQuaternion(t.__quaternion, undefined, false);
+        t.____rotation3d.__setFromQuaternion(t.__quaternion, undefined, false);
+        t.__dirty = 3;
     };
 
     Node.call(this, a)
 
+    t.__matrix.__is3D = 1;
+    t.mw.__is3D = 1;
+
     var scale = t.____scale;
-    t.____scale = new Vector3(scale.x, scale.y, scale.z == undefined ? 1 : scale.z);
+    t.____scale = new Vector3(scale.x, scale.y, scale.z == undefined ? scale.x == scale.y ? scale.x : 1 : scale.z);
 }
 
 makeClass(Node3d, {
-    __addGroup(start, count, materialIndex = 0) {
-        if (!this.__groups) this.__groups = {};
-        this.__groups.push({
-            start: start,
-            count: count,
-            materialIndex: materialIndex
-        });
+
+    __addGroup(start, count, materialIndex) {
+        if (!this.__groups) this.__groups = [];
+        this.__groups.push([start, count, materialIndex || 0])
+    },
+
+    __destruct() {
+        if (t.____geometry) {
+            t.____geometry.__destruct();
+            t.____geometry = null;
+        }
+        NodePrototype.__destruct.call(this)
     },
 
     __clearGroups() {
         this.__groups = [];
     },
 
-    __updateVertices() {
-        return this;
-    },
-
-    __updateUVS() {
-        return this;
-    },
-
-    __updateGeometry() {
-        return this;
-    },
-
     __applyMatrix4(m) {
         var t = this;
-        if (t.__matrixAutoUpdate) t.__updateMatrix();
-
         t.__matrix.__premultiply(m);
         t.__matrix.__decompose(t.__offset, t.__quaternion, t.____scale);
-
+        t.__offset.y *= -1;
     },
 
     __applyQuaternion(q) {
@@ -241,153 +241,106 @@ makeClass(Node3d, {
 
     __updateMatrix() {
         var t = this;
+        t.__offset.y *= -1;
         t.__matrix.__compose(t.__offset, t.__quaternion, t.____scale);
+        t.__offset.y *= -1;
         t.__matrixWorldNeedsUpdate = 1;
+    },
+
+    __drawMe() {
+        var t = this;
+        if (t.__verticesCount) {
+            if (t.__groups) {
+                var r = 0;
+                $each(t.__groups, g => {
+                    t.__currentMaterialIndex = g[2];
+                    r += renderer.__draw(t, g[1], 0, g[0]);
+                });
+                t.__currentMaterialIndex = 0;
+                return r;
+            } else {
+                return renderer.__draw(t, t.__verticesCount);
+            }
+        } else {
+            return NodePrototype.__drawMe.call(t);
+        }
+    },
+
+
+    __bind(skeleton, bindMatrix) {
+
+        var t = this;
+        t.__skeleton = skeleton;
+
+        if (bindMatrix === undefined) {
+
+            t.__updateMatrixWorld(true);
+
+            t.__skeleton.__calculateInverses();
+
+            bindMatrix = this.__matrixWorld;
+
+        }
+
+        if (!t.__bindMatrix) {
+            t.__bindMatrix = new Matrix4();
+            t.__bindMatrixInverse = new Matrix4();
+        }
+        t.__bindMatrix.__copy(bindMatrix);
+        t.__bindMatrixInverse.__copy(bindMatrix).__invert();
+
+    }
+
+    , __pose() {
+        var skeleton = this.__skeleton;
+        if (s) skeleton.__pose();
+
+    }
+
+    , __normalizeSkinWeights() {
+        if (!this.__skinWeightBuffer) {
+            return;
+        }
+
+        const skinWeight = this.__skinWeightBuffer.__array;
+
+        for (let i = 0, l = skinWeight.length; i < l; i += 4) {
+
+            const scale = 1.0 / (abs(skinWeight[i]) + abs(skinWeight[i + 1]) + abs(skinWeight[i + 2]) + abs(skinWeight[i + 3]));
+
+            if (scale !== Infinity) {
+                skinWeight[i] *= scale;
+                skinWeight[i + 1] *= scale;
+                skinWeight[i + 2] *= scale;
+                skinWeight[i + 3] *= scale;
+            } else {
+                skinWeight[i] = 1;
+                skinWeight[i + 1] = 0;
+                skinWeight[i + 2] = 0;
+                skinWeight[i + 3] = 0;
+            }
+
+        }
 
     },
 
     __updateMatrixWorld(force) {
-        var t = this;
-        if (t.__matrixAutoUpdate) t.__updateMatrix();
-
-        if (t.__matrixWorldNeedsUpdate || force) {
-
-            if (t.__matrixWorldAutoUpdate) {
-
-                if (t.__parent === null) {
-
-                    t.__matrixWorld.copy(t.__matrix);
-
-                } else {
-
-                    t.__matrixWorld.multiplyMatrices(t.__parent.__matrixWorld, t.__matrix);
-
-                }
-
-            }
-
-            t.__matrixWorldNeedsUpdate = 0;
-
-            force = true;
-
-        }
-
-        // make sure descendants are updated if required
-
-        const children = t.__childs;
-
-        for (let i = 0, l = children.length; i < l; i++) {
-
-            children[i].__updateMatrixWorld(force);
-
-        }
-
-    },
-
-    __updateWorldMatrix(updateParents, updateChildren) {
 
         var t = this;
+        Node.prototype.__updateMatrixWorld.call(t, force);
 
-        const parent = t.__parent;
-
-        if (updateParents === true && parent !== null) {
-
-            parent.__updateWorldMatrix(true, false);
-
-        }
-
-        if (t.__matrixAutoUpdate) t.updateMatrix();
-
-        if (t.__matrixWorldAutoUpdate === true) {
-
-            if (t.__parent === null) {
-
-                t.__matrixWorld.copy(t.__matrix);
-
+        if (t.__bindMatrix) {
+            if (t.__bindMode === DetachedBindMode) {
+                t.__bindMatrixInverse.__copy(t.__bindMatrix).__invert();
             } else {
-
-                t.__matrixWorld.multiplyMatrices(t.__parent.__matrixWorld, t.__matrix);
-
+                t.__bindMatrixInverse.__copy(t.mw).__invert();
             }
-
         }
-
-        // make sure descendants are updated
-
-        if (updateChildren === true) {
-
-            const children = t.__childs;
-
-            for (let i = 0, l = children.length; i < l; i++) {
-
-                const child = children[i];
-
-                child.updateWorldMatrix(false, true);
-
-            }
-
-        }
-
-    }
-
-}, {
-    //cheats
-    __EditorColors: {
-        enumerable: false, value: {
-            'DarkSimple': '#aac',
-            'DarkBlue': '#88d',
-            'LightBlue': '#335'
-        }
-    },
-
-    __hierarchyColor: {
-        enumerable: false, get() {
-            return this.__EditorColors[Editor.uiTheme]
-        }
-    },
-    //endcheats
-}, Node);
-
-
-
-
-function Bone() {
-    Node3d.call(this)
-}
-
-makeClass(Bone, {
-
-}, {
-
-}, Node3d);
-
-
-
-function SkinnedMesh(geometry, material) {
-    Node3d.call(this, {
-        __geometry: geometry,
-        __material: material,
-        __bindMode: AttachedBindMode,
-        __bindMatrix: new Matrix4(),
-        __bindMatrixInverse: new Matrix4()
-    });
-}
-
-
-makeClass(SkinnedMesh, {
-    __isSkinnedMesh: true,
-    __type: 'SkinnedMesh',
-
-    __destruct() {
-        if (t.__geometry) {
-            t.__geometry.__destruct();
-            t.__geometry = null;
-        }
-        NodePrototype.__destruct.call(this)
     },
 
     __updateGeometry() {
-        return this;
+        var t = this;
+        return t.____geometry ? t : NodePrototype.__updateGeometry.call(t);
     },
 
     __computeBoundingBox() {
@@ -446,8 +399,8 @@ makeClass(SkinnedMesh, {
 
         this.__skeleton = source.__skeleton;
 
-        if (source.__boundingBox !== null) this.__boundingBox = source.__boundingBox.clone();
-        if (source.__boundingSphere !== null) this.__boundingSphere = source.__boundingSphere.clone();
+        if (source.__boundingBox !== null) this.__boundingBox = source.__boundingBox.__clone();
+        if (source.__boundingSphere !== null) this.__boundingSphere = source.__boundingSphere.__clone();
 
         return this;
 
@@ -498,72 +451,6 @@ makeClass(SkinnedMesh, {
 
     }*/
 
-    , __bind(skeleton, bindMatrix) {
-
-        this.__skeleton = skeleton;
-
-        if (bindMatrix === undefined) {
-
-            this.__updateMatrixWorld(true);
-
-            this.__skeleton.__calculateInverses();
-
-            bindMatrix = this.__matrixWorld;
-
-        }
-
-        this.__bindMatrix.__copy(bindMatrix);
-        this.__bindMatrixInverse.__copy(bindMatrix).__invert();
-
-    }
-
-    , __pose() {
-
-        this.__skeleton.__pose();
-
-    }
-
-    , __normalizeSkinWeights() {
-        if (!this.__skinWeightBuffer) {
-            return;
-        }
-
-        const skinWeight = this.__skinWeightBuffer.__array;
-
-        for (let i = 0, l = skinWeight.length; i < l; i += 4) {
-
-            const scale = 1.0 / (abs(skinWeight[i]) + abs(skinWeight[i + 1]) + abs(skinWeight[i + 2]) + abs(skinWeight[i + 3]));
-
-            if (scale !== Infinity) {
-                skinWeight[i] *= scale;
-                skinWeight[i + 1] *= scale;
-                skinWeight[i + 2] *= scale;
-                skinWeight[i + 3] *= scale;
-            } else {
-                skinWeight[i] = 1;
-                skinWeight[i + 1] = 0;
-                skinWeight[i + 2] = 0;
-                skinWeight[i + 3] = 0;
-            }
-
-        }
-
-    },
-
-    __updateMatrixWorld(force) {
-
-        Node3d.prototype.__updateMatrixWorld.call(this, force);
-        var t = this;
-        if (t.__bindMode === AttachedBindMode) {
-
-            t.__bindMatrixInverse.__copy(t.mw).__invert();
-
-        } else if (t.__bindMode === DetachedBindMode) {
-
-            t.__bindMatrixInverse.__copy(t.__bindMatrix).__invert();
-
-        }
-    }
 
     /*
     applyBoneTransform(index, vector) {
@@ -602,8 +489,8 @@ makeClass(SkinnedMesh, {
     , __setupVertexAttributes(program) {
         var t = this;
 
-        if (!t.__buffers) {
-            return;
+        if (!t.__buffers || !t.__verticesCount) {
+            return NodePrototype.__setupVertexAttributes.call(t, program);
         }
 
         //debug
@@ -657,48 +544,202 @@ makeClass(SkinnedMesh, {
         return 1;
     },
 
-    __drawMe() {
-        var t = this;
 
-        if (t.__material) {
-            if (t.__indecesBuffer) {
-                renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
-                return 1;
-            } else if (t.__verticesBuffer) {
-                debugger;
-                renderer.__draw(t, t.__verticesCount || (t.__verticesBuffer.__realsize / t.__verticesBuffer.__itemSize));
-                return 1;
+    __updateUVS() {
+        return this;
+        var t = this;
+        if (t.__uvsBuffer0 && !t.__uvsBuffer0.__updated && t.__material && t.__material[0] && t.__material[0].__map) {
+            if (t.__groups) {
+                $each(t.__groups, g => {
+                    t.__transformUvBuf(t.__uvsBuffer0, t.__material[g[2]].__map);
+                });
+            } else {
+                t.__transformUvBuf(t.__uvsBuffer0, t.__material[0].__map);
+            }
+            t.__uvsBuffer0.__updated = 1;
+        }
+    },
+
+    __transformUvBuf(buffer, tex) {
+        if (buffer && tex) {
+            var a = buffer.__array, v = new Vector2(), t = this;
+            for (var i = 0; i < a.length; i += 2) {
+                v.set(a[i], a[i + 1]);
+                t.__transformUv(tex, v);
+                a[i] = v.x; a[i + 1] = v.y;
             }
         }
+    },
+
+    __transformUv(tex, uv, flipY) {
+
+        var tx = (tex.__offset || 0).x || 0,
+            ty = (tex.__offset || 0).y || 0,
+            sx = (tex.__repeat || 0).x || 1,
+            sy = (tex.__repeat || 0).y || 1,
+            c = cos(tex.__rotation || 0),
+            s = sin(tex.__rotation || 0),
+            cx = (tex.__center || 0).x || 0,
+            cy = (tex.__center || 0).y || 0,
+            m = new Matrix4().set(
+                sx * c, sx * s, - sx * (c * cx + s * cy) + cx + tx, 1,
+                - sy * s, sy * c, - sy * (- s * cx + c * cy) + cy + ty, 1,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+        uv.__applyMatrix4(m);
+
+        if (uv.x < 0 || uv.x > 1) {
+            switch (tex.__wraps) {
+                case GL_REPEAT:
+                    uv.x = uv.x - floor(uv.x);
+                    break;
+                case GL_CLAMP_TO_EDGE:
+                    uv.x = uv.x < 0 ? 0 : 1;
+                    break;
+                case GL_MIRRORED_REPEAT:
+                    if (abs(floor(uv.x) % 2) === 1) {
+                        uv.x = ceil(uv.x) - uv.x;
+                    } else {
+                        uv.x = uv.x - floor(uv.x);
+                    }
+                    break;
+            }
+        }
+
+        if (uv.y < 0 || uv.y > 1) {
+            switch (tex.__wrapt) {
+                case GL_REPEAT:
+                    uv.y = uv.y - floor(uv.y);
+                    break;
+
+                case GL_CLAMP_TO_EDGE:
+                    uv.y = uv.y < 0 ? 0 : 1;
+                    break;
+
+                case GL_MIRRORED_REPEAT:
+                    if (abs(floor(uv.y) % 2) === 1) {
+                        uv.y = ceil(uv.y) - uv.y;
+                    } else {
+                        uv.y = uv.y - floor(uv.y);
+                    }
+                    break;
+            }
+        }
+        if (flipY) {
+            uv.y = 1 - uv.y;
+        }
+        return uv;
+
     }
+
 
 }, {
 
+    ____rotation: {
+        get() { return this.____rotation3d._z; },
+        set(v) { this.____rotation3d.z = v; }
+    },
+
+    __rotation3d: {
+        set(v) {
+            var r = this.____rotation3d;
+            if (!v) {
+                r.set(0, 0, 0);
+            } else if (isArray(v)) {
+                r.__fromArray(v)
+            } else if (v.__isEuler) {
+                r.__copy(v);
+            } else if (v.__isVector3) {
+                r.__setFromVector3(v);
+            } else if (v.__isQuternion) {
+                r.__setFromQuaternion(q, r._w, true);
+            }
+        },
+        get() { return this.____rotation3d; }
+    },
+
+    //cheats
+    __EditorColors: {
+        enumerable: false, value: {
+            'DarkSimple': '#aac',
+            'DarkBlue': '#88d',
+            'LightBlue': '#335'
+        }
+    },
+
+    __hierarchyColor: {
+        enumerable: false, get() {
+            return this.__EditorColors[Editor.uiTheme]
+        }
+    },
+    //endcheats
+
+    t_uv0: {
+        get() {
+            return this.__material[this.__currentMaterialIndex].__map;
+        }
+    },
 
     __geometry: {
         set(v) {
 
             var t = this;
+            if (t.____geometry == v)
+                return;
+
+            t.____geometry = v;
+            // t.__debugDrawing = 1;
+            t.__verticesCount = 0;
+            t.__dirty = 4;
+
             if (v) {
                 // todo: clone!
+                // not supported now
+                delete v.__buffers.a_skinIndex;
+                delete v.__buffers.a_skinWeight;
+                delete v.__buffers.a_normal;
+                t.__groups = v.__groups;
                 t.__buffers = v.__buffers;
-                t.__material = v.__material;
-                t.__verticesBuffer = v.__buffers.position;
-                t.__colorsBuffer = v.__buffers.color;
-                t.__skinIndexBuffer = v.__buffers.skinIndex;
-                t.__skinWeightBuffer = v.__buffers.skinWeight;
-                t.__normalBuffer = v.__buffers.normal;
-                t.__uvsBuffer0 = v.__buffers.uv0;
-                t.__uvsBuffer1 = v.__buffers.uv1;
-                t.__uvsBuffer2 = v.__buffers.uv2;
-                t.__uvsBuffer3 = v.__buffers.uv3;
+                var mat = v.__material;
+                if (isObject(mat)) {
+                    t.__material = [v.__material];
+                } else if (isArray(mat)) {
+                    t.__material = mat;
+                }
+                t.__currentMaterialIndex = 0;
+
+                t.__verticesBuffer = v.__buffers.a_position;
+                t.__colorsBuffer = v.__buffers.a_color;
+                t.__skinIndexBuffer = v.__buffers.a_skinIndex;
+                t.__skinWeightBuffer = v.__buffers.a_skinWeight;
+                t.__normalBuffer = v.__buffers.a_normal;
+                t.__uvsBuffer0 = v.__buffers.a_uv0;
+                t.__uvsBuffer1 = v.__buffers.a_uv1;
+                t.__uvsBuffer2 = v.__buffers.a_uv2;
+                t.__uvsBuffer3 = v.__buffers.a_uv3;
                 t.__indecesBuffer = v.__buffers.indices;
                 if (!v.__normalized) {
                     t.__normalizeSkinWeights();
                     v.__normalized = 1;
                 }
+                t.__shader = ComputeShaderFor(t)
+
+                if (t.__shader) {
+                    if (t.__indecesBuffer) {
+                        t.__verticesCount = t.__indecesBuffer.__realsize;
+                    } else if (t.__verticesBuffer) {
+                        t.__verticesCount = t.__verticesBuffer.__realsize / t.__verticesBuffer.__itemSize;
+                    }
+                }
+                t.__cullFace = Default3dCullFace;
+
             } else {
-                t.__material =
+                t.__groups =
+                    t.__verticesCount =
+                    t.__shader =
+                    t.__material =
                     t.__buffers =
                     t.__verticesBuffer =
                     t.__colorsBuffer =
@@ -713,17 +754,11 @@ makeClass(SkinnedMesh, {
             }
         },
         get() {
-            return this.__geometry;
+            return this.____geometry;
         }
-    }
+    },
 
-}, Node3d);
-
-
-
-
-
-
+}, Node);
 
 
 
@@ -736,12 +771,12 @@ function Skeleton(bones, boneInverses) {
     this.boneInverses = boneInverses || [];
     this.boneMatrices = null;
     this.boneTexture = null;
-    this.init();
+    this.__init();
 }
 
 makeClass(Skeleton, {
 
-    init() {
+    __init() {
 
         const bones = this.bones;
         const boneInverses = this.boneInverses;
@@ -796,7 +831,7 @@ makeClass(Skeleton, {
 
     },
 
-    pose() {
+    __pose() {
 
         // recover the bind-time world matrices
 
@@ -839,7 +874,7 @@ makeClass(Skeleton, {
 
     },
 
-    update() {
+    __update() {
 
         const bones = this.bones;
         const boneInverses = this.boneInverses;
@@ -867,13 +902,13 @@ makeClass(Skeleton, {
 
     },
 
-    clone() {
+    __clone() {
 
         return new Skeleton(this.bones, this.boneInverses);
 
     },
 
-    computeBoneTexture() {
+    __computeBoneTexture() {
 
         // layout (1 matrix = 4 pixels)
         //      RGBA RGBA RGBA RGBA (=> column1, column2, column3, column4)
@@ -882,9 +917,9 @@ makeClass(Skeleton, {
         //       32x32 pixel texture max  256 bones * 4 pixels = (32 * 32)
         //       64x64 pixel texture max 1024 bones * 4 pixels = (64 * 64)
 
-        let size = Math.sqrt(this.bones.length * 4); // 4 pixels needed for 1 matrix
-        size = Math.ceil(size / 4) * 4;
-        size = Math.max(size, 4);
+        let size = sqrt(this.bones.length * 4); // 4 pixels needed for 1 matrix
+        size = ceil(size / 4) * 4;
+        size = max(size, 4);
 
         const boneMatrices = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
         boneMatrices.set(this.boneMatrices); // copy current values
@@ -899,7 +934,7 @@ makeClass(Skeleton, {
 
     },
 
-    getBoneByName(name) {
+    __getBoneByName(name) {
 
         for (let i = 0, il = this.bones.length; i < il; i++) {
 
@@ -917,11 +952,11 @@ makeClass(Skeleton, {
 
     },
 
-    dispose() {
+    __destruct() {
 
         if (this.boneTexture !== null) {
 
-            this.boneTexture.dispose();
+            this.boneTexture.__destruct();
 
             this.boneTexture = null;
 
@@ -929,7 +964,7 @@ makeClass(Skeleton, {
 
     },
 
-    fromJSON(json, bones) {
+    __fromJSON(json, bones) {
 
         this.uuid = json.uuid;
 
@@ -941,7 +976,7 @@ makeClass(Skeleton, {
             if (bone === undefined) {
 
                 console.warn('THREE.__skeleton: No bone found with UUID:', uuid);
-                bone = new Bone();
+                bone = new Node3d();
 
             }
 
@@ -956,13 +991,13 @@ makeClass(Skeleton, {
 
     },
 
-    toJSON() {
+    __toJson() {
 
         const data = {
             metadata: {
                 version: 4.6,
                 type: 'Skeleton',
-                generator: 'Skeleton.toJSON'
+                generator: 'SkeletontoJson'
             },
             bones: [],
             boneInverses: []

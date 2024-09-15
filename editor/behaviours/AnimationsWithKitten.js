@@ -941,7 +941,7 @@ var AnimationsWithKitten = (function () {
                 if (animationsWithKitten.animsPlayed) {
                     //TODO:
 
-                    //                                 animationsWithKitten.savedLayout = Editor.currentLayout.layoutView.toJson();
+                    //                                 animationsWithKitten.savedLayout = Editor.currentLayout.layoutView.__toJson();
                     BUS.__post('__ANIMATION_STARTED');
 
                     // __animStartedTime = 0;

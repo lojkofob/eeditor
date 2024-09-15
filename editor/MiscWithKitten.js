@@ -429,7 +429,7 @@ function jsonSubObjectsDiff(j1, j2, skipDebugger) {
 
 function currentLayoutJsonDiff() {
     activateProjectOptions();
-    var j2 = Editor.currentLayout.layoutView.toJson().__childs;
+    var j2 = Editor.currentLayout.layoutView.__toJson().__childs;
     var j1 = Editor.currentLayout.opts.json;
     var k = jsonSubObjectsDiff(j1, j2);
     return k;

@@ -363,6 +363,11 @@ NodeEditWithKitten.prototype = {
                         $find(node.__program.uniforms, (u, i) => i.startsWith('u_')) ? false : true);
                 }
 
+                function nodeshader(node) {
+                    return node.__is3D ? 'base' : canShade(node) ? { v: node.__program.v, f: 'base' } : 'base';
+                }
+
+
                 function addhh_(x, y) {
                     if (x == 0 && y == 0) {
                         var anchor = node.__anchor;
@@ -436,14 +441,14 @@ NodeEditWithKitten.prototype = {
                                     BUS.__post('FLUSH_HISTORY_STACK')
                                 },
 
-                                __shader: canShade(node) ? { v: node.__program.v, f: 'base' } : 'base'
+                                __shader: nodeshader(node)
 
                             }, "n_" + x + '_' + y)
                     }
                     else
                         helper.__addChildBox(
                             {
-                                __shader: canShade(node) ? { v: node.__program.v, f: 'base' } : 'base',
+                                __shader: nodeshader(node),
                                 __camera: cam,
                                 x: x,
                                 y: y,

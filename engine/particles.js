@@ -1067,7 +1067,7 @@ EffectComponentsFactory.__registerComponent('sub',
 
             if (subEmitter) {
                 subEmitter.__update = subEmitter.__render = function () { return 0 };
-                t.__subEmitterJson = subEmitter.toJson();
+                t.__subEmitterJson = subEmitter.__toJson();
             } else {
                 t.__needReinit = 1;
             }
@@ -2552,12 +2552,12 @@ makeClass(ParticleEffect, {
         $each(this.emitters, function (e) { e.__enabled = 1; });
     }
 
-    , toJson: function () {
+    , __toJson: function () {
         var v = {};
         if (this.loop) v.loop = 1;
         for (var j in this.emitters) {
             if (!v.emitters) v.emitters = [];
-            v.emitters.push(this.emitters[j].toJson())
+            v.emitters.push(this.emitters[j].__toJson())
         }
         return v;
     }
@@ -2612,7 +2612,7 @@ var emmpropopts = {
 
 };
 
-ParticleEmitterPrototype.toJson = function () {
+ParticleEmitterPrototype.__toJson = function () {
     var v = {}, nosave = 0;
     if (this.loop) v.loop = 1;
     if (this.__name) v.name = this.__name;

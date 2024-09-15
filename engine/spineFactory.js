@@ -434,11 +434,11 @@ void main(){\
 
         },
 
-        clone: function () {
-            return this.toJson();
+        __clone: function () {
+            return this.__toJson();
         },
 
-        toJson: function () {
+        __toJson: function () {
             var t = this;
             return $filterObject({
                 __name: t.__name,

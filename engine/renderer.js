@@ -36,6 +36,7 @@ var gl
     , _emptyImage
     , textureIdCount = 0
     , _texturesCache = {}
+    , _depthRenderbuffer
 
     , CullFaceNone = 0
     , CullFaceBack = 1
@@ -111,10 +112,22 @@ var gl
     , GL_TRIANGLE_FAN
     , GL_TRIANGLES
 
+    , NeverDepth = 0
+    , AlwaysDepth = 1
+    , LessDepth = 2
+    , LessEqualDepth = 3
+    , EqualDepth = 4
+    , GreaterEqualDepth = 5
+    , GreaterDepth = 6
+    , NotEqualDepth = 7
+
     , blendingsList
     , glAttributes
     , textureRepeatsList
-    , defaultShader = 'base';
+    , defaultShader = 'base'
+    , _shader_precision
+    , _shader_defines_str = ""
+    , depthBuffer;
 
 function __setGLGlobals(gl) {
 
@@ -184,6 +197,11 @@ function __setGLGlobals(gl) {
     textureRepeatsList = [GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT];
 
 }
+
+
+
+
+
 //debug
 function debugOnGLError() {
     var e = gl.getError();
@@ -494,8 +512,6 @@ function WebGLRenderer(dbg) {
         , _premultipliedAlpha = true
         , _preserveDrawingBuffer = false
 
-        , _precision
-
         , _currentProgram
         , _currentRenderTarget
         , _currentFramebuffer = 0
@@ -550,8 +566,7 @@ function WebGLRenderer(dbg) {
         , _glwrapped
         //endcheats
 
-        , _shaderDefines = { PI: PI, PRECISION_HIGH: '', PRECISION_LOW: '' }
-        , _shaderDefinesStr = ""
+        , _shaderDefines = { PI: PI }
         , _shaderMod
 
         , _emptyTexture = new Texture()
@@ -647,6 +662,61 @@ function WebGLRenderer(dbg) {
         }
     }
 
+
+    let currentDepthMask = null;
+    let currentDepthFunc = null;
+    let currentDepthClear = null;
+
+    depthBuffer = (function () {
+
+        let locked = false;
+
+        return {
+            __setTest: function (depthTest) {
+                (depthTest ? __enable : __disable)(gl.DEPTH_TEST);
+            },
+            __setMask: function (depthMask) {
+                if (currentDepthMask !== depthMask && !locked) {
+                    gl.depthMask(depthMask);
+                    currentDepthMask = depthMask;
+                }
+            },
+            __setFunc: function (depthFunc) {
+                if (currentDepthFunc !== depthFunc) {
+                    switch (depthFunc) {
+                        case NeverDepth: gl.depthFunc(gl.NEVER); break;
+                        case AlwaysDepth: gl.depthFunc(gl.ALWAYS); break;
+                        case LessDepth: gl.depthFunc(gl.LESS); break;
+                        case LessEqualDepth: gl.depthFunc(gl.LEQUAL); break;
+                        case EqualDepth: gl.depthFunc(gl.EQUAL); break;
+                        case GreaterEqualDepth: gl.depthFunc(gl.GEQUAL); break;
+                        case GreaterDepth: gl.depthFunc(gl.GREATER); break;
+                        case NotEqualDepth: gl.depthFunc(gl.NOTEQUAL); break;
+                        default: gl.depthFunc(gl.LEQUAL);
+                    }
+                    currentDepthFunc = depthFunc;
+                }
+            },
+            __setLocked: function (lock) {
+                locked = lock;
+            },
+            __setClear: function (depth) {
+                currentDepthClear = depth;
+            },
+            __clear() {
+                gl.clearDepth(currentDepthClear);
+                gl.clear(gl.DEPTH_BUFFER_BIT)
+            },
+            __reset: function () {
+                locked = false;
+                currentDepthMask = null;
+                currentDepthFunc = null;
+                currentDepthClear = null;
+            }
+        };
+
+    })();
+
     function __setBlending(blending) {
 
         _currentBlending = blending;
@@ -699,11 +769,11 @@ function WebGLRenderer(dbg) {
 
     function __setCullFace(cullFace) {
 
-        if (cullFace !== CullFaceNone) {
+        if (cullFace !== _currentCullFace) {
 
-            __enable(gl.CULL_FACE);
+            if (cullFace !== CullFaceNone) {
 
-            if (cullFace !== _currentCullFace) {
+                __enable(gl.CULL_FACE);
 
                 if (cullFace === CullFaceBack) {
 
@@ -719,15 +789,14 @@ function WebGLRenderer(dbg) {
 
                 }
 
+            } else {
+
+                __disable(gl.CULL_FACE);
+
             }
 
-        } else {
-
-            __disable(gl.CULL_FACE);
-
+            _currentCullFace = cullFace;
         }
-
-        _currentCullFace = cullFace;
 
     }
 
@@ -858,17 +927,17 @@ function WebGLRenderer(dbg) {
         };
     }
 
-    function __getWebGLVertexShader(file) {
+    function __getWebGLVertexShader(file, raw) {
         var s = _shadersCache.v[file];
         if (!s) {
-            if (options.__useRawShaders) {
+            if (options.__useRawShaders || raw) {
                 s = _shadersCache.v[file] = __createWebGLShader(file, gl.VERTEX_SHADER, getVertexShaderData(file));
             }
             else
                 s = _shadersCache.v[file] = __createWebGLShader(file, gl.VERTEX_SHADER, [
-                    _shaderDefinesStr,
-                    'precision ' + _precision + ' float;',
-                    'precision ' + _precision + ' int;',
+                    _shader_defines_str,
+                    'precision ' + _shader_precision + ' float;',
+                    'precision ' + _shader_precision + ' int;',
                     'uniform mat4 matrixWorld;',
                     'uniform mat4 projectionMatrix;',
                     'attribute vec2 position;',
@@ -879,16 +948,16 @@ function WebGLRenderer(dbg) {
         return s;
     }
 
-    function __getWebGLFragmentShader(file) {
+    function __getWebGLFragmentShader(file, raw) {
         var s = _shadersCache.f[file];
         if (!s) {
-            if (options.__useRawShaders) {
+            if (options.__useRawShaders || raw) {
                 s = _shadersCache.f[file] = __createWebGLShader(file, gl.FRAGMENT_SHADER, getFragmentShaderData(file))
             } else {
                 s = _shadersCache.f[file] = __createWebGLShader(file, gl.FRAGMENT_SHADER, [
-                    _shaderDefinesStr,
-                    'precision ' + _precision + ' float;',
-                    'precision ' + _precision + ' int;',
+                    _shader_defines_str,
+                    'precision ' + _shader_precision + ' float;',
+                    'precision ' + _shader_precision + ' int;',
                     getFragmentShaderData(file)
                 ].join('\n'));
             }
@@ -918,17 +987,17 @@ function WebGLRenderer(dbg) {
     }
     /*
         function __updateRenderTargetMipmap( renderTarget ) {
-    
+     
             var texture = renderTarget.__texture;
-    
+     
             if ( texture.__generateMipmaps && isPowerOfTwo( renderTarget ) ) {
-    
+     
                 __bindTexture( texture.__webglTexture );
                 gl.generateMipmap( GL_TEXTURE_2D );
                 __bindTexture( null );
-    
+     
             }
-    
+     
         }*/
 
     function __clampImageToMaxSize(image, maxSize) {
@@ -1121,8 +1190,8 @@ function WebGLRenderer(dbg) {
 
         if (!_programsCache[id]) {
             var program = gl.createProgram()
-                , glVertexShader = shader.v.__shader ? shader.v : __getWebGLVertexShader(shader.v)
-                , glFragmentShader = shader.f.__shader ? shader.f : __getWebGLFragmentShader(shader.f)
+                , glVertexShader = shader.v.__shader ? shader.v : __getWebGLVertexShader(shader.v, shader.r)
+                , glFragmentShader = shader.f.__shader ? shader.f : __getWebGLFragmentShader(shader.f, shader.r)
                 , attributes = {}
                 , uniforms = {};
 
@@ -1368,29 +1437,25 @@ function WebGLRenderer(dbg) {
         gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         __texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, new Uint8Array(4));
 
-        _precision = _precision || __getMaxPrecision('highp');
+        _shader_precision = _shader_precision || __getMaxPrecision('highp');
 
         __setFlipSided(false);
 
-        __setCullFace(CullFaceBack);
-        __disable(gl.CULL_FACE);
+        __setFaceCulling(CullFaceNone)
 
         __setBlending(NormalBlending);
 
         __scissor(_scissor);
         __viewport(_viewport);
 
-        gl.depthFunc(gl.NOTEQUAL);
-        __setDepthMask(0);
-        __disable(gl.DEPTH_TEST);
+        depthBuffer.__setFunc(GreaterEqualDepth);
+        depthBuffer.__setMask(1);
+        depthBuffer.__setTest(0);
+        depthBuffer.__setClear(0);
 
         __glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, _clearAlpha);
 
-    }
 
-
-    function __setDepthMask(v) {
-        gl.depthMask(!!v)
     }
 
     function __resetGLState() {
@@ -1464,7 +1529,8 @@ function WebGLRenderer(dbg) {
 
     function __clear() {
         __glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, _clearAlpha);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        depthBuffer.__clear();
     }
 
 
@@ -1671,11 +1737,12 @@ function WebGLRenderer(dbg) {
                 gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.__webglTexture, 0);
 
                 // TODO: depth                
-                //                 __window.depthRenderbuffer = gl.createRenderbuffer();
-                //                 gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, renderTarget.width, renderTarget.height);
-                //                 gl.bindRenderbuffer(gl.RENDERBUFFER, __window.depthRenderbuffer);
-                //                 gl.framebufferRenderbuffer(GL_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, __window.depthRenderbuffer);
-
+                /*
+                _depthRenderbuffer = gl.createRenderbuffer();
+                gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, renderTarget.width, renderTarget.height);
+                gl.bindRenderbuffer(gl.RENDERBUFFER, _depthRenderbuffer);
+                gl.framebufferRenderbuffer(GL_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, _depthRenderbuffer);
+                */
 
                 gl.bindFramebuffer(GL_FRAMEBUFFER, null);
                 /*
@@ -1773,9 +1840,8 @@ function WebGLRenderer(dbg) {
         }
     }
 
-
     for (var i in _shaderDefines)
-        _shaderDefinesStr += '\n#define ' + i + ' ' + _shaderDefines[i];
+        _shader_defines_str += '\n#define ' + i + ' ' + _shaderDefines[i];
 
     glAttributes = {
         alpha: _alpha,
@@ -1801,7 +1867,7 @@ function WebGLRenderer(dbg) {
         throw 'gl lost';
     }
 
-    function onContextRestored() {
+    function onContextRestored(event) {
         setErrorReportingFlagWEBGL(4);
         throw 'gl restored';
         consoleWarn('gl restored');
@@ -1816,7 +1882,7 @@ function WebGLRenderer(dbg) {
 
     __setDefaultGLState();
 
-    function __draw(object, count, forceShader) {
+    function __draw(object, count, forceShader, start) {
 
         var blending = object.____registeredBlending;
         if (blending != _currentBlending) {
@@ -1870,15 +1936,34 @@ function WebGLRenderer(dbg) {
 
         renderer.__initAttributes();
 
-        if (object.__setupVertexAttributes(program)) {
-            gl.drawElements(object.__drawMode || gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
-        }
+        var r = object.__setupVertexAttributes(program);
 
         renderer.__disableUnusedAttributes();
+
+        __setCullFace(object.__cullFace);
+
+        var mat = object.__material;
+        if (mat) {
+            depthBuffer.__setTest(1);
+        } else {
+            depthBuffer.__setTest(0);
+        }
+
+        if (r) {
+            if (object.__indecesBuffer) {
+                gl.drawElements(object.__drawMode || gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+            } else {
+                gl.drawArrays(object.__drawMode || gl.TRIANGLES, start || 0, count)
+            }
+        } else {
+
+        }
 
         //debug
         if (gl.getError()) debugger;
         //undebug
+
+        return r;
     }
 
     function __getVideoInfo() {

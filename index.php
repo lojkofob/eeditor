@@ -49,6 +49,9 @@ $enginescripts = array(
     "3rdparty/spine-webgl",
     "3rdparty/CubismSdk/Core/live2dcubismcore.min",
     "3rdparty/psd",
+
+    // unzipping
+    "3rdparty/fflate.min",
     
     "globals",
     "bus",
@@ -79,7 +82,8 @@ $enginescripts = array(
 
     "3d/3d",
     "3d/types",
-    "3d/FBXLoader"
+    "3d/FBXLoader",
+    "3d/shaders"
 
 );
 

@@ -6,8 +6,10 @@ function LayoutWithKitten(opts) {
     this.opts = opts;
     this.name = this.opts.name;
 
-    this.layoutView = opts.layoutView || new Node({
-        __hitTest: function () { },
+    this.__is3D = opts.__is3D;
+
+    this.layoutView = opts.layoutView || newNode(0, opts || 0).__init({
+        __hitTest() { },
         __size: { x: 1, y: 1, px: 1, py: 1 },
         ha: 1, va: 1, __isScene: 1
     });
@@ -24,12 +26,9 @@ function LayoutWithKitten(opts) {
     this.options = mergeObj({}, opts.options);
 }
 
+makeClass(LayoutWithKitten, {
 
-LayoutWithKitten.prototype = {
-
-    constructor: LayoutWithKitten,
-
-    createView: function (json) {
+    createView(json) {
 
         if (isObject(json))
             json = [json];
@@ -69,7 +68,7 @@ LayoutWithKitten.prototype = {
 
     },
 
-    __on: function (t, e) {
+    __on(t, e) {
         switch (t) {
             case __ON_RESIZE: {
                 if (Editor.updateLayoutSize) {
@@ -90,7 +89,7 @@ LayoutWithKitten.prototype = {
     },
 
 
-    close: function () {
+    close() {
 
         if (this.nodeEditWithKitten) {
             this.nodeEditWithKitten.deactivate();
@@ -106,7 +105,7 @@ LayoutWithKitten.prototype = {
 
     },
 
-    activate: function () {
+    activate() {
         if (!this.__active) {
             this.__active = 1;
             this.activateOptions();
@@ -137,7 +136,7 @@ LayoutWithKitten.prototype = {
         return this;
     },
 
-    deactivate: function () {
+    deactivate() {
         if (this.__active) {
             this.__active = 0;
             if (this.nodeEditWithKitten) {
@@ -156,7 +155,7 @@ LayoutWithKitten.prototype = {
     },
 
 
-    activateOptions: function () {
+    activateOptions() {
         if (!this.__oactive) {
             this.__oactive = 1;
             if (this.project) activateOptions(this.project.options);
@@ -165,7 +164,7 @@ LayoutWithKitten.prototype = {
         return this;
     },
 
-    deactivateOptions: function () {
+    deactivateOptions() {
 
         if (this.__oactive) {
             this.__oactive = 0;
@@ -175,4 +174,6 @@ LayoutWithKitten.prototype = {
         return this;
     }
 
-}
+}, {
+
+});

@@ -61,11 +61,11 @@ var LottieObject = (() => {
                 this.__htmlElement.play();
         },
 
-        clone() {
-            return this.toJson();
+        __clone() {
+            return this.__toJson();
         },
 
-        toJson() {
+        __toJson() {
             var t = this, o = t.__opts || 0;
             return $filterObject({
                 __name: t.____name

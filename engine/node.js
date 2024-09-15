@@ -130,6 +130,18 @@ function Node(j) {
 
 }
 
+function newNode(p, j) {
+    //3d
+    if (p && p.__is3D) {
+        if (j.__is3D == 0) return new Node();
+        return new Node3d();
+    }
+    if (j && j.__is3D) return new Node3d();
+    //no3d
+    return new Node();
+}
+
+
 var NodePrototype = Node.prototype = Object.create(Object3DPrototype);
 
 mergeObj(NodePrototype, {
@@ -475,7 +487,7 @@ mergeObj(NodePrototype, {
 
         } else {
 
-            var child = j.__isObject3D ? j : new Node();
+            var child = j.__isObject3D ? j : newNode(t, j);
 
             if (name) {
                 child.name = name;
@@ -635,18 +647,19 @@ mergeObj(NodePrototype, {
     },
 
     __clone() {
-        var c = new Node(), v;
+        var j = {}, v, t = this;
         for (var i = 0; i < NodeCloneProperties.length; i++) {
-            v = this[NodeCloneProperties[i]];
+            v = t[NodeCloneProperties[i]];
             if (v !== undefined)
-                c[NodeCloneProperties[i]] = v;
+                j[NodeCloneProperties[i]] = v;
         }
-        this.__eachChild(function (cc) {
+        t.__eachChild(cc => {
             if (cc.__validToSave) {
-                c.add(cc.__clone());
+                if (!j.__childs) j.__childs = [];
+                j.__childs.add(cc.__clone());
             }
         });
-        return c;
+        return newNode(y, j).__init(c);
     },
 
     __removeClass(c) {
@@ -1202,6 +1215,7 @@ mergeObj(NodePrototype, {
             //cheats
             renderInfo.nodesRendered++;
             //endcheats
+            return 1;
         }
         //debug
         else if (t.__debugDrawing) {
@@ -1209,16 +1223,12 @@ mergeObj(NodePrototype, {
         }
         //undebug
 
-        return 1;
     },
 
     __drawMe() {
         var t = this;
-        if (t.__indecesBuffer) {
-            if (t.map || t.____shader) {
-                renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
-                return 1;
-            }
+        if (t.__indecesBuffer && (t.map || t.____shader)) {
+            return renderer.__draw(t, t.__verticesCount || t.__indecesBuffer.__realsize);
         }
     },
 
@@ -2314,7 +2324,7 @@ mergeObj(NodePrototype, {
     },
 
     toJsString() {
-        return JSON.stringify(this.toJson(), 1, 4).replace(/    "(\w*)":/g, function (a, b) { return '   ' + b + ':' });
+        return JSON.stringify(this.__toJson(), 1, 4).replace(/    "(\w*)":/g, function (a, b) { return '   ' + b + ':' });
     },
 
     __nodeToJsonPropertiesList__: (function () {
@@ -2417,10 +2427,21 @@ mergeObj(NodePrototype, {
             __notNormalNode: undefined,
 
             __dragonBones(v) { if (v) return v.__name },
-            __spine(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
-            __model3d(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
-            __cubism(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
-            __lottie(v) { if (v) { var vv = v.toJson(); return vv ? vv : v.__name } },
+            __spine(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
+            //3d
+            __model3d(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
+            // __cullFace(v) {   },
+            __is3D: undefined,
+            __rotation3d(v) {
+                if (v) {
+                    if (v._x != 0 || v._y != 0 || v._z != 0 || v._w != Euler.DefaultOrder) {
+                        return v.__toJson();
+                    }
+                }
+            },
+            //no3d
+            __cubism(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
+            __lottie(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
 
             __needScissor: [0, false, undefined],
 
@@ -2545,18 +2566,31 @@ mergeObj(NodePrototype, {
             __scale(scale, o) {
 
                 if (scale) {
-                    var sx = Number(scale.x.toFixed(3)),
-                        sy = Number(scale.y.toFixed(3));
-
-                    if (sx != 1 || sy != 1) {
-                        if (sx == sy) {
-                            o.__scaleF = sx;
-                        } else if (sx != 1 && sy != 1) {
-                            o.__scale = [sx, sy];
-                        } else if (sx != 1) {
-                            o.__scalex = sx;
-                        } else if (sy != 1) {
-                            o.__scaley = sy;
+                    var sx = Number(scale.x.toFixed(5)),
+                        sy = Number(scale.y.toFixed(5));
+                    //3d
+                    if (this.__is3D) {
+                        var sz = Number(scale.y.toFixed(5));
+                        if (sx != 1 || sy != 1 || sz != 1) {
+                            if (sx == sy && sx == sz) {
+                                o.__scaleF = sx;
+                            } else {
+                                o.__scale = [sx, sy, sz];
+                            }
+                        }
+                    } else
+                    //no 3d
+                    {
+                        if (sx != 1 || sy != 1) {
+                            if (sx == sy) {
+                                o.__scaleF = sx;
+                            } else if (sx != 1 && sy != 1) {
+                                o.__scale = [sx, sy];
+                            } else if (sx != 1) {
+                                o.__scalex = sx;
+                            } else if (sy != 1) {
+                                o.__scaley = sy;
+                            }
                         }
                     }
                 }
@@ -2566,7 +2600,7 @@ mergeObj(NodePrototype, {
         }
     })(),
 
-    toJson: (function () {
+    __toJson: (function () {
 
         function saveShadow(o, shadow) {
             if (o)
@@ -2809,7 +2843,7 @@ mergeObj(NodePrototype, {
 
             var effect = t.__effect;
             if (effect && objectKeys(effect).length) {
-                o.__effect = effect.toJson();
+                o.__effect = effect.__toJson();
             }
 
             var keyframes = t.__keyframes;
@@ -2844,8 +2878,8 @@ mergeObj(NodePrototype, {
             if (typeof traversingWithoutLoops != undefinedType)
                 traversingWithoutLoops(o, function (obj, key, depth, parent) {
                     if (obj && isObject(obj) && obj.constructor != Object) {
-                        if (obj.toJson) {
-                            var j = obj.toJson();
+                        if (obj.__toJson) {
+                            var j = obj.__toJson();
                             if (j != undefined) {
                                 parent[key] = j;
                             }
@@ -2858,7 +2892,7 @@ mergeObj(NodePrototype, {
                 });
 
             t.__eachChild(function (child, i) {
-                var jjj = child.__validToSave && child.toJson && child.toJson();
+                var jjj = child.__validToSave && child.__toJson && child.__toJson();
                 if (jjj) {
                     if (options.__storeChildsAsObject) {
                         if (!o.__childs) o.__childs = {};
@@ -2951,6 +2985,11 @@ var NodeCloneProperties = [
     , '__description', '__selectable', '__onKey', '__onLoad', '__propertyBinding',
     '__behaviour', '__classesObj', '__physics', '__numericInputStep', '__contextMenu', '__wheel'
     //undebug
+    //3d
+    , '__rotation3d', '__model3d'
+    // , '__cullFace'
+    , '__is3D'
+    //no3d
 ],
 
     NodePropertiesObject = {
@@ -3923,10 +3962,15 @@ var NodeCloneProperties = [
                     }
 
                 } else
-                    if (v == 3 && parent) {
-                        parent.__dirty = 4;
-                        t.__viewable = 2;
-                        t.__matrixNeedsUpdate = t.__matrixWorldNeedsUpdate = 1;
+                    if (v == 3) {
+                        if (parent) {
+                            parent.__dirty = 4;
+                            t.__viewable = 2;
+                            t.__matrixNeedsUpdate = t.__matrixWorldNeedsUpdate = 1;
+                        } else {
+                            t.__viewable = 2;
+                            t.__matrixNeedsUpdate = t.__matrixWorldNeedsUpdate = 1;
+                        }
                     }
 
                 if (v >= 2) {

@@ -1,10 +1,10 @@
 // универсальный шейдер с матрицей трансформации для цветов
 // в отличие от ps_color берет еще цвет из атрибутов вершины
-varying PRECISION_HIGH vec4 v_color;
+varying vec4 v_color;
 
-varying PRECISION_HIGH vec2 v_texcoord;
+varying vec2 v_texcoord;
 uniform sampler2D u_texture;
-uniform PRECISION_HIGH vec4 u_color;
+uniform vec4 u_color;
 uniform float u_brightness;
 
 // накладываемый цвет

@@ -264,7 +264,7 @@ mergeObj(TextPrototype, {
     ____validToSave: 0,
     __notNormalNode: 1,
 
-    clone: function () {
+    __clone: function () {
         return deepclone(this.__p);
     },
 

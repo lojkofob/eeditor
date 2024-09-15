@@ -62,7 +62,12 @@ TreeEntry.prototype = {
         var entry = this;
 
         if (entry.treeItem) {
-            entry.treeItem.__removeFromParent();
+            if (entry.treeItem.__removeFromParent) {
+                entry.treeItem.__removeFromParent();
+            } else
+                if (entry.treeItem.content) {
+                    entry.treeItem.content.__removeFromParent();
+                }
         }
 
         if (entry.node) {

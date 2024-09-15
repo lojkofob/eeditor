@@ -500,6 +500,7 @@ function createGame(parameters) {
     scene = new Node({
         __hitTest: function () { }, __size: { x: 1, y: 1, px: 1, py: 1 }, ha: 1, va: 1, __isScene: 1
     });
+
     scenes.push(scene);
 
     defaultIndecesBuffer1 = new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, [0, 2, 1, 2, 3, 1], 1);
@@ -681,6 +682,9 @@ function modUrl(path, defdir) {
         , hasQuestion = path.indexOf('?') > 0;
 
     if (hasFullUrl) {
+        return path;
+    }
+    if (path.indexOf('blob:') == 0) {
         return path;
     }
 

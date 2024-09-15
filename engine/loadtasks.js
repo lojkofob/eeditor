@@ -272,32 +272,37 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
         url = filename;
     }
 
-    if (url && url.indexOf("data:image/") == 0) {
-        var tex = new Texture(new Image());
-        tex.__image.src = url;
-        // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
-        var isJPEG = url.indexOf("data:image/jpeg") === 0;
-        tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 });
+    if (url) {
+        var isBlob = url.indexOf("blob:") == 0,
+            isBase64 = url.indexOf("data:image/") == 0;
 
-        if (nodeWaitingsForThis) {
-            tex.__nodesWaitingsForThis = [nodeWaitingsForThis];
+        if (isBase64 || isBlob) {
+            var tex = new Texture(new Image());
+            tex.__image.src = url;
+            // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
+            var isJPEG = url.indexOf("data:image/jpeg") === 0;
+            tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 });
+
+            if (nodeWaitingsForThis) {
+                tex.__nodesWaitingsForThis = [nodeWaitingsForThis];
+            }
+            tex.__src = "_b64i_" + _b64i;
+            _b64i++;
+            var w = tex.__image.width, h = tex.__image.height;
+            globalConfigsData.__frames[tex.__src] = {
+                __isSimpleImage: true,
+                tex: tex,
+                __uvsBuffers: [],
+                v: [0, 1, 1, 0],
+                s: new Vector2(w, h),
+                r: [0, 0, w, h],
+                c: defaultHalfVector2
+            };
+
+            if (onload) onload(tex);
+            onTextureLoaded(tex);
+            return tex;
         }
-        tex.__src = "_b64i_" + _b64i;
-        _b64i++;
-        var w = tex.__image.width, h = tex.__image.height;
-        globalConfigsData.__frames[tex.__src] = {
-            __isSimpleImage: true,
-            tex: tex,
-            __uvsBuffers: [],
-            v: [0, 1, 1, 0],
-            s: new Vector2(w, h),
-            r: [0, 0, w, h],
-            c: defaultHalfVector2
-        };
-
-        if (onload) onload(tex);
-        onTextureLoaded(tex);
-        return tex;
     }
 
     var urlGotModUrl = 0;

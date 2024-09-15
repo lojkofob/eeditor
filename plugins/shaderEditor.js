@@ -79,9 +79,9 @@ let ShaderEditorPlugin = (() => {
             this.eachItem(item => item.destruct()).items = [];
         },
 
-        toJson() {
+        __toJson() {
             return {
-                items: $map(this.items, it => it.toJson())
+                items: $map(this.items, it => it.__toJson())
             }
         },
         push(item) {
@@ -133,7 +133,7 @@ let ShaderEditorPlugin = (() => {
             return this;
         },
 
-        toJson() {
+        __toJson() {
 
             let t = this;
             let panel = t.panel;

@@ -15,7 +15,7 @@ FBXLoader = function () { };
             var self = this;
 
             self.__resourceDirectory = "/" + dirname(url);
-            task.__loadTaskOne(TASKS_RAWDATA, url);
+            task.__loadTaskOne(TASKS_RAWBUFFER, url);
 
             task.__addOnCompleted(a => {
 
@@ -302,21 +302,13 @@ FBXLoader = function () { };
             texture.__setWrapT(valueV === 0 ? 1 : 0);
 
             if ('Scaling' in textureNode) {
-
                 const values = textureNode.Scaling.value;
-
-                texture.repeat.x = values[0];
-                texture.repeat.y = values[1];
-
+                texture.__repeat = new Vector2(values[0], values[1]);
             }
 
             if ('Translation' in textureNode) {
-
                 const values = textureNode.Translation.value;
-
-                texture.offset.x = values[0];
-                texture.offset.y = values[1];
-
+                texture.__offset = new Vector2(values[0], values[1]);
             }
 
             return texture;
@@ -328,13 +320,14 @@ FBXLoader = function () { };
 
             const children = connections.get(textureNode.id).children;
 
-            let fileName;
+            let fileName = children && children.length > 0 ? images[children[0].ID] : 0;
+            if (fileName) {
+                if (fileName.indexOf('blob:') == 0 || fileName.indexOf('data:') == 0) {
+                    return loadImage({ u: fileName, n: fileName });
+                }
 
-            if (children && children.length > 0) {
-                fileName = images[children[0].ID];
+                return loadImage(this.__resourceDirectory + fileName + "?");
             }
-
-            return loadImage(this.__resourceDirectory + fileName + "?");
 
         },
 
@@ -515,7 +508,7 @@ FBXLoader = function () { };
             // if the texture is a layered texture, just use the first layer and issue a warning
             if ('LayeredTexture' in this.__objects && id in this.__objects.LayeredTexture) {
 
-                consoleWarn('FBXLoader: layered textures are not supported in three.js. Discarding all but first layer.');
+                consoleWarn('FBXLoader: layered textures are not supported. Discarding all but first layer.');
                 id = connections.get(id).children[0].ID;
 
             }
@@ -680,13 +673,13 @@ FBXLoader = function () { };
                 parentConnections.forEach(function (connection) {
 
                     const parent = modelMap.get(connection.ID);
-                    if (parent) parent.add(model);
+                    if (parent) parent.__addChildBox(model);
 
                 });
 
                 if (!model.__parent) {
 
-                    sceneGraph.add(model);
+                    sceneGraph.__addChildBox(model);
 
                 }
 
@@ -699,20 +692,19 @@ FBXLoader = function () { };
 
             sceneGraph.__traverse(function (node) {
 
-                if (node.__userData.transformData) {
+                if (node.__transformData) {
 
                     if (node.__parent) {
 
-                        node.__userData.transformData.__parentMatrix = node.__parent.__matrix;
-                        node.__userData.transformData.__parentMatrixWorld = node.__parent.__matrixWorld;
+                        node.__transformData.__parentMatrix = node.__parent.__matrix;
+                        node.__transformData.__parentMatrixWorld = node.__parent.__matrixWorld;
 
                     }
 
-                    const transform = generateTransform(node.__userData.transformData);
+                    const transform = generateTransform(node.__transformData);
 
                     node.__applyMatrix4(transform);
-                    node.__updateWorldMatrix();
-
+                    // node.__updateWorldMatrix();
                 }
 
             });
@@ -774,9 +766,7 @@ FBXLoader = function () { };
                     }
 
                     model.name = node.attrName ? PropertyBinding_sanitizeNodeName(node.attrName) : '';
-                    model.__userData = {
-                        originalName: node.attrName
-                    };
+                    model.__originalName = node.attrName;
 
                     model.ID = id;
 
@@ -806,14 +796,14 @@ FBXLoader = function () { };
                         if (rawBone.ID === parent.ID) {
 
                             const subBone = bone;
-                            bone = new Bone();
+                            bone = new Node3d();
 
                             bone.__matrixWorld.__copy(rawBone.transformLink);
 
                             // set name and id here - otherwise in cases where "subBone" is created it will not have a name / id
 
                             bone.name = name ? PropertyBinding_sanitizeNodeName(name) : '';
-                            bone.__userData.originalName = name;
+                            bone.__originalName = name;
                             bone.ID = id;
 
                             skeleton.bones[i] = bone;
@@ -822,7 +812,7 @@ FBXLoader = function () { };
                             // duplicate the bone here and and it as a child of the first bone
                             if (subBone !== null) {
 
-                                bone.add(subBone);
+                                bone.__addChildBox(subBone);
 
                             }
 
@@ -1025,7 +1015,7 @@ FBXLoader = function () { };
 
                             // TODO: this is not correct - FBX calculates outer and inner angle in degrees
                             // with OuterAngle > InnerAngle && OuterAngle <= Math.PI
-                            // while three.js uses a penumbra between (0, 1) to attenuate the inner angle
+                            // while uses a penumbra between (0, 1) to attenuate the inner angle
                             penumbra = degToRad(lightAttribute.OuterAngle.value);
                             penumbra = Math.max(penumbra, 1);
 
@@ -1092,7 +1082,7 @@ FBXLoader = function () { };
 
             }
 
-            if ('color' in geometry.__buffers) {
+            if ('a_color' in geometry.__buffers) {
 
                 materials.forEach(function (material) {
 
@@ -1102,15 +1092,10 @@ FBXLoader = function () { };
 
             }
 
-            if (geometry.FBX_Deformer) {
+            model = new Node3d({
+                __geometry: geometry, __material: material
+            });
 
-                model = new SkinnedMesh(geometry, material);
-
-            } else {
-
-                model = new Mesh(geometry, material);
-
-            }
 
             return model;
 
@@ -1161,7 +1146,7 @@ FBXLoader = function () { };
             if ('RotationOffset' in modelNode) transformData.rotationOffset = modelNode.RotationOffset.value;
             if ('RotationPivot' in modelNode) transformData.rotationPivot = modelNode.RotationPivot.value;
 
-            model.__userData.transformData = transformData;
+            model.__transformData = transformData;
 
         },
 
@@ -1185,7 +1170,7 @@ FBXLoader = function () { };
                             if (model.target) {
 
                                 model.target.__position.__fromArray(pos);
-                                sceneGraph.add(model.target);
+                                sceneGraph.__addChildBox(model.target);
 
                             } else { // Cameras and other Object3Ds
 
@@ -1294,7 +1279,7 @@ FBXLoader = function () { };
                     if (r !== 0 || g !== 0 || b !== 0) {
 
                         const color = new Color(r, g, b).convertSRGBToLinear();
-                        sceneGraph.add(new AmbientLight(color, 1));
+                        sceneGraph.__addChildBox(new AmbientLight(color, 1));
 
                     }
 
@@ -1440,18 +1425,18 @@ FBXLoader = function () { };
             }
 
             Attribute_applyMatrix4(
-                geo.__addAttributeBuffer('position', 3, buffers.vertex),
+                geo.__addAttributeBuffer('a_position', 3, buffers.vertex),
                 preTransform
             );
 
 
             if (buffers.colors.length > 0) {
-                geo.__addAttributeBuffer('color', 3, buffers.colors);
+                geo.__addAttributeBuffer('a_color', 3, buffers.colors);
             }
 
             if (skeleton) {
-                geo.__buffers['skinIndex'] = new MyBufferAttribute('skinIndex', Uint16Array, 4, GL_ARRAY_BUFFER, buffers.weightsIndices);
-                geo.__addAttributeBuffer('skinWeight', 4, buffers.vertexWeights);
+                geo.__buffers['a_skinIndex'] = new MyBufferAttribute('a_skinIndex', Uint16Array, 4, GL_ARRAY_BUFFER, buffers.weightsIndices);
+                geo.__addAttributeBuffer('a_skinWeight', 4, buffers.vertexWeights);
                 // used later to bind the skeleton to the model
                 geo.FBX_Deformer = skeleton;
             }
@@ -1461,14 +1446,14 @@ FBXLoader = function () { };
                 const normalMatrix = preTransform.__getInverseMatrix().__transpose();
 
                 Attribute_applyNormalMatrix(
-                    geo.__addAttributeBuffer('normal', 3, buffers.normal),
+                    geo.__addAttributeBuffer('a_normal', 3, buffers.normal),
                     normalMatrix
                 );
 
             }
 
             $each(buffers.uvs, (v, i) => {
-                geo.__addAttributeBuffer('uv' + i, 2, v);
+                geo.__addAttributeBuffer('a_uv' + i, 2, v);
             });
 
             if (geoInfo.material && geoInfo.material.mappingType !== 'AllSame') {
@@ -1494,7 +1479,7 @@ FBXLoader = function () { };
                 if (geo.__groups.length > 0) {
 
                     const lastGroup = geo.__groups[geo.__groups.length - 1];
-                    const lastIndex = lastGroup.start + lastGroup.count;
+                    const lastIndex = lastGroup[0] + lastGroup[1];
 
                     if (lastIndex !== buffers.materialIndex.length) {
 
@@ -2034,8 +2019,7 @@ FBXLoader = function () { };
             const morphPositionsSparse = morphGeoNode.Vertices ? morphGeoNode.Vertices.a : [];
             const morphIndices = morphGeoNode.Indexes ? morphGeoNode.Indexes.a : [];
 
-            debugger;
-            const length = parentGeo.__buffers.position.__array.length;
+            const length = parentGeo.__buffers.a_position.__array.length;
             const morphPositions = new Float32Array(length);
 
             for (let i = 0; i < morphIndices.length; i++) {
@@ -2255,7 +2239,7 @@ FBXLoader = function () { };
     // __parse animation data from FBXTree
     makeClass(AnimationParser, {
 
-        // take raw animation clips and turn them into three.js animation clips
+        // take raw animation clips and turn them into animation clips
         __parse() {
 
             const animationClips = [];
@@ -2449,7 +2433,7 @@ FBXLoader = function () { };
 
                                                 node.transform = child.matrix;
 
-                                                if (child.__userData.transformData) node.eulerOrder = child.__userData.transformData.eulerOrder;
+                                                if (child.__transformData) node.eulerOrder = child.__transformData.eulerOrder;
 
                                             }
 
@@ -2659,7 +2643,7 @@ FBXLoader = function () { };
 
                 quaternion.__setFromEulerXYZO(values[i], values[i + 1], values[i + 2], eulerOrder);
 
-                if (preRotation !== undefined) quaternion.premultiply(preRotation);
+                if (preRotation !== undefined) quaternion.__premultiply(preRotation);
                 if (postRotation !== undefined) quaternion.__multiply(postRotation);
 
                 // Check unroll
@@ -3575,8 +3559,12 @@ FBXLoader = function () { };
 
     });
 
-    function BinaryReader(buffer, littleEndian) {
-        this.dv = new DataView(buffer);
+    function BinaryReader(arr, littleEndian) {
+        if (arr.buffer) {
+            this.dv = new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+        } else {
+            this.dv = new DataView(arr);
+        }
         this.offset = 0;
         this.littleEndian = (littleEndian !== undefined) ? littleEndian : true;
         this._textDecoder = new TextDecoder();
@@ -3627,7 +3615,7 @@ FBXLoader = function () { };
 
         __getUint8() {
 
-            const value = this.dv.__getUint8(this.offset);
+            const value = this.dv.getUint8(this.offset);
             this.offset += 1;
             return value;
 
@@ -3635,7 +3623,7 @@ FBXLoader = function () { };
 
         __getInt16() {
 
-            const value = this.dv.__getInt16(this.offset, this.littleEndian);
+            const value = this.dv.getInt16(this.offset, this.littleEndian);
             this.offset += 2;
             return value;
 
@@ -3643,7 +3631,7 @@ FBXLoader = function () { };
 
         __getInt32() {
 
-            const value = this.dv.__getInt32(this.offset, this.littleEndian);
+            const value = this.dv.getInt32(this.offset, this.littleEndian);
             this.offset += 4;
             return value;
 
@@ -3665,7 +3653,7 @@ FBXLoader = function () { };
 
         __getUint32() {
 
-            const value = this.dv.__getUint32(this.offset, this.littleEndian);
+            const value = this.dv.getUint32(this.offset, this.littleEndian);
             this.offset += 4;
             return value;
 
@@ -3747,7 +3735,7 @@ FBXLoader = function () { };
 
         __getFloat32() {
 
-            const value = this.dv.__getFloat32(this.offset, this.littleEndian);
+            const value = this.dv.getFloat32(this.offset, this.littleEndian);
             this.offset += 4;
             return value;
 
@@ -3769,7 +3757,7 @@ FBXLoader = function () { };
 
         __getFloat64() {
 
-            const value = this.dv.__getFloat64(this.offset, this.littleEndian);
+            const value = this.dv.getFloat64(this.offset, this.littleEndian);
             this.offset += 8;
             return value;
 
@@ -3824,12 +3812,16 @@ FBXLoader = function () { };
 
     // ************** UTILITY FUNCTIONS **************
 
+    const CORRECT = 'Kaydara FBX Binary  ';
     function isFbxFormatBinary(buffer) {
-
-        const CORRECT = 'Kaydara\u0020FBX\u0020Binary\u0020\u0020\0';
-
-        return buffer.byteLength >= CORRECT.length && CORRECT === convertArrayBufferToString(buffer, 0, CORRECT.length);
-
+        if (buffer && buffer.byteLength >= CORRECT.length) {
+            for (var i = 0; i < CORRECT.length; i++) {
+                if (buffer[i] != CORRECT.charCodeAt(i)) {
+                    return;
+                }
+            }
+            return true;
+        }
     }
 
     function isFbxFormatASCII(text) {
@@ -4015,7 +4007,7 @@ FBXLoader = function () { };
 
     }
 
-    // Returns the three.js intrinsic Euler order corresponding to FBX extrinsic Euler order
+    // Returns the intrinsic Euler order corresponding to FBX extrinsic Euler order
     // ref: http://help.autodesk.com/view/FBX/2017/ENU/?guid=__cpp_ref_class_fbx_euler_html
     function getEulerOrder(order) {
 
@@ -4047,12 +4039,6 @@ FBXLoader = function () { };
     function parseNumberArray(value) {
         return $map(value.split(','), v => parseFloat(v))
 
-    }
-
-    function convertArrayBufferToString(buffer, from, to) {
-        if (from === undefined) from = 0;
-        if (to === undefined) to = buffer.byteLength;
-        return new TextDecoder().decode(new Uint8Array(buffer, from, to));
     }
 
     function append(a, b) {

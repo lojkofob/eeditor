@@ -22,16 +22,18 @@ var hierarchyPanel;
 
     var oldadd = NodePrototype.add;
     NodePrototype.add = function (child) {
-        var t = this, r = oldadd.call(t, child);
+        if (child) {
+            var t = this, r = oldadd.call(t, child);
 
-        if (t && t.treeEntry) {
-            t.treeEntry.add(child.toTree());
-        }
+            if (t && t.treeEntry) {
+                t.treeEntry.add(child.toTree());
+            }
 
-        if (child.treeEntry) {
-            child.treeEntry.updateSelfIndex(child.__realIndex);
+            if (child.treeEntry) {
+                child.treeEntry.updateSelfIndex(child.__realIndex);
+            }
+            return r;
         }
-        return r;
     };
 
     var oldremove = NodePrototype.__removeChild;

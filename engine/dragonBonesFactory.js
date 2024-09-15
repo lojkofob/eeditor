@@ -417,7 +417,7 @@ if (typeof dragonBones != undefinedType) {
 
         },
 
-        clone: function () {
+        __clone: function () {
             return this.__name;
         },
 

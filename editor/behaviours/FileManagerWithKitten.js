@@ -91,7 +91,7 @@ $each({
 
     u_texture: { get: function () { return this._u_map; }, set: function (v) { this._u_map = v; } },
 
-    a_texcoord: { get: function () { return this.__uvsBuffer; } },
+    a_texcoord: { get: function () { return this.__uvsBuffer0 || this.__uvsBuffer; } },
     a_position: { get: function () { return this.__verticesBuffer; } },
 
     mouse: { get: function () { return toNodeCoords(mouse.__clone()).__divide(__screenSize) } },
@@ -388,7 +388,7 @@ var ImagePreviewerWithKitten = {
             if (content == undefined) {
                 content = [];
                 l.layoutView.__eachChild(function (c) {
-                    content.push(c.toJson());
+                    content.push(c.__toJson());
                 });
             }
 

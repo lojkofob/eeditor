@@ -128,10 +128,9 @@ makeClass(MyBufferAttribute, {
 
         var t = this;
         var programAttribute = programAttributes[t.__name];
-
         t.__bindBuffer();
-
         if (programAttribute !== undefined) {
+
             //debug
             if (t.__debugDrawing) {
                 consoleLog('attribute passed', t.__name, t.__realsize + '/' + t.__size, t.__itemSize, t);
@@ -166,7 +165,7 @@ function hsl2hsv(a, b, c) { b *= c < .5 ? c : 1 - c; return [a, 2 * b / (c + b),
 
 
 function colorToJson(color, defValue) {
-    return jsonToColor(color, defValue).toJson(defValue);
+    return jsonToColor(color, defValue).__toJson(defValue);
 }
 
 function jsonToColor(j, defValue) {
@@ -177,7 +176,7 @@ makeClass(Color, {
 
     __isColor: true,
 
-    toJson(defValue) {
+    __toJson(defValue) {
         var r = this.r, g = this.g, b = this.b;
         if (r <= 1 && g <= 1 && b <= 1) {
             if (r == g && g == b && r != 1) return Number(r.toFixed(4));

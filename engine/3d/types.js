@@ -29,12 +29,12 @@ Euler.DefaultOrder = 'XYZ';
 makeClass(Euler, {
 
 
-    set: function (x, y, z, order) {
+    set(x, y, z, order) {
 
         this._x = x;
         this._y = y;
         this._z = z;
-        this._w = order || this._w;
+        this._w = order || Euler.DefaultOrder;
 
         this.__onChangeCallback();
 
@@ -42,13 +42,13 @@ makeClass(Euler, {
 
     },
 
-    __clone: function () {
+    __clone() {
 
         return new Euler(this._x, this._y, this._z, this._w);
 
     },
 
-    __copy: function (euler) {
+    __copy(euler) {
 
         this._x = euler._x;
         this._y = euler._y;
@@ -61,7 +61,7 @@ makeClass(Euler, {
 
     },
 
-    __setFromRotationMatrix: function (m, order, update) {
+    __setFromRotationMatrix(m, order, update) {
 
         // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -190,36 +190,19 @@ makeClass(Euler, {
 
     },
 
-    __setFromVector3: function (v, order) {
+    __setFromVector3(v, order) {
 
         return this.set(v.x, v.y, v.z, order || this._w);
 
     },
 
-    __reorder: function () {
-
-        // WARNING: this discards revolution information -bhouston
-
-        var q = new Quaternion();
-
-        return function reorder(newOrder) {
-
-            q.__setFromEuler(this);
-
-            return this.__setFromQuaternion(q, newOrder);
-
-        };
-
-    }(),
-
-
-    __equals: function (euler) {
+    __equals(euler) {
 
         return (euler._x === this._x) && (euler._y === this._y) && (euler._z === this._z) && (euler._w === this._w);
 
     },
 
-    __fromArray: function (array) {
+    __fromArray(array) {
 
         this._x = array[0];
         this._y = array[1];
@@ -232,7 +215,7 @@ makeClass(Euler, {
 
     },
 
-    __toArray: function (array, offset) {
+    __toArray(array, offset) {
 
         if (array === undefined) array = [];
         if (offset === undefined) offset = 0;
@@ -240,13 +223,18 @@ makeClass(Euler, {
         array[offset] = this._x;
         array[offset + 1] = this._y;
         array[offset + 2] = this._z;
-        array[offset + 3] = this._w;
-
+        if (this._w != Euler.DefaultOrder) {
+            array[offset + 3] = this._w;
+        }
         return array;
 
     },
 
-    __toVector3: function (optionalResult) {
+    __toJson() {
+        return this.__toArray();
+    },
+
+    __toVector3(optionalResult) {
 
         if (optionalResult) {
 
@@ -260,7 +248,7 @@ makeClass(Euler, {
 
     },
 
-    __onChangeCallback: function () { }
+    __onChangeCallback() { }
 
 },
     {
@@ -290,15 +278,14 @@ makeClass(Euler, {
         __order: createSomePropertyWithGetterAndSetter(function () {
             return this._w;
         }, function (value) {
-            this._w = value;
-            this.__onChangeCallback();
+            this.__setFromQuaternion(_quaternion$3.__setFromEuler(this), value, 1);
         })
     });
 
 
 mergeObj(Matrix4.prototype, {
 
-    __transpose: function () {
+    __transpose() {
 
         var te = this.e;
         var tmp;
@@ -315,7 +302,7 @@ mergeObj(Matrix4.prototype, {
 
     },
 
-    __copyPosition: function (m) {
+    __copyPosition(m) {
 
         var te = this.e;
         var me = m.e;
@@ -328,7 +315,7 @@ mergeObj(Matrix4.prototype, {
 
     },
 
-    __extractRotation: function (m) {
+    __extractRotation(m) {
 
         var te = this.e;
         var me = m.e;
@@ -353,7 +340,7 @@ mergeObj(Matrix4.prototype, {
 
     },
 
-    __makeRotationFromEuler: function (euler) {
+    __makeRotationFromEuler(euler) {
 
         var te = this.e;
 
@@ -475,7 +462,7 @@ mergeObj(Matrix4.prototype, {
 
     },
 
-    __makeRotationFromQuaternion: function (q) {
+    __makeRotationFromQuaternion(q) {
 
         var te = this.e;
 
@@ -687,7 +674,7 @@ class Box3 {
 
     }
 
-    clone() {
+    __clone() {
 
         return new this.constructor().__copy( this );
 
@@ -1147,7 +1134,7 @@ function Quaternion(x, y, z, w) {
     this._x = x || 0;
     this._y = y || 0;
     this._z = z || 0;
-    this._w = w || z;
+    this._w = w || 1;
 
 }
 
@@ -1290,7 +1277,7 @@ makeClass(Quaternion, {
         return this.__setFromEulerXYZO(array[0], array[1], array[2], array[3], update);
     },
 
-    __setFromEuler(euler) {
+    __setFromEuler(euler, update) {
         return this.__setFromEulerXYZO(euler._x, euler._y, euler._z, euler._w, update);
     },
 
@@ -1387,7 +1374,7 @@ makeClass(Quaternion, {
 
     },
 
-    __setFromRotationMatrix(m) {
+    __setFromRotationMatrix(m, update) {
 
         // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 
@@ -1439,7 +1426,9 @@ makeClass(Quaternion, {
 
         }
 
-        this.__onChangeCallback();
+        if (update) {
+            this.__onChangeCallback();
+        }
 
         return this;
 
@@ -1734,7 +1723,7 @@ makeClass(Quaternion, {
     },
 
 
-    __toJSON() {
+    __toJson() {
         return this.toArray();
     },
 
@@ -2377,7 +2366,7 @@ function flattenJSON(jsonKeys, times, values, valuePropertyName) {
 
 function subclip(sourceClip, name, startFrame, endFrame, fps = 30) {
 
-    const clip = sourceClip.clone();
+    const clip = sourceClip.__clone();
 
     clip.name = name;
 
@@ -2587,18 +2576,18 @@ var KeyframeTrack = makeClass(function (name, times, values, interpolation) {
 }, {
 
     // Serialization (in context, because of constructor invocation
-    // and automatic invocation of .toJSON):
+    // and automatic invocation of .__toJson):
 
-    toJSON(track) {
+    __toJson(track) {
 
         const trackType = track.constructor;
 
         let json;
 
-        // derived classes can define a toJSON method
-        if (trackType.toJSON !== this.toJSON) {
+        // derived classes can define a __toJson method
+        if (trackType.__toJson !== this.__toJson) {
 
-            json = trackType.toJSON(track);
+            json = trackType.__toJson(track);
 
         } else {
 
@@ -3000,7 +2989,7 @@ var KeyframeTrack = makeClass(function (name, times, values, interpolation) {
 
     },
 
-    clone() {
+    __clone() {
 
         const times = this.times.slice();
         const values = this.values.slice();
@@ -3105,7 +3094,7 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 }, {
 
 
-    parse(json) {
+    __parse(json) {
 
         const tracks = [],
             jsonTracks = json.tracks,
@@ -3124,7 +3113,7 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
     },
 
-    toJSON(clip) {
+    __toJson(clip) {
 
         const tracks = [],
             clipTracks = clip.tracks;
@@ -3141,7 +3130,7 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
         for (let i = 0, n = clipTracks.length; i !== n; ++i) {
 
-            tracks.push(KeyframeTrack.toJSON(clipTracks[i]));
+            tracks.push(KeyframeTrack.__toJson(clipTracks[i]));
 
         }
 
@@ -3446,22 +3435,22 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
     },
 
-    clone() {
+    __clone() {
 
         const tracks = [];
 
         for (let i = 0; i < this.tracks.length; i++) {
 
-            tracks.push(this.tracks[i].clone());
+            tracks.push(this.tracks[i].__clone());
 
         }
 
         return new this.constructor(this.name, this.duration, tracks, this.blendMode);
 
     },
-    toJSON() {
+    __toJson() {
 
-        return this.constructor.toJSON(this);
+        return this.constructor.__toJson(this);
 
     }
 

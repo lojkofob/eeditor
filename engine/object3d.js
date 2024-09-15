@@ -49,7 +49,8 @@ function Object3D() {
         __selfColor: new Color(1, 1, 1),
         __alphaDeep: 1,
         __opacityDeep: 1,
-        __alpha: 1
+        __alpha: 1,
+        __cullFace: CullFaceBack
     });
 }
 
@@ -57,14 +58,14 @@ var Object3DPrototype = Object3D.prototype;
 
 ObjectDefineProperties(Object3DPrototype,
     setNonObfuscatedParams({},
-
         'color', {
         set(v) { this.__selfColor = v; },
         get(v) { return this.__selfColor; }
     },
 
         matrixWorld, { get(v) { return this.mw; } },
-        projectionMatrix, { get(v) { return this.__projectionMatrix; } }
+        projectionMatrix, { get(v) { return this.__projectionMatrix; } },
+        'pm', { get(v) { return this.__projectionMatrix; } }
     )
 )
 

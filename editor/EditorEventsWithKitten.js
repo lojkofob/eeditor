@@ -312,7 +312,7 @@ var EditorEventsWithKitten = {
 
             if (!selectedNode.__someParentSelected()) {
                 activateProjectOptions();
-                var o = selectedNode.toJson();
+                var o = selectedNode.__toJson();
                 deactivateProjectOptions();
                 o.nnnnflag = 12;
                 __clipboard += z + JSON.stringify(o, null, 2);
@@ -559,7 +559,7 @@ var EditorEventsWithKitten = {
             }
 
             if (emitter) {
-                this.emitterClipboard = emitter.toJson();
+                this.emitterClipboard = emitter.__toJson();
             }
         }
 
@@ -879,7 +879,7 @@ addEditorEvents('Editor', {
                     if (r) {
                         sn.__effect.name = r;
                         activateProjectOptions();
-                        FileManagerWithKitten.saveFile(options.__baseParticlesFolder + r + '.effect.json', sn.__effect.toJson(), ParticlesFileWorker);
+                        FileManagerWithKitten.saveFile(options.__baseParticlesFolder + r + '.effect.json', sn.__effect.__toJson(), ParticlesFileWorker);
                         deactivateProjectOptions();
                     }
                 }

@@ -31,7 +31,7 @@ function reorderPadding(p) {
 }
 
 function noneColor() {
-    return invertedDefTextColor().lerp({ r: 0.5, g: 0.5, b: 0.5 }, 0.7).toJson()
+    return invertedDefTextColor().lerp({ r: 0.5, g: 0.5, b: 0.5 }, 0.7).__toJson()
 }
 
 var EditFieldsWithKitten = {
@@ -731,6 +731,8 @@ var EditFieldsWithKitten = {
                 if (!EditFieldsWithKitten.inputsForProperties[type][property]) EditFieldsWithKitten.inputsForProperties[type][property] = [];
 
                 EditFieldsWithKitten.inputsForProperties[type][property].push(input);
+
+                EditFieldsWithKitten.inputsForProperties.Node3d = EditFieldsWithKitten.inputsForProperties.Node;
 
                 input.addedToInputsForProperties = 1;
 
