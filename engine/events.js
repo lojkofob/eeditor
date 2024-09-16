@@ -611,7 +611,7 @@ function onDocumentMouseWheel(e) {
 function onContextMenu(e) {
 
     draggableObjects.__startDragPosition = 0;
-
+    blockBrowserEvent(e);
     if (__window.oncm)
         return;
 

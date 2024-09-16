@@ -806,7 +806,7 @@ FBXLoader = function () { };
                             bone.__originalName = name;
                             bone.ID = id;
 
-                            skeleton.bones[i] = bone;
+                            skeleton.__boneMatrices[i] = bone;
 
                             // In cases where a bone is shared between multiple meshes
                             // duplicate the bone here and and it as a child of the first bone
@@ -1211,7 +1211,7 @@ FBXLoader = function () { };
 
                                 const model = modelMap.get(geoConnParent.ID);
 
-                                model.__bind(new Skeleton(skeleton.bones), bindMatrices[geoConnParent.ID]);
+                                model.__bind(new Skeleton(skeleton.__boneMatrices), bindMatrices[geoConnParent.ID]);
 
                             }
 

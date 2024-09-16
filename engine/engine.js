@@ -485,7 +485,7 @@ function createGame(parameters) {
 
     renderer = new WebGLRenderer(); //WebGLRenderer(1); to enable GlDebug
 
-    camera = new Camera();
+    camera = new CameraOrtho();
 
     var __domElement = renderer.__domElement;
 

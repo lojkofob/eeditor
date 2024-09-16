@@ -571,9 +571,13 @@ TreeEntry.prototype = {
             if (onlyHierarchy) {
                 for (var i in entry.data) {
                     var e = entry.data[i];
-                    e.__parentNode = content;
-                    e.__parentEntry = entry;
-                    e.updateItemContent(1);
+                    if (e) {
+                        e.__parentNode = content;
+                        e.__parentEntry = entry;
+                        e.updateItemContent(1);
+                    } else {
+                        debugger;
+                    }
                 }
                 return;
             }

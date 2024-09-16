@@ -316,7 +316,7 @@ function showImage(i) {
         }
         else
             if (i instanceof Node) {
-                var cam = new Camera();
+                var cam = new CameraOrtho();
 
                 var b = i.__getBoundingBox();
 

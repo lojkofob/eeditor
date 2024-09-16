@@ -711,6 +711,9 @@ makeClass(Matrix4, {
         return this;
     },
 
+    __getPosition() {
+        return new Vector3(te[12], te[13], te[14]);
+    },
 
     __setPosition(x, y, z) {
 

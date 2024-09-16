@@ -1453,6 +1453,14 @@ function __selectChildTraversing(f) {
 }
 
 
+function EditorHitTest(node, pos) {
+
+    var _cam = camera;
+    camera = Editor.currentLayout.camera || node.__root.__camera || camera;
+    node.__hitTest(pos);
+    camera = _cam;
+}
+
 gestures.tap = function (pos) {
 
     pos = pos || mouse;
@@ -1472,6 +1480,10 @@ gestures.tap = function (pos) {
     //         EditFieldsWithKitten.focusedInput.unfocus();
 
     // 	delete pos.wp;
+
+
+    var _cam = camera;
+    camera = Editor.currentLayout.camera || camera;
 
     if (EditorEventsWithKitten.debugHitTest) {
         var z = 3;
@@ -1508,6 +1520,7 @@ gestures.tap = function (pos) {
         }
     }
 
+
     if (isCtrlPressed) {
         let node = __selectChildTraversing(n => n.selected && n.__hitTest(pos));
         if (node) {
@@ -1518,6 +1531,7 @@ gestures.tap = function (pos) {
 
     let node = __selectChildTraversing(n => n.__select && !n.selected && n.__hitTest(pos));
 
+    camera = _cam;
     selectNode(node);
 
     return 1;

@@ -80,8 +80,8 @@ $enginescripts = array(
     "text",
     "timer",
 
-    "3d/3d",
     "3d/types",
+    "3d/3d",
     "3d/FBXLoader",
     "3d/shaders"
 

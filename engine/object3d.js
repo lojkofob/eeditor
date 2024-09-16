@@ -126,6 +126,7 @@ var Object3dPropertiesObject = {
         }
     }
 };
+
 ObjectDefineProperties(Object3DPrototype, Object3dPropertiesObject);
 
 mergeObj(Object3DPrototype, {

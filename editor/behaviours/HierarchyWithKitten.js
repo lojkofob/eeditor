@@ -5,6 +5,46 @@ var hierarchyPanel;
     if (window.HierarchyPanelDisabled)
         return;
 
+    function onNodeContextMenu() {
+
+        if (showContextMenu) {
+
+            var entry = this.entry;
+            var node = entry.node;
+
+            if (node) {
+
+                var a = {};
+                if (node.__selected) {
+                    a.unselect = function () { node.__unselect(); }
+                } else {
+                    a.select = function () { node.__select(); }
+                }
+                showContextMenu(
+                    mergeObj(a,
+                        $map({
+                            clone: 1,
+                            add: 1,
+                            remove: 1,
+                            cut: 1,
+                            copy: 1,
+                            paste: 1
+                        }, (v, k) => function () {
+                            if (!isCtrlPressed)
+                                selectNode(node);
+                            var os = getSelectedNodes;
+                            getSelectedNodes = function () { return [node] };
+                            invokeEventWithKitten('Edit.' + k);
+                            getSelectedNodes = os;
+                        })));
+                return 1;
+            }
+        }
+
+
+    }
+
+
     function onTapItemOnTree(entryItem) {
 
         var entry = this;
@@ -26,12 +66,16 @@ var hierarchyPanel;
             var t = this, r = oldadd.call(t, child);
 
             if (t && t.treeEntry) {
-                t.treeEntry.add(child.toTree());
+                var c = child.toTree();
+                if (c) {
+                    t.treeEntry.add(c, 1);
+                }
             }
 
             if (child.treeEntry) {
                 child.treeEntry.updateSelfIndex(child.__realIndex);
             }
+
             return r;
         }
     };
@@ -51,7 +95,6 @@ var hierarchyPanel;
         if (t && t.treeEntry) {
             t.treeEntry.add(child.toTree());
         }
-
         return r;
     };
 
@@ -111,7 +154,8 @@ var hierarchyPanel;
                 onTap: onTapItemOnTree,
                 data: [],
                 toggleVis: 1,
-                toggleSelectable: 1
+                toggleSelectable: 1,
+                contextMenu: onNodeContextMenu
             };
 
 

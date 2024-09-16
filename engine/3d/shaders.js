@@ -199,16 +199,12 @@ var ComputeShaderFor = (function () {
             vp = options.__baseShadersFolder + opts.v + '.v';
         if (!globalConfigsData[fp]) {
             globalConfigsData[fp] = ComputeFShaderFor(node, opts);
-            //debug
-            consoleLog(opts.f, '=', globalConfigsData[fp])
-            //undebug
+            // consoleLog(opts.f, '=', globalConfigsData[fp])
         }
 
         if (!globalConfigsData[vp]) {
             globalConfigsData[vp] = ComputeVShaderFor(node, opts);
-            //debug
-            consoleLog(opts.v, '=', globalConfigsData[vp])
-            //undebug
+            // consoleLog(opts.v, '=', globalConfigsData[vp])
         }
 
         return { f: opts.f, v: opts.v, r: 1 };

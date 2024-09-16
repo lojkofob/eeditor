@@ -1,4 +1,33 @@
 
+const _points = [
+    new Vector3(),
+    new Vector3(),
+    new Vector3(),
+    new Vector3(),
+    new Vector3(),
+    new Vector3(),
+    new Vector3(),
+    new Vector3()
+];
+
+const _vector$b = new Vector3();
+
+
+// triangle centered vertices
+
+const _v0$3 = new Vector3();
+const _v1$7 = new Vector3();
+const _v2$4 = new Vector3();
+
+// triangle edge vectors
+
+const _f0 = new Vector3();
+const _f1 = new Vector3();
+const _f2 = new Vector3();
+
+const _center = new Vector3();
+const _extents = new Vector3();
+const _triangleNormal = new Vector3();
 
 const _v1$5 = new Vector3();
 const _m1$4 = new Matrix4();
@@ -204,10 +233,10 @@ makeClass(Euler, {
 
     __fromArray(array) {
 
-        this._x = array[0];
-        this._y = array[1];
-        this._z = array[2];
-        if (array[3] !== undefined) this._w = array[3];
+        this._x = array[0] || 0;
+        this._y = array[1] || 0;
+        this._z = array[2] || 0;
+        if (array[3] !== undefined) this._w = array[3] || Euler.DefaultOrder;
 
         this.__onChangeCallback();
 
@@ -536,7 +565,7 @@ mergeObj(Matrix4.prototype, {
 
     },
 
-    __decompose(position, quaternion, scale) {
+    __decompose(position, quaternion, scale, update) {
 
         const te = this.e;
 
@@ -571,7 +600,7 @@ mergeObj(Matrix4.prototype, {
         _m1$4.e[9] *= invSZ;
         _m1$4.e[10] *= invSZ;
 
-        quaternion.__setFromRotationMatrix(_m1$4);
+        quaternion.__setFromRotationMatrix(_m1$4, update);
 
         scale.x = sx;
         scale.y = sy;
@@ -589,528 +618,939 @@ mergeObj(Matrix4.prototype, {
 
 
 
-/* ----------- Box3
-const _vector$c =  new Vector3();
-const _quaternion$4 =  new Quaternion();
 
-class Box3 {
+function Box3(min = new Vector3(+ Infinity, + Infinity, + Infinity), max = new Vector3(- Infinity, - Infinity, - Infinity)) {
 
-    constructor( min = new Vector3( + Infinity, + Infinity, + Infinity ), max = new Vector3( - Infinity, - Infinity, - Infinity ) ) {
+    this.__isBox3 = true;
 
-        this.isBox3 = true;
+    this.min = min;
+    this.max = max;
 
-        this.min = min;
-        this.max = max;
+}
 
-    }
+makeClass(Box3, {
 
-    set( min, max ) {
-
-        this.min.__copy( min );
-        this.max.__copy( max );
-
+    set(min, max) {
+        this.min.__copy(min);
+        this.max.__copy(max);
         return this;
+    },
 
-    }
-
-    setFromArray( array ) {
-
-        this.makeEmpty();
-
-        for ( let i = 0, il = array.length; i < il; i += 3 ) {
-
-            this.expandByPoint( _vector$b.fromArray( array, i ) );
-
+    __setFromArray(array) {
+        this.__makeEmpty();
+        for (let i = 0, il = array.length; i < il; i += 3) {
+            this.__expandByPoint(_vector$b.__fromArray(array, i));
         }
-
         return this;
+    },
 
-    }
-
-    setFromBufferAttribute( attribute ) {
-
-        this.makeEmpty();
-
-        for ( let i = 0, il = attribute.count; i < il; i ++ ) {
-
-            this.expandByPoint( _vector$b.fromBufferAttribute( attribute, i ) );
-
+    __setFromPoints(points) {
+        this.__makeEmpty();
+        for (let i = 0, il = points.length; i < il; i++) {
+            this.__expandByPoint(points[i]);
         }
-
         return this;
+    },
 
-    }
-
-    setFromPoints( points ) {
-
-        this.makeEmpty();
-
-        for ( let i = 0, il = points.length; i < il; i ++ ) {
-
-            this.expandByPoint( points[ i ] );
-
-        }
-
+    __setFromCenterAndSize(center, size) {
+        const halfSize = _vector$b.__copy(size).__multiplyScalar(0.5);
+        this.min.__copy(center).sub(halfSize);
+        this.max.__copy(center).add(halfSize);
         return this;
-
-    }
-
-    setFromCenterAndSize( center, size ) {
-
-        const halfSize = _vector$b.__copy( size ).multiplyScalar( 0.5 );
-
-        this.min.__copy( center ).sub( halfSize );
-        this.max.__copy( center ).add( halfSize );
-
-        return this;
-
-    }
-
-    setFromObject( object, precise = false ) {
-
-        this.makeEmpty();
-
-        return this.expandByObject( object, precise );
-
-    }
+    },
 
     __clone() {
 
-        return new this.constructor().__copy( this );
+        return new Box3().__copy(this);
 
-    }
+    },
 
-    copy( box ) {
+    __copy(box) {
 
-        this.min.__copy( box.min );
-        this.max.__copy( box.max );
+        this.min.__copy(box.min);
+        this.max.__copy(box.max);
 
         return this;
 
-    }
+    },
 
-    makeEmpty() {
+    __makeEmpty() {
 
         this.min.x = this.min.y = this.min.z = + Infinity;
         this.max.x = this.max.y = this.max.z = - Infinity;
 
         return this;
 
-    }
+    },
 
-    isEmpty() {
+    __isEmpty() {
 
         // this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
 
-        return ( this.max.x < this.min.x ) || ( this.max.y < this.min.y ) || ( this.max.z < this.min.z );
+        return (this.max.x < this.min.x) || (this.max.y < this.min.y) || (this.max.z < this.min.z);
 
-    }
+    },
 
-    getCenter( target ) {
+    __getCenter(target) {
 
-        return this.isEmpty() ? target.set( 0, 0, 0 ) : target.addVectors( this.min, this.max ).multiplyScalar( 0.5 );
+        return this.__isEmpty() ? target.set(0, 0, 0) : target.__copy(this.min).add(this.max).__multiplyScalar(0.5);
 
-    }
+    },
 
-    getSize( target ) {
+    __getSize(target) {
 
-        return this.isEmpty() ? target.set( 0, 0, 0 ) : target.subVectors( this.max, this.min );
+        return this.__isEmpty() ? target.set(0, 0, 0) : target.__copy(this.max).sub(this.min);
+    },
 
-    }
+    __expandByPoint(point) {
+        this.min.min(point);
+        this.max.max(point);
+        return this;
+    },
 
-    expandByPoint( point ) {
+    __expandByVector(vector) {
 
-        this.min.min( point );
-        this.max.max( point );
+        this.min.sub(vector);
+        this.max.add(vector);
 
         return this;
 
-    }
+    },
 
-    expandByVector( vector ) {
+    __expandByScalar(scalar) {
 
-        this.min.sub( vector );
-        this.max.add( vector );
-
-        return this;
-
-    }
-
-    expandByScalar( scalar ) {
-
-        this.min.addScalar( - scalar );
-        this.max.addScalar( scalar );
+        this.min.addScalar(- scalar);
+        this.max.addScalar(scalar);
 
         return this;
 
-    }
+    },
 
-    expandByObject( object, precise = false ) {
-
-        // Computes the world-axis-aligned bounding box of an object (including its children),
-        // accounting for both the object's, and children's, world transforms
-
-        object.updateWorldMatrix( false, false );
-
-        const geometry = object.geometry;
-
-        if ( geometry !== undefined ) {
-
-            const positionAttribute = geometry.getAttribute( 'position' );
-
-            // precise AABB computation based on vertex data requires at least a position attribute.
-            // instancing isn't supported so far and uses the normal (conservative) code path.
-
-            if ( precise === true && positionAttribute !== undefined && object.isInstancedMesh !== true ) {
-
-                for ( let i = 0, l = positionAttribute.count; i < l; i ++ ) {
-
-                    if ( object.isMesh === true ) {
-
-                        object.getVertexPosition( i, _vector$b );
-
-                    } else {
-
-                        _vector$b.fromBufferAttribute( positionAttribute, i );
-
-                    }
-
-                    _vector$b.applyMatrix4( object.__matrixWorld );
-                    this.expandByPoint( _vector$b );
-
-                }
-
-            } else {
-
-                if ( object.boundingBox !== undefined ) {
-
-                    // object-level bounding box
-
-                    if ( object.boundingBox === null ) {
-
-                        object.computeBoundingBox();
-
-                    }
-
-                    _box$4.__copy( object.boundingBox );
-
-
-                } else {
-
-                    // geometry-level bounding box
-
-                    if ( geometry.boundingBox === null ) {
-
-                        geometry.computeBoundingBox();
-
-                    }
-
-                    _box$4.__copy( geometry.boundingBox );
-
-                }
-
-                _box$4.applyMatrix4( object.__matrixWorld );
-
-                this.union( _box$4 );
-
-            }
-
-        }
-
-        const children = object.children;
-
-        for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-            this.expandByObject( children[ i ], precise );
-
-        }
-
-        return this;
-
-    }
-
-    containsPoint( point ) {
+    __containsPoint(point) {
 
         return point.x >= this.min.x && point.x <= this.max.x &&
             point.y >= this.min.y && point.y <= this.max.y &&
             point.z >= this.min.z && point.z <= this.max.z;
 
-    }
+    },
 
-    containsBox( box ) {
+    __containsBox(box) {
 
         return this.min.x <= box.min.x && box.max.x <= this.max.x &&
             this.min.y <= box.min.y && box.max.y <= this.max.y &&
             this.min.z <= box.min.z && box.max.z <= this.max.z;
 
-    }
+    },
 
-    getParameter( point, target ) {
+    __getParameter(point, target) {
 
         // This can potentially have a divide by zero if the box
         // has a size dimension of 0.
 
         return target.set(
-            ( point.x - this.min.x ) / ( this.max.x - this.min.x ),
-            ( point.y - this.min.y ) / ( this.max.y - this.min.y ),
-            ( point.z - this.min.z ) / ( this.max.z - this.min.z )
+            (point.x - this.min.x) / (this.max.x - this.min.x),
+            (point.y - this.min.y) / (this.max.y - this.min.y),
+            (point.z - this.min.z) / (this.max.z - this.min.z)
         );
 
-    }
+    },
 
-    intersectsBox( box ) {
+    __intersectsBox(box) {
 
         // using 6 splitting planes to rule out intersections.
         return box.max.x >= this.min.x && box.min.x <= this.max.x &&
             box.max.y >= this.min.y && box.min.y <= this.max.y &&
             box.max.z >= this.min.z && box.min.z <= this.max.z;
 
-    }
+    },
 
-    intersectsSphere( sphere ) {
+    __intersectsSphere(sphere) {
 
         // Find the point on the AABB closest to the sphere center.
-        this.clampPoint( sphere.center, _vector$b );
+        this.__clampPoint(sphere.__center, _vector$b);
 
         // If that point is inside the sphere, the AABB and sphere intersect.
-        return _vector$b.distanceToSquared( sphere.center ) <= ( sphere.radius * sphere.radius );
+        return _vector$b.__distanceToSquared(sphere.center) <= (sphere.__radius * sphere.__radius);
 
-    }
+    },
 
-    intersectsPlane( plane ) {
+    __intersectsPlane(plane) {
 
         // We compute the minimum and maximum dot product values. If those values
         // are on the same side (back or front) of the plane, then there is no intersection.
 
         let min, max;
 
-        if ( plane.normal.x > 0 ) {
+        if (plane.__normal.x > 0) {
 
-            min = plane.normal.x * this.min.x;
-            max = plane.normal.x * this.max.x;
-
-        } else {
-
-            min = plane.normal.x * this.max.x;
-            max = plane.normal.x * this.min.x;
-
-        }
-
-        if ( plane.normal.y > 0 ) {
-
-            min += plane.normal.y * this.min.y;
-            max += plane.normal.y * this.max.y;
+            min = plane.__normal.x * this.min.x;
+            max = plane.__normal.x * this.max.x;
 
         } else {
 
-            min += plane.normal.y * this.max.y;
-            max += plane.normal.y * this.min.y;
+            min = plane.__normal.x * this.max.x;
+            max = plane.__normal.x * this.min.x;
 
         }
 
-        if ( plane.normal.z > 0 ) {
+        if (plane.__normal.y > 0) {
 
-            min += plane.normal.z * this.min.z;
-            max += plane.normal.z * this.max.z;
+            min += plane.__normal.y * this.min.y;
+            max += plane.__normal.y * this.max.y;
 
         } else {
 
-            min += plane.normal.z * this.max.z;
-            max += plane.normal.z * this.min.z;
+            min += plane.__normal.y * this.max.y;
+            max += plane.__normal.y * this.min.y;
 
         }
 
-        return ( min <= - plane.constant && max >= - plane.constant );
+        if (plane.__normal.z > 0) {
 
-    }
-
-    intersectsTriangle( triangle ) {
-
-        if ( this.isEmpty() ) {
-
-            return false;
-
-        }
-
-        // compute box center and extents
-        this.getCenter( _center );
-        _extents.subVectors( this.max, _center );
-
-        // translate triangle to aabb origin
-        _v0$3.subVectors( triangle.a, _center );
-        _v1$7.subVectors( triangle.b, _center );
-        _v2$4.subVectors( triangle.c, _center );
-
-        // compute edge vectors for triangle
-        _f0.subVectors( _v1$7, _v0$3 );
-        _f1.subVectors( _v2$4, _v1$7 );
-        _f2.subVectors( _v0$3, _v2$4 );
-
-        // test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
-        // make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
-        // axis_ij = u_i x f_j (u0, u1, u2 = face normals of aabb = x,y,z axes vectors since aabb is axis aligned)
-        let axes = [
-            0, - _f0.z, _f0.y, 0, - _f1.z, _f1.y, 0, - _f2.z, _f2.y,
-            _f0.z, 0, - _f0.x, _f1.z, 0, - _f1.x, _f2.z, 0, - _f2.x,
-            - _f0.y, _f0.x, 0, - _f1.y, _f1.x, 0, - _f2.y, _f2.x, 0
-        ];
-        if ( ! satForAxes( axes, _v0$3, _v1$7, _v2$4, _extents ) ) {
-
-            return false;
-
-        }
-
-        // test 3 face normals from the aabb
-        axes = [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ];
-        if ( ! satForAxes( axes, _v0$3, _v1$7, _v2$4, _extents ) ) {
-
-            return false;
-
-        }
-
-        // finally testing the face normal of the triangle
-        // use already existing triangle edge vectors here
-        _triangleNormal.crossVectors( _f0, _f1 );
-        axes = [ _triangleNormal.x, _triangleNormal.y, _triangleNormal.z ];
-
-        return satForAxes( axes, _v0$3, _v1$7, _v2$4, _extents );
-
-    }
-
-    clampPoint( point, target ) {
-
-        return target.__copy( point ).clamp( this.min, this.max );
-
-    }
-
-    distanceToPoint( point ) {
-
-        return this.clampPoint( point, _vector$b ).distanceTo( point );
-
-    }
-
-    getBoundingSphere( target ) {
-
-        if ( this.isEmpty() ) {
-
-            target.makeEmpty();
+            min += plane.__normal.z * this.min.z;
+            max += plane.__normal.z * this.max.z;
 
         } else {
 
-            this.getCenter( target.center );
+            min += plane.__normal.z * this.max.z;
+            max += plane.__normal.z * this.min.z;
 
-            target.radius = this.getSize( _vector$b ).__length() * 0.5;
+        }
+
+        return (min <= - plane.__constant && max >= - plane.__constant);
+
+    },
+    /*
+        __intersectsTriangle(triangle) {
+    
+            if (this.__isEmpty()) {
+    
+                return false;
+    
+            }
+    
+            // compute box center and extents
+            this.__getCenter(_center);
+            _extents.__copy(this.max).sub(_center);
+    
+            // translate triangle to aabb origin
+            _v0$3.subVectors(triangle.a, _center);
+            _v1$7.subVectors(triangle.b, _center);
+            _v2$4.subVectors(triangle.c, _center);
+    
+            // compute edge vectors for triangle
+            _f0.subVectors(_v1$7, _v0$3);
+            _f1.subVectors(_v2$4, _v1$7);
+            _f2.subVectors(_v0$3, _v2$4);
+    
+            // test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
+            // make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
+            // axis_ij = u_i x f_j (u0, u1, u2 = face normals of aabb = x,y,z axes vectors since aabb is axis aligned)
+            let axes = [
+                0, - _f0.z, _f0.y, 0, - _f1.z, _f1.y, 0, - _f2.z, _f2.y,
+                _f0.z, 0, - _f0.x, _f1.z, 0, - _f1.x, _f2.z, 0, - _f2.x,
+                - _f0.y, _f0.x, 0, - _f1.y, _f1.x, 0, - _f2.y, _f2.x, 0
+            ];
+            if (!satForAxes(axes, _v0$3, _v1$7, _v2$4, _extents)) {
+    
+                return false;
+    
+            }
+    
+            // test 3 face normals from the aabb
+            axes = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+            if (!satForAxes(axes, _v0$3, _v1$7, _v2$4, _extents)) {
+    
+                return false;
+    
+            }
+    
+            // finally testing the face normal of the triangle
+            // use already existing triangle edge vectors here
+            _triangleNormal.crossVectors(_f0, _f1);
+            axes = [_triangleNormal.x, _triangleNormal.y, _triangleNormal.z];
+    
+            return satForAxes(axes, _v0$3, _v1$7, _v2$4, _extents);
+    
+        }*/
+
+    __clampPoint(point, target) {
+
+        return target.__copy(point).__clamp(this.min, this.max);
+
+    },
+
+    __distanceToPoint(point) {
+
+        return this.__clampPoint(point, _vector$b).__distanceTo(point);
+
+    },
+
+    __getBoundingSphere(target) {
+
+        if (this.__isEmpty()) {
+
+            target.__makeEmpty();
+
+        } else {
+
+            this.getCenter(target.__center);
+
+            target.__radius = this.__getSize(_vector$b).__length() * 0.5;
 
         }
 
         return target;
 
-    }
+    },
 
-    intersect( box ) {
+    __intersect(box) {
 
-        this.min.max( box.min );
-        this.max.min( box.max );
+        this.min.max(box.min);
+        this.max.min(box.max);
 
         // ensure that if there is no overlap, the result is fully empty, not slightly empty with non-inf/+inf values that will cause subsequence intersects to erroneously return valid values.
-        if ( this.isEmpty() ) this.makeEmpty();
+        if (this.__isEmpty()) this.__makeEmpty();
 
         return this;
 
-    }
+    },
 
-    union( box ) {
+    __union(box) {
 
-        this.min.min( box.min );
-        this.max.max( box.max );
+        this.min.min(box.min);
+        this.max.max(box.max);
 
         return this;
 
-    }
+    },
 
-    applyMatrix4( matrix ) {
+    __applyMatrix4(matrix) {
 
         // transform of empty box is an empty box.
-        if ( this.isEmpty() ) return this;
+        if (this.__isEmpty()) return this;
 
-        // NOTE: I am using a binary pattern to specify all 2^3 combinations below
-        _points[ 0 ].set( this.min.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 000
-        _points[ 1 ].set( this.min.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 001
-        _points[ 2 ].set( this.min.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 010
-        _points[ 3 ].set( this.min.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 011
-        _points[ 4 ].set( this.max.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 100
-        _points[ 5 ].set( this.max.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 101
-        _points[ 6 ].set( this.max.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 110
-        _points[ 7 ].set( this.max.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 111
+        _points[0].set(this.min.x, this.min.y, this.min.z).__applyMatrix4(matrix); // 000
+        _points[1].set(this.min.x, this.min.y, this.max.z).__applyMatrix4(matrix); // 001
+        _points[2].set(this.min.x, this.max.y, this.min.z).__applyMatrix4(matrix); // 010
+        _points[3].set(this.min.x, this.max.y, this.max.z).__applyMatrix4(matrix); // 011
+        _points[4].set(this.max.x, this.min.y, this.min.z).__applyMatrix4(matrix); // 100
+        _points[5].set(this.max.x, this.min.y, this.max.z).__applyMatrix4(matrix); // 101
+        _points[6].set(this.max.x, this.max.y, this.min.z).__applyMatrix4(matrix); // 110
+        _points[7].set(this.max.x, this.max.y, this.max.z).__applyMatrix4(matrix); // 111
 
-        this.setFromPoints( _points );
-
-        return this;
-
-    }
-
-    translate( offset ) {
-
-        this.min.add( offset );
-        this.max.add( offset );
+        this.__setFromPoints(_points);
 
         return this;
 
+    },
+
+    __translate(offset) {
+
+        this.min.add(offset);
+        this.max.add(offset);
+
+        return this;
+
+    },
+
+    __equals(box) {
+
+        return box.min.__equals(this.min) && box.max.__equals(this.max);
+
     }
 
-    __equals( box ) {
+});
 
-        return box.min.__equals( this.min ) && box.max.__equals( this.max );
 
-    }
+
+const _vector$a = /*@__PURE__*/ new Vector3();
+const _segCenter = /*@__PURE__*/ new Vector3();
+const _segDir = /*@__PURE__*/ new Vector3();
+const _diff = /*@__PURE__*/ new Vector3();
+
+const _edge1 = /*@__PURE__*/ new Vector3();
+const _edge2 = /*@__PURE__*/ new Vector3();
+const _normal$1 = /*@__PURE__*/ new Vector3();
+
+function Ray(origin = new Vector3(), direction = new Vector3(0, 0, - 1){
+
+    this.__origin = origin || new Vector3();
+    this.__direction = direction || new Vector3(0, 0, - 1);
 
 }
 
-const _points = [
-     new Vector3(),
-     new Vector3(),
-     new Vector3(),
-     new Vector3(),
-     new Vector3(),
-     new Vector3(),
-     new Vector3(),
-     new Vector3()
-];
 
-const _vector$b =  new Vector3();
+	set(origin, direction) {
 
-const _box$4 =  new Box3();
+    this.origin.copy(origin);
+    this.direction.copy(direction);
 
-// triangle centered vertices
+    return this;
 
-const _v0$3 =  new Vector3();
-const _v1$7 =  new Vector3();
-const _v2$4 =  new Vector3();
+}
 
-// triangle edge vectors
+copy(ray) {
 
-const _f0 =  new Vector3();
-const _f1 =  new Vector3();
-const _f2 =  new Vector3();
+    this.origin.copy(ray.origin);
+    this.direction.copy(ray.direction);
 
-const _center =  new Vector3();
-const _extents =  new Vector3();
-const _triangleNormal =  new Vector3();
-const _testAxis =  new Vector3();
+    return this;
 
-function satForAxes( axes, v0, v1, v2, extents ) {
+}
 
-    for ( let i = 0, j = axes.length - 3; i <= j; i += 3 ) {
+at(t, target) {
 
-        _testAxis.fromArray( axes, i );
+    return target.copy(this.origin).addScaledVector(this.direction, t);
+
+}
+
+lookAt(v) {
+
+    this.direction.copy(v).sub(this.origin).normalize();
+
+    return this;
+
+}
+
+recast(t) {
+
+    this.origin.copy(this.at(t, _vector$a));
+
+    return this;
+
+}
+
+closestPointToPoint(point, target) {
+
+    target.subVectors(point, this.origin);
+
+    const directionDistance = target.dot(this.direction);
+
+    if (directionDistance < 0) {
+
+        return target.copy(this.origin);
+
+    }
+
+    return target.copy(this.origin).addScaledVector(this.direction, directionDistance);
+
+}
+
+distanceToPoint(point) {
+
+    return Math.sqrt(this.distanceSqToPoint(point));
+
+}
+
+distanceSqToPoint(point) {
+
+    const directionDistance = _vector$a.subVectors(point, this.origin).dot(this.direction);
+
+    // point behind the ray
+
+    if (directionDistance < 0) {
+
+        return this.origin.distanceToSquared(point);
+
+    }
+
+    _vector$a.copy(this.origin).addScaledVector(this.direction, directionDistance);
+
+    return _vector$a.distanceToSquared(point);
+
+}
+
+distanceSqToSegment(v0, v1, optionalPointOnRay, optionalPointOnSegment) {
+
+    // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteDistRaySegment.h
+    // It returns the min distance between the ray and the segment
+    // defined by v0 and v1
+    // It can also set two optional targets :
+    // - The closest point on the ray
+    // - The closest point on the segment
+
+    _segCenter.copy(v0).add(v1).multiplyScalar(0.5);
+    _segDir.copy(v1).sub(v0).normalize();
+    _diff.copy(this.origin).sub(_segCenter);
+
+    const segExtent = v0.distanceTo(v1) * 0.5;
+    const a01 = - this.direction.dot(_segDir);
+    const b0 = _diff.dot(this.direction);
+    const b1 = - _diff.dot(_segDir);
+    const c = _diff.lengthSq();
+    const det = Math.abs(1 - a01 * a01);
+    let s0, s1, sqrDist, extDet;
+
+    if (det > 0) {
+
+        // The ray and segment are not parallel.
+
+        s0 = a01 * b1 - b0;
+        s1 = a01 * b0 - b1;
+        extDet = segExtent * det;
+
+        if (s0 >= 0) {
+
+            if (s1 >= - extDet) {
+
+                if (s1 <= extDet) {
+
+                    // region 0
+                    // Minimum at interior points of ray and segment.
+
+                    const invDet = 1 / det;
+                    s0 *= invDet;
+                    s1 *= invDet;
+                    sqrDist = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c;
+
+                } else {
+
+                    // region 1
+
+                    s1 = segExtent;
+                    s0 = Math.max(0, - (a01 * s1 + b0));
+                    sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+                }
+
+            } else {
+
+                // region 5
+
+                s1 = - segExtent;
+                s0 = Math.max(0, - (a01 * s1 + b0));
+                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+            }
+
+        } else {
+
+            if (s1 <= - extDet) {
+
+                // region 4
+
+                s0 = Math.max(0, - (- a01 * segExtent + b0));
+                s1 = (s0 > 0) ? - segExtent : Math.min(Math.max(- segExtent, - b1), segExtent);
+                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+            } else if (s1 <= extDet) {
+
+                // region 3
+
+                s0 = 0;
+                s1 = Math.min(Math.max(- segExtent, - b1), segExtent);
+                sqrDist = s1 * (s1 + 2 * b1) + c;
+
+            } else {
+
+                // region 2
+
+                s0 = Math.max(0, - (a01 * segExtent + b0));
+                s1 = (s0 > 0) ? segExtent : Math.min(Math.max(- segExtent, - b1), segExtent);
+                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+            }
+
+        }
+
+    } else {
+
+        // Ray and segment are parallel.
+
+        s1 = (a01 > 0) ? - segExtent : segExtent;
+        s0 = Math.max(0, - (a01 * s1 + b0));
+        sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+    }
+
+    if (optionalPointOnRay) {
+
+        optionalPointOnRay.copy(this.origin).addScaledVector(this.direction, s0);
+
+    }
+
+    if (optionalPointOnSegment) {
+
+        optionalPointOnSegment.copy(_segCenter).addScaledVector(_segDir, s1);
+
+    }
+
+    return sqrDist;
+
+}
+
+intersectSphere(sphere, target) {
+
+    _vector$a.subVectors(sphere.center, this.origin);
+    const tca = _vector$a.dot(this.direction);
+    const d2 = _vector$a.dot(_vector$a) - tca * tca;
+    const radius2 = sphere.radius * sphere.radius;
+
+    if (d2 > radius2) return null;
+
+    const thc = Math.sqrt(radius2 - d2);
+
+    // t0 = first intersect point - entrance on front of sphere
+    const t0 = tca - thc;
+
+    // t1 = second intersect point - exit point on back of sphere
+    const t1 = tca + thc;
+
+    // test to see if t1 is behind the ray - if so, return null
+    if (t1 < 0) return null;
+
+    // test to see if t0 is behind the ray:
+    // if it is, the ray is inside the sphere, so return the second exit point scaled by t1,
+    // in order to always return an intersect point that is in front of the ray.
+    if (t0 < 0) return this.at(t1, target);
+
+    // else t0 is in front of the ray, so return the first collision point scaled by t0
+    return this.at(t0, target);
+
+}
+
+intersectsSphere(sphere) {
+
+    return this.distanceSqToPoint(sphere.center) <= (sphere.radius * sphere.radius);
+
+}
+
+distanceToPlane(plane) {
+
+    const denominator = plane.normal.dot(this.direction);
+
+    if (denominator === 0) {
+
+        // line is coplanar, return origin
+        if (plane.distanceToPoint(this.origin) === 0) {
+
+            return 0;
+
+        }
+
+        // Null is preferable to undefined since undefined means.... it is undefined
+
+        return null;
+
+    }
+
+    const t = - (this.origin.dot(plane.normal) + plane.constant) / denominator;
+
+    // Return if the ray never intersects the plane
+
+    return t >= 0 ? t : null;
+
+}
+
+intersectPlane(plane, target) {
+
+    const t = this.distanceToPlane(plane);
+
+    if (t === null) {
+
+        return null;
+
+    }
+
+    return this.at(t, target);
+
+}
+
+intersectsPlane(plane) {
+
+    // check if the ray lies on the plane first
+
+    const distToPoint = plane.distanceToPoint(this.origin);
+
+    if (distToPoint === 0) {
+
+        return true;
+
+    }
+
+    const denominator = plane.normal.dot(this.direction);
+
+    if (denominator * distToPoint < 0) {
+
+        return true;
+
+    }
+
+    // ray origin is behind the plane (and is pointing behind it)
+
+    return false;
+
+}
+
+intersectBox(box, target) {
+
+    let tmin, tmax, tymin, tymax, tzmin, tzmax;
+
+    const invdirx = 1 / this.direction.x,
+        invdiry = 1 / this.direction.y,
+        invdirz = 1 / this.direction.z;
+
+    const origin = this.origin;
+
+    if (invdirx >= 0) {
+
+        tmin = (box.min.x - origin.x) * invdirx;
+        tmax = (box.max.x - origin.x) * invdirx;
+
+    } else {
+
+        tmin = (box.max.x - origin.x) * invdirx;
+        tmax = (box.min.x - origin.x) * invdirx;
+
+    }
+
+    if (invdiry >= 0) {
+
+        tymin = (box.min.y - origin.y) * invdiry;
+        tymax = (box.max.y - origin.y) * invdiry;
+
+    } else {
+
+        tymin = (box.max.y - origin.y) * invdiry;
+        tymax = (box.min.y - origin.y) * invdiry;
+
+    }
+
+    if ((tmin > tymax) || (tymin > tmax)) return null;
+
+    if (tymin > tmin || isNaN(tmin)) tmin = tymin;
+
+    if (tymax < tmax || isNaN(tmax)) tmax = tymax;
+
+    if (invdirz >= 0) {
+
+        tzmin = (box.min.z - origin.z) * invdirz;
+        tzmax = (box.max.z - origin.z) * invdirz;
+
+    } else {
+
+        tzmin = (box.max.z - origin.z) * invdirz;
+        tzmax = (box.min.z - origin.z) * invdirz;
+
+    }
+
+    if ((tmin > tzmax) || (tzmin > tmax)) return null;
+
+    if (tzmin > tmin || tmin !== tmin) tmin = tzmin;
+
+    if (tzmax < tmax || tmax !== tmax) tmax = tzmax;
+
+    //return point closest to the ray (positive side)
+
+    if (tmax < 0) return null;
+
+    return this.at(tmin >= 0 ? tmin : tmax, target);
+
+}
+
+intersectsBox(box) {
+
+    return this.intersectBox(box, _vector$a) !== null;
+
+}
+
+intersectTriangle(a, b, c, backfaceCulling, target) {
+
+    // Compute the offset origin, edges, and normal.
+
+    // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
+
+    _edge1.subVectors(b, a);
+    _edge2.subVectors(c, a);
+    _normal$1.crossVectors(_edge1, _edge2);
+
+    // Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
+    // E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
+    //   |Dot(D,N)|*b1 = sign(Dot(D,N))*Dot(D,Cross(Q,E2))
+    //   |Dot(D,N)|*b2 = sign(Dot(D,N))*Dot(D,Cross(E1,Q))
+    //   |Dot(D,N)|*t = -sign(Dot(D,N))*Dot(Q,N)
+    let DdN = this.direction.dot(_normal$1);
+    let sign;
+
+    if (DdN > 0) {
+
+        if (backfaceCulling) return null;
+        sign = 1;
+
+    } else if (DdN < 0) {
+
+        sign = - 1;
+        DdN = - DdN;
+
+    } else {
+
+        return null;
+
+    }
+
+    _diff.subVectors(this.origin, a);
+    const DdQxE2 = sign * this.direction.dot(_edge2.crossVectors(_diff, _edge2));
+
+    // b1 < 0, no intersection
+    if (DdQxE2 < 0) {
+
+        return null;
+
+    }
+
+    const DdE1xQ = sign * this.direction.dot(_edge1.cross(_diff));
+
+    // b2 < 0, no intersection
+    if (DdE1xQ < 0) {
+
+        return null;
+
+    }
+
+    // b1+b2 > 1, no intersection
+    if (DdQxE2 + DdE1xQ > DdN) {
+
+        return null;
+
+    }
+
+    // Line intersects triangle, check if ray does.
+    const QdN = - sign * _diff.dot(_normal$1);
+
+    // t < 0, no intersection
+    if (QdN < 0) {
+
+        return null;
+
+    }
+
+    // Ray intersects triangle.
+    return this.at(QdN / DdN, target);
+
+}
+
+applyMatrix4(matrix4) {
+
+    this.origin.applyMatrix4(matrix4);
+    this.direction.transformDirection(matrix4);
+
+    return this;
+
+}
+
+equals(ray) {
+
+    return ray.origin.equals(this.origin) && ray.direction.equals(this.direction);
+
+}
+
+clone() {
+
+    return new this.constructor().copy(this);
+
+}
+
+});
+
+
+
+/*
+function Raycaster(ray, near, far) {
+
+    this.__ray = ray;
+    // direction is assumed to be normalized (for accurate distance calculations)
+
+    this.__near = near || 0;
+    this.__far = far == undefined ? Infinity : far;
+
+
+};
+
+makeClass(Raycaster, {
+
+    __ascSort(a, b) {
+
+        return a.__distance - b.__distance;
+
+    },
+
+    __set(origin, direction) {
+
+        // direction is assumed to be normalized (for accurate distance calculations)
+
+        this.__ray.set(origin, direction);
+
+    },
+
+    /*
+        setFromXRController(controller) {
+    
+            _matrix.identity().extractRotation(controller.matrixWorld);
+    
+            this.__ray.origin.__setFromMatrixPosition(controller.matrixWorld);
+            this.__ray.direction.set(0, 0, - 1).applyMatrix4(_matrix);
+    
+            return this;
+    
+        }*/
+
+__intersectObject(object, recursive = true, intersects = []) {
+
+    RayIntersect(object, this, intersects, recursive);
+
+    intersects.sort(this.__ascSort);
+
+    return intersects;
+
+},
+
+__intersectObjects(objects, recursive = true, intersects = []) {
+
+    for (let i = 0, l = objects.length; i < l; i++) {
+
+        RayIntersect(objects[i], this, intersects, recursive);
+
+    }
+
+    intersects.sort(ascSort);
+
+    return intersects;
+
+}
+
+});
+
+function RayIntersect(object, raycaster, intersects, recursive) {
+    let propagate = 1;
+    // if (object.layers.test(raycaster.layers)) {
+    const result = object.__raycast(raycaster, intersects);
+    if (!result) propagate = 0;
+    // }
+    if (propagate && recursive) {
+        const children = object.__childs;
+        for (let i = 0, l = children.length; i < l; i++) {
+            RayIntersect(children[i], raycaster, intersects, true);
+        }
+    }
+}* /
+
+
+const _testAxis = new Vector3();
+
+function satForAxes(axes, v0, v1, v2, extents) {
+
+    for (let i = 0, j = axes.length - 3; i <= j; i += 3) {
+
+        _testAxis.fromArray(axes, i);
         // project the aabb onto the separating axis
-        const r = extents.x * abs( _testAxis.x ) + extents.y * abs( _testAxis.y ) + extents.z * abs( _testAxis.z );
+        const r = extents.x * abs(_testAxis.x) + extents.y * abs(_testAxis.y) + extents.z * abs(_testAxis.z);
         // project all 3 vertices of the triangle onto the separating axis
-        const p0 = v0.dot( _testAxis );
-        const p1 = v1.dot( _testAxis );
-        const p2 = v2.dot( _testAxis );
+        const p0 = v0.dot(_testAxis);
+        const p1 = v1.dot(_testAxis);
+        const p2 = v2.dot(_testAxis);
         // actual test, basically see if either of the most extreme of the triangle points intersects r
-        if ( max( - max( p0, p1, p2 ), min( p0, p1, p2 ) ) > r ) {
+        if (max(- max(p0, p1, p2), min(p0, p1, p2)) > r) {
 
             // points of the projected triangle are outside the projected half-length of the aabb
             // the axis is separating and we can exit
@@ -1124,10 +1564,10 @@ function satForAxes( axes, v0, v1, v2, extents ) {
 
 }
 
-const _box$3 =  new Box3();
-const _v1$6 =  new Vector3();
-const _v2$3 =  new Vector3();
- ------------- box3 */
+const _box$3 = new Box3();
+const _v1$6 = new Vector3();
+const _v2$3 = new Vector3();
+
 
 function Quaternion(x, y, z, w) {
 
@@ -1646,7 +2086,7 @@ makeClass(Quaternion, {
             this._y = s * y + t * this._y;
             this._z = s * z + t * this._z;
 
-            this.normalize(); // normalize calls __onChangeCallback()
+            this.__normalize(); // normalize calls __onChangeCallback()
 
             return this;
 
@@ -3348,18 +3788,18 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
                 // ...assume skeletal animation
 
-                const boneName = '.bones[' + bones[h].name + ']';
+                const boneName = '.__bones[' + bones[h].name + ']';
 
                 addNonemptyTrack(
-                    VectorKeyframeTrack, boneName + '.position',
+                    VectorKeyframeTrack, boneName + '.__position',
                     animationKeys, 'pos', tracks);
 
                 addNonemptyTrack(
-                    QuaternionKeyframeTrack, boneName + '.quaternion',
+                    QuaternionKeyframeTrack, boneName + '.__quaternion',
                     animationKeys, 'rot', tracks);
 
                 addNonemptyTrack(
-                    VectorKeyframeTrack, boneName + '.scale',
+                    VectorKeyframeTrack, boneName + '.__scale',
                     animationKeys, 'scl', tracks);
 
             }

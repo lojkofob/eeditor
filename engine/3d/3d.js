@@ -3,6 +3,11 @@ var AttachedBindMode = 1, DetachedBindMode = 2;
 
 var Default3dCullFace = CullFaceFront;
 
+var _ray;
+var _intersects;
+var _basePosition = new Vector4();
+var _matrix4 = new Matrix4();
+
 // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 const _lut = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a', '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e', '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c', '5d', '5e', '5f', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '6a', '6b', '6c', '6d', '6e', '6f', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '7a', '7b', '7c', '7d', '7e', '7f', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8a', '8b', '8c', '8d', '8e', '8f', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '9a', '9b', '9c', '9d', '9e', '9f', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'da', 'db', 'dc', 'dd', 'de', 'df', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'fa', 'fb', 'fc', 'fd', 'fe', 'ff'];
 
@@ -130,6 +135,11 @@ var __Object3dProxy = (function () {
 
         __onDataReady: function () {
             var t = this;
+            if (t.__sceneSave) {
+                t.__scene.__apply(t.__sceneSave);
+                delete t.__sceneSave
+            }
+
             t.__scene.__validToSave = 0;
             t.__parent.__addChildBox(t.__scene);
         },
@@ -143,6 +153,7 @@ var __Object3dProxy = (function () {
 
             if (t.__scene) {
                 o.__sceneSave = t.__scene.__toJson();
+                delete o.__sceneSave.__shader;
             }
 
             return $filterObject(o, a => a);
@@ -199,6 +210,8 @@ function Node3d(a) {
         t.__dirty = 3;
     };
 
+    t.__quaternion.__setFromEuler(t.____rotation3d, false);
+
     Node.call(this, a)
 
     t.__matrix.__is3D = 1;
@@ -216,6 +229,7 @@ makeClass(Node3d, {
     },
 
     __destruct() {
+        var t = this;
         if (t.____geometry) {
             t.____geometry.__destruct();
             t.____geometry = null;
@@ -230,7 +244,7 @@ makeClass(Node3d, {
     __applyMatrix4(m) {
         var t = this;
         t.__matrix.__premultiply(m);
-        t.__matrix.__decompose(t.__offset, t.__quaternion, t.____scale);
+        t.__matrix.__decompose(t.__offset, t.__quaternion, t.____scale, 1);
         t.__offset.y *= -1;
     },
 
@@ -343,26 +357,54 @@ makeClass(Node3d, {
         return t.____geometry ? t : NodePrototype.__updateGeometry.call(t);
     },
 
-    __computeBoundingBox() {
-        /*
+    __hitTest(ppos) {
         var t = this;
-        const geometry = t.__geometry;
+        if (t.__material && t.__geometry) {
+            if (!t.__boundingBox) { t.__computeBoundingBox(); }
+            if (t.__boundingBox) {
+                var cam = t.__getCamera();
+                _ray = CameraCachedRay(cam, ppos);
+                _intersects = [];
+                t.__raycast()
+                return _intersects.length
+            }
+        }
+        /*
+        const intersections = raycaster.intersectObjects(objects, true);
 
-        if ( t.__boundingBox === null ) {
+        if (intersections.length > 0) {
+ 
+
+        }
+        */
+    },
+
+    __computeBoundingBox() {
+
+        var t = this;
+
+        if (t.__boundingBox === null) {
             t.__boundingBox = new Box3();
         }
 
         t.__boundingBox.__makeEmpty();
 
-        const positionAttribute = geometry.__buffers['position'];
+        const positionAttribute = t.__verticesBuffer;
+        var _vertex = new Vector3();
+        for (let i = 0; i < positionAttribute.__array.length / 3; i++) {
 
-        for ( let i = 0; i < positionAttribute.__array.length/3; i ++ ) {
-
-            t.__getVertexPosition( i, _vertex );
-            t.__boundingBox.expandByPoint( _vertex );
+            t.__getVertexPosition(i, _vertex);
+            t.__boundingBox.expandByPoint(_vertex);
 
         }
-        */
+    },
+
+    __getVertexPosition(index, target) {
+
+        target.__fromArray(this.__verticesBuffer.__array, index);
+        this.__applyBoneTransform(index, target);
+        return target;
+
     },
 
     __computeBoundingSphere() {
@@ -386,105 +428,228 @@ makeClass(Node3d, {
 
         }
         */
-    }
-    /*
-    
-    __copy(source, recursive) {
-        
-        super.__copy(source, recursive);
+    },
 
-        this.__bindMode = source.__bindMode;
-        this.__bindMatrix.__copy(source.__bindMatrix);
-        this.__bindMatrixInverse.__copy(source.__bindMatrixInverse);
+    /*__copy(source, recursive) {
 
-        this.__skeleton = source.__skeleton;
+        var t = this;
+        NodePrototype.__copy.call(t, source, recursive);
 
-        if (source.__boundingBox !== null) this.__boundingBox = source.__boundingBox.__clone();
-        if (source.__boundingSphere !== null) this.__boundingSphere = source.__boundingSphere.__clone();
+        t.__bindMode = source.__bindMode;
+        t.__bindMatrix.__copy(source.__bindMatrix);
+        t.__bindMatrixInverse.__copy(source.__bindMatrixInverse);
+
+        t.__skeleton = source.__skeleton;
+
+        if (source.__boundingBox !== null) t.__boundingBox = source.__boundingBox.__clone();
+        if (source.__boundingSphere !== null) t.__boundingSphere = source.__boundingSphere.__clone();
 
         return this;
 
-    }
+    },*/
 
-    raycast(raycaster, intersects) {
+    __raycast() {
+        var t = this,
+            matrixWorld = t.mw,
+            bb = t.__boundingBox;
 
-        const material = this.material;
-        const matrixWorld = this.__matrixWorld;
-
-        if (material === undefined) return;
 
         // test with bounding sphere in world space
-
-        if (this.__boundingSphere === null) this.computeBoundingSphere();
-
-        _sphere$4.__copy(this.__boundingSphere);
-        _sphere$4.applyMatrix4(matrixWorld);
-
-        if (raycaster.ray.intersectsSphere(_sphere$4) === false) return;
-
+        /*
+                if (this.__boundingSphere === null) this.__computeBoundingSphere();
+        
+                _sphere$4.__copy(this.__boundingSphere);
+                _sphere$4.applyMatrix4(matrixWorld);
+        
+                if (raycaster.ray.intersectsSphere(_sphere$4) === false) return;
+        */
         // convert ray to local space of skinned mesh
-
-        _inverseMatrix$2.__copy(matrixWorld).__invert();
-        _ray$2.__copy(raycaster.ray).applyMatrix4(_inverseMatrix$2);
+        if (!mw.im) mw.im = matrixWorld.__getInverseMatrix();
+        var ray = _ray.__clone().__applyMatrix4(mw.im);
 
         // test with bounding box in local space
-
-        if (this.__boundingBox !== null) {
-
-            if (_ray$2.intersectsBox(this.__boundingBox) === false) return;
-
-        }
+        var intersect = ray.__intersectsBox(bb);
+        if (intersect) {
+            _intersects.push(intersect)
+        };
 
         // test for intersections with geometry
 
-        this._computeIntersections(raycaster, intersects, _ray$2);
+        // this.__computeIntersections(raycaster, intersects, _ray$2);
 
-    }
-
-    getVertexPosition(index, target) {
-
-        super.getVertexPosition(index, target);
-
-        this.applyBoneTransform(index, target);
-
-        return target;
-
-    }*/
-
+    },
 
     /*
-    applyBoneTransform(index, vector) {
+    __computeIntersections( raycaster, intersects, rayLocalSpace ) {
 
-        const skeleton = this.__skeleton;
-        const geometry = this.__geometry;
+        let intersection;
 
-        _skinIndex.fromBufferAttribute(geometry.attributes.skinIndex, index);
-        _skinWeight.fromBufferAttribute(geometry.attributes.skinWeight, index);
+        const geometry = this.geometry;
+        const material = this.material;
 
-        _basePosition.__copy(vector).applyMatrix4(this.__bindMatrix);
+        const index = geometry.index;
+        const position = geometry.attributes.position;
+        const uv = geometry.attributes.uv;
+        const uv1 = geometry.attributes.uv1;
+        const normal = geometry.attributes.normal;
+        const groups = geometry.groups;
+        const drawRange = geometry.drawRange;
 
-        vector.set(0, 0, 0);
+        if ( index !== null ) {
 
-        for (let i = 0; i < 4; i++) {
+            // indexed buffer geometry
 
-            const weight = _skinWeight.getComponent(i);
+            if ( Array.isArray( material ) ) {
 
-            if (weight !== 0) {
+                for ( let i = 0, il = groups.length; i < il; i ++ ) {
 
-                const boneIndex = _skinIndex.getComponent(i);
+                    const group = groups[ i ];
+                    const groupMaterial = material[ group.materialIndex ];
 
-                _matrix4.multiplyMatrices(skeleton.bones[boneIndex].__matrixWorld, skeleton.boneInverses[boneIndex]);
+                    const start = Math.max( group.start, drawRange.start );
+                    const end = Math.min( index.count, Math.min( ( group.start + group.count ), ( drawRange.start + drawRange.count ) ) );
 
-                vector.addScaledVector(_vector3.__copy(_basePosition).applyMatrix4(_matrix4), weight);
+                    for ( let j = start, jl = end; j < jl; j += 3 ) {
+
+                        const a = index.getX( j );
+                        const b = index.getX( j + 1 );
+                        const c = index.getX( j + 2 );
+
+                        intersection = checkGeometryIntersection( this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c );
+
+                        if ( intersection ) {
+
+                            intersection.faceIndex = Math.floor( j / 3 ); // triangle number in indexed buffer semantics
+                            intersection.face.materialIndex = group.materialIndex;
+                            intersects.push( intersection );
+
+                        }
+
+                    }
+
+                }
+
+            } else {
+
+                const start = Math.max( 0, drawRange.start );
+                const end = Math.min( index.count, ( drawRange.start + drawRange.count ) );
+
+                for ( let i = start, il = end; i < il; i += 3 ) {
+
+                    const a = index.getX( i );
+                    const b = index.getX( i + 1 );
+                    const c = index.getX( i + 2 );
+
+                    intersection = checkGeometryIntersection( this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c );
+
+                    if ( intersection ) {
+
+                        intersection.faceIndex = Math.floor( i / 3 ); // triangle number in indexed buffer semantics
+                        intersects.push( intersection );
+
+                    }
+
+                }
+
+            }
+
+        } else if ( position !== undefined ) {
+
+            // non-indexed buffer geometry
+
+            if ( Array.isArray( material ) ) {
+
+                for ( let i = 0, il = groups.length; i < il; i ++ ) {
+
+                    const group = groups[ i ];
+                    const groupMaterial = material[ group.materialIndex ];
+
+                    const start = Math.max( group.start, drawRange.start );
+                    const end = Math.min( position.count, Math.min( ( group.start + group.count ), ( drawRange.start + drawRange.count ) ) );
+
+                    for ( let j = start, jl = end; j < jl; j += 3 ) {
+
+                        const a = j;
+                        const b = j + 1;
+                        const c = j + 2;
+
+                        intersection = checkGeometryIntersection( this, groupMaterial, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c );
+
+                        if ( intersection ) {
+
+                            intersection.faceIndex = Math.floor( j / 3 ); // triangle number in non-indexed buffer semantics
+                            intersection.face.materialIndex = group.materialIndex;
+                            intersects.push( intersection );
+
+                        }
+
+                    }
+
+                }
+
+            } else {
+
+                const start = Math.max( 0, drawRange.start );
+                const end = Math.min( position.count, ( drawRange.start + drawRange.count ) );
+
+                for ( let i = start, il = end; i < il; i += 3 ) {
+
+                    const a = i;
+                    const b = i + 1;
+                    const c = i + 2;
+
+                    intersection = checkGeometryIntersection( this, material, raycaster, rayLocalSpace, uv, uv1, normal, a, b, c );
+
+                    if ( intersection ) {
+
+                        intersection.faceIndex = Math.floor( i / 3 ); // triangle number in non-indexed buffer semantics
+                        intersects.push( intersection );
+
+                    }
+
+                }
 
             }
 
         }
 
-        return vector.applyMatrix4(this.__bindMatrixInverse);
+    },
+*/
+
+    __applyBoneTransform(index, vector) {
+
+        const skeleton = this.__skeleton;
+
+        if (skeleton) {
+            const skinIndexB = this.__skinIndexBuffer.__array, skinWeightB = this.__skinWeightBuffer.__array;
+
+            _skinIndex.__fromArray(skinIndexB, index);
+            _skinWeight.__fromArray(skinWeightB, index);
+
+            _basePosition.__copy(vector).__applyMatrix4(this.__bindMatrix);
+
+            vector.set(0, 0, 0);
+
+            for (let i = 0; i < 4; i++) {
+
+                const weight = skinWeightB[index + i];
+
+                if (weight !== 0) {
+
+                    const boneIndex = skinIndexB[index + i];
+
+                    _matrix4.__multiplyMatrices(skeleton.__bones[boneIndex].__matrixWorld, skeleton.__boneInverses[boneIndex]);
+
+                    vector.addScaledVector(_vector3.__copy(_basePosition).applyMatrix4(_matrix4), weight);
+
+                }
+
+            }
+
+            return vector.applyMatrix4(this.__bindMatrixInverse);
+        }
 
     }
-    */
 
     , __setupVertexAttributes(program) {
         var t = this;
@@ -637,9 +802,57 @@ makeClass(Node3d, {
 
 }, {
 
+    __ofs: { // offset
+        get() { return this.__offset; },
+        set(v) {
+            var tofs = this.__offset; v = v || 0;
+            if (isArray(v)) { v = { x: v[0], y: v[1], z: v[2] }; }
+            tofs.set(v.x || 0, v.y || 0, v.z || 0);
+            //debug
+            if (!__propertiesAppliedByClass) {
+                this.__selfProperties.__ofs = tofs.__clone();
+            }
+            //undebug
+            this.__dirty = 3;
+            this.__needUpdateDeep = 0;
+        }
+    },
+
     ____rotation: {
         get() { return this.____rotation3d._z; },
         set(v) { this.____rotation3d.z = v; }
+    },
+
+    __rotation3dDeg: {
+        set(v) {
+            var r = this.____rotation3d, ch = r.__onChangeCallback;
+            r.__onChangeCallback = function () { }
+            if (!v) {
+                r.set(0, 0, 0);
+            } else if (isArray(v)) {
+                r.__fromArray(v)
+            } else if (v.__isEuler) {
+                r.__copy(v);
+            } else if (v.__isVector3) {
+                r.__setFromVector3(v);
+            } else if (isObject(v)) {
+                r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
+            }
+            r._x = degToRad(r._x);
+            r._y = degToRad(r._y);
+            r._z = degToRad(r._z);
+            r.__onChangeCallback = ch;
+            ch();
+        },
+        get() {
+            var r = this.____rotation3d;
+            return {
+                x: radToDeg(r._x),
+                y: radToDeg(r._y),
+                z: radToDeg(r._z),
+                w: r._w
+            }
+        }
     },
 
     __rotation3d: {
@@ -655,6 +868,8 @@ makeClass(Node3d, {
                 r.__setFromVector3(v);
             } else if (v.__isQuternion) {
                 r.__setFromQuaternion(q, r._w, true);
+            } else if (isObject(v)) {
+                r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
             }
         },
         get() { return this.____rotation3d; }
@@ -767,10 +982,10 @@ makeClass(Node3d, {
 
 function Skeleton(bones, boneInverses) {
     this.uuid = generateUUID();
-    this.bones = bones ? bones.slice(0) : [];
-    this.boneInverses = boneInverses || [];
-    this.boneMatrices = null;
-    this.boneTexture = null;
+    this.__bones = bones ? bones.slice(0) : [];
+    this.__boneInverses = boneInverses || [];
+    this.__boneMatrices = null;
+    this.__boneTexture = null;
     this.__init();
 }
 
@@ -778,10 +993,10 @@ makeClass(Skeleton, {
 
     __init() {
 
-        const bones = this.bones;
-        const boneInverses = this.boneInverses;
+        const bones = this.__bones;
+        const boneInverses = this.__boneInverses;
 
-        this.boneMatrices = new Float32Array(bones.length * 16);
+        this.__boneMatrices = new Float32Array(bones.length * 16);
 
         // calculate inverse bone matrices if necessary
 
@@ -795,13 +1010,13 @@ makeClass(Skeleton, {
 
             if (bones.length !== boneInverses.length) {
 
-                console.warn('THREE.__skeleton: Number of inverse bone matrices does not match amount of bones.');
+                consoleWarn('Skeleton: Number of inverse bone matrices does not match amount of bones.');
 
-                this.boneInverses = [];
+                this.__boneInverses = [];
 
-                for (let i = 0, il = this.bones.length; i < il; i++) {
+                for (let i = 0, il = this.__bones.length; i < il; i++) {
 
-                    this.boneInverses.push(new Matrix4());
+                    this.__boneInverses.push(new Matrix4());
 
                 }
 
@@ -813,19 +1028,19 @@ makeClass(Skeleton, {
 
     __calculateInverses() {
 
-        this.boneInverses.length = 0;
+        this.__boneInverses.length = 0;
 
-        for (let i = 0, il = this.bones.length; i < il; i++) {
+        for (let i = 0, il = this.__bones.length; i < il; i++) {
 
             const inverse = new Matrix4();
 
-            if (this.bones[i]) {
+            if (this.__bones[i]) {
 
-                inverse.__copy(this.bones[i].__matrixWorld).__invert();
+                inverse.__copy(this.__bones[i].__matrixWorld).__invert();
 
             }
 
-            this.boneInverses.push(inverse);
+            this.__boneInverses.push(inverse);
 
         }
 
@@ -835,13 +1050,13 @@ makeClass(Skeleton, {
 
         // recover the bind-time world matrices
 
-        for (let i = 0, il = this.bones.length; i < il; i++) {
+        for (let i = 0, il = this.__bones.length; i < il; i++) {
 
-            const bone = this.bones[i];
+            const bone = this.__bones[i];
 
             if (bone) {
 
-                bone.__matrixWorld.__copy(this.boneInverses[i]).__invert();
+                bone.__matrixWorld.__copy(this.__boneInverses[i]).__invert();
 
             }
 
@@ -849,9 +1064,9 @@ makeClass(Skeleton, {
 
         // compute the local matrices, positions, rotations and scales
 
-        for (let i = 0, il = this.bones.length; i < il; i++) {
+        for (let i = 0, il = this.__bones.length; i < il; i++) {
 
-            const bone = this.bones[i];
+            const bone = this.__bones[i];
 
             if (bone) {
 
@@ -876,10 +1091,10 @@ makeClass(Skeleton, {
 
     __update() {
 
-        const bones = this.bones;
-        const boneInverses = this.boneInverses;
-        const boneMatrices = this.boneMatrices;
-        const boneTexture = this.boneTexture;
+        const bones = this.__bones;
+        const boneInverses = this.__boneInverses;
+        const boneMatrices = this.__boneMatrices;
+        const boneTexture = this.__boneTexture;
 
         // flatten bone matrices to array
 
@@ -904,7 +1119,7 @@ makeClass(Skeleton, {
 
     __clone() {
 
-        return new Skeleton(this.bones, this.boneInverses);
+        return new Skeleton(this.__bones, this.__boneInverses);
 
     },
 
@@ -917,18 +1132,18 @@ makeClass(Skeleton, {
         //       32x32 pixel texture max  256 bones * 4 pixels = (32 * 32)
         //       64x64 pixel texture max 1024 bones * 4 pixels = (64 * 64)
 
-        let size = sqrt(this.bones.length * 4); // 4 pixels needed for 1 matrix
+        let size = sqrt(this.__bones.length * 4); // 4 pixels needed for 1 matrix
         size = ceil(size / 4) * 4;
         size = max(size, 4);
 
         const boneMatrices = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
-        boneMatrices.set(this.boneMatrices); // copy current values
+        boneMatrices.set(this.__boneMatrices); // copy current values
 
         const boneTexture = new DataTexture(boneMatrices, size, size, RGBAFormat, FloatType);
         boneTexture.needsUpdate = true;
 
-        this.boneMatrices = boneMatrices;
-        this.boneTexture = boneTexture;
+        this.__boneMatrices = boneMatrices;
+        this.__boneTexture = boneTexture;
 
         return this;
 
@@ -936,9 +1151,9 @@ makeClass(Skeleton, {
 
     __getBoneByName(name) {
 
-        for (let i = 0, il = this.bones.length; i < il; i++) {
+        for (let i = 0, il = this.__bones.length; i < il; i++) {
 
-            const bone = this.bones[i];
+            const bone = this.__bones[i];
 
             if (bone.name === name) {
 
@@ -954,11 +1169,11 @@ makeClass(Skeleton, {
 
     __destruct() {
 
-        if (this.boneTexture !== null) {
+        if (this.__boneTexture !== null) {
 
-            this.boneTexture.__destruct();
+            this.__boneTexture.__destruct();
 
-            this.boneTexture = null;
+            this.__boneTexture = null;
 
         }
 
@@ -968,20 +1183,20 @@ makeClass(Skeleton, {
 
         this.uuid = json.uuid;
 
-        for (let i = 0, l = json.bones.length; i < l; i++) {
+        for (let i = 0, l = json.__bones.length; i < l; i++) {
 
-            const uuid = json.bones[i];
+            const uuid = json.__bones[i];
             let bone = bones[uuid];
 
             if (bone === undefined) {
 
-                console.warn('THREE.__skeleton: No bone found with UUID:', uuid);
+                consoleWarn('Skeleton: No bone found with UUID:', uuid);
                 bone = new Node3d();
 
             }
 
-            this.bones.push(bone);
-            this.boneInverses.push(new Matrix4().fromArray(json.boneInverses[i]));
+            this.__bones.push(bone);
+            this.__boneInverses.push(new Matrix4().fromArray(json.__boneInverses[i]));
 
         }
 
@@ -1005,16 +1220,16 @@ makeClass(Skeleton, {
 
         data.uuid = this.uuid;
 
-        const bones = this.bones;
-        const boneInverses = this.boneInverses;
+        const bones = this.__bones;
+        const boneInverses = this.__boneInverses;
 
         for (let i = 0, l = bones.length; i < l; i++) {
 
             const bone = bones[i];
-            data.bones.push(bone.uuid);
+            data.__bones.push(bone.uuid);
 
             const boneInverse = boneInverses[i];
-            data.boneInverses.push(boneInverse.toArray());
+            data.__boneInverses.push(boneInverse.toArray());
 
         }
 

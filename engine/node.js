@@ -1558,6 +1558,15 @@ mergeObj(NodePrototype, {
         return t;
     },
 
+    __getCamera() {
+        var t = this;
+        //debug        
+        if (!t.__camera) {
+            t.__camera = (t.__root || 0).camera || camera;
+        }
+        //undebug
+        return t.__camera;
+    },
 
     __hitTest(pos) {
 
@@ -2432,10 +2441,14 @@ mergeObj(NodePrototype, {
             __model3d(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
             // __cullFace(v) {   },
             __is3D: undefined,
-            __rotation3d(v) {
+            __rotation3dDeg(v) {
                 if (v) {
-                    if (v._x != 0 || v._y != 0 || v._z != 0 || v._w != Euler.DefaultOrder) {
-                        return v.__toJson();
+                    if (v.x != 0 || v.y != 0 || v.z != 0 || (v.w != Euler.DefaultOrder && v.w != undefined)) {
+                        var r = [v.x.toFixed(2), v.y.toFixed(2), v.z.toFixed(2)];
+                        if (v.w != Euler.DefaultOrder && v.w != undefined) {
+                            r[3] = r.w;
+                        }
+                        return r;
                     }
                 }
             },
@@ -2986,7 +2999,7 @@ var NodeCloneProperties = [
     '__behaviour', '__classesObj', '__physics', '__numericInputStep', '__contextMenu', '__wheel'
     //undebug
     //3d
-    , '__rotation3d', '__model3d'
+    , '__rotation3dDeg', '__model3d'
     // , '__cullFace'
     , '__is3D'
     //no3d
@@ -4209,10 +4222,7 @@ var NodeCloneProperties = [
                     if (t.__viewable && sciss) {
                         sciss = sciss.__clone();
                         //debug
-                        if (!t.__camera) {
-                            t.__camera = (t.__root || 0).camera || camera;
-                        }
-                        var cam = t.__camera, zoom = cam.__zoom;
+                        var cam = t.__getCamera(), zoom = cam.__zoom;
                         sciss.x = (sciss.x - cam.__x) * zoom;
                         sciss.y = (sciss.y + cam.__y) * zoom;
                         sciss.z *= zoom;
