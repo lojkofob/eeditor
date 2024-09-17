@@ -640,7 +640,7 @@ makeClass(Node3d, {
 
                     _matrix4.__multiplyMatrices(skeleton.__bones[boneIndex].__matrixWorld, skeleton.__boneInverses[boneIndex]);
 
-                    vector.addScaledVector(_vector3.__copy(_basePosition).applyMatrix4(_matrix4), weight);
+                    vector.__addScaledVector(_vector3.__copy(_basePosition).applyMatrix4(_matrix4), weight);
 
                 }
 

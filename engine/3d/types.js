@@ -834,14 +834,14 @@ makeClass(Box3, {
             _extents.__copy(this.max).sub(_center);
     
             // translate triangle to aabb origin
-            _v0$3.subVectors(triangle.a, _center);
-            _v1$7.subVectors(triangle.b, _center);
-            _v2$4.subVectors(triangle.c, _center);
+            _v0$3.__subVectors(triangle.a, _center);
+            _v1$7.__subVectors(triangle.b, _center);
+            _v2$4.__subVectors(triangle.c, _center);
     
             // compute edge vectors for triangle
-            _f0.subVectors(_v1$7, _v0$3);
-            _f1.subVectors(_v2$4, _v1$7);
-            _f2.subVectors(_v0$3, _v2$4);
+            _f0.__subVectors(_v1$7, _v0$3);
+            _f1.__subVectors(_v2$4, _v1$7);
+            _f2.__subVectors(_v0$3, _v2$4);
     
             // test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
             // make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
@@ -867,7 +867,7 @@ makeClass(Box3, {
     
             // finally testing the face normal of the triangle
             // use already existing triangle edge vectors here
-            _triangleNormal.crossVectors(_f0, _f1);
+            _triangleNormal.__crossVectors(_f0, _f1);
             axes = [_triangleNormal.x, _triangleNormal.y, _triangleNormal.z];
     
             return satForAxes(axes, _v0$3, _v1$7, _v2$4, _extents);
@@ -964,492 +964,504 @@ makeClass(Box3, {
 
 
 
-const _vector$a = /*@__PURE__*/ new Vector3();
-const _segCenter = /*@__PURE__*/ new Vector3();
-const _segDir = /*@__PURE__*/ new Vector3();
-const _diff = /*@__PURE__*/ new Vector3();
+const _vector$a = new Vector3();
+const _segCenter = new Vector3();
+const _segDir = new Vector3();
+const _diff = new Vector3();
 
-const _edge1 = /*@__PURE__*/ new Vector3();
-const _edge2 = /*@__PURE__*/ new Vector3();
-const _normal$1 = /*@__PURE__*/ new Vector3();
+const _edge1 = new Vector3();
+const _edge2 = new Vector3();
+const _normal$1 = new Vector3();
 
-function Ray(origin = new Vector3(), direction = new Vector3(0, 0, - 1){
+function Ray(origin, direction) {
 
     this.__origin = origin || new Vector3();
     this.__direction = direction || new Vector3(0, 0, - 1);
 
 }
 
+makeClass(Ray, {
+    set(origin, direction) {
 
-	set(origin, direction) {
+        this.__origin.__copy(origin);
+        this.__direction.__copy(direction);
 
-    this.origin.copy(origin);
-    this.direction.copy(direction);
+        return this;
 
-    return this;
+    },
 
-}
+    __copy(ray) {
 
-copy(ray) {
+        this.__origin.__copy(ray.__origin);
+        this.__direction.__copy(ray.__direction);
 
-    this.origin.copy(ray.origin);
-    this.direction.copy(ray.direction);
+        return this;
 
-    return this;
+    },
 
-}
+    __at(t, target) {
 
-at(t, target) {
+        return target.__copy(this.__origin).__addScaledVector(this.__direction, t);
 
-    return target.copy(this.origin).addScaledVector(this.direction, t);
+    },
 
-}
+    __lookAt(v) {
+        this.__direction.__copy(v).sub(this.__origin).__normalize();
+        return this;
+    },
 
-lookAt(v) {
+    __recast(t) {
+        this.__origin.__copy(this.at(t, _vector$a));
+        return this;
+    },
 
-    this.direction.copy(v).sub(this.origin).normalize();
+    __closestPointToPoint(point, target) {
 
-    return this;
+        target.__subVectors(point, this.__origin);
 
-}
+        const directionDistance = target.dot(this.__direction);
 
-recast(t) {
+        if (directionDistance < 0) {
 
-    this.origin.copy(this.at(t, _vector$a));
+            return target.__copy(this.__origin);
 
-    return this;
+        }
 
-}
+        return target.__copy(this.__origin).__addScaledVector(this.__direction, directionDistance);
 
-closestPointToPoint(point, target) {
+    },
 
-    target.subVectors(point, this.origin);
+    __distanceToPoint(point) {
 
-    const directionDistance = target.dot(this.direction);
+        return sqrt(this.__distanceSqToPoint(point));
 
-    if (directionDistance < 0) {
+    },
 
-        return target.copy(this.origin);
+    __distanceSqToPoint(point) {
 
-    }
+        const directionDistance = _vector$a.__subVectors(point, this.__origin).dot(this.__direction);
 
-    return target.copy(this.origin).addScaledVector(this.direction, directionDistance);
+        // point behind the ray
 
-}
+        if (directionDistance < 0) {
 
-distanceToPoint(point) {
+            return this.__origin.__distanceToSquared(point);
 
-    return Math.sqrt(this.distanceSqToPoint(point));
+        }
 
-}
+        _vector$a.__copy(this.__origin).__addScaledVector(this.__direction, directionDistance);
 
-distanceSqToPoint(point) {
+        return _vector$a.__distanceToSquared(point);
 
-    const directionDistance = _vector$a.subVectors(point, this.origin).dot(this.direction);
+    },
 
-    // point behind the ray
+    __distanceSqToSegment(v0, v1, optionalPointOnRay, optionalPointOnSegment) {
 
-    if (directionDistance < 0) {
+        // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteDistRaySegment.h
+        // It returns the min distance between the ray and the segment
+        // defined by v0 and v1
+        // It can also set two optional targets :
+        // - The closest point on the ray
+        // - The closest point on the segment
 
-        return this.origin.distanceToSquared(point);
+        _segCenter.__copy(v0).add(v1).__multiplyScalar(0.5);
+        _segDir.__copy(v1).sub(v0).__normalize();
+        _diff.__copy(this.__origin).sub(_segCenter);
 
-    }
+        const segExtent = v0.__distanceTo(v1) * 0.5;
+        const a01 = - this.__direction.dot(_segDir);
+        const b0 = _diff.dot(this.__direction);
+        const b1 = - _diff.dot(_segDir);
+        const c = _diff.lengthSq();
+        const det = abs(1 - a01 * a01);
+        let s0, s1, sqrDist, extDet;
 
-    _vector$a.copy(this.origin).addScaledVector(this.direction, directionDistance);
+        if (det > 0) {
 
-    return _vector$a.distanceToSquared(point);
+            // The ray and segment are not parallel.
 
-}
+            s0 = a01 * b1 - b0;
+            s1 = a01 * b0 - b1;
+            extDet = segExtent * det;
 
-distanceSqToSegment(v0, v1, optionalPointOnRay, optionalPointOnSegment) {
+            if (s0 >= 0) {
 
-    // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteDistRaySegment.h
-    // It returns the min distance between the ray and the segment
-    // defined by v0 and v1
-    // It can also set two optional targets :
-    // - The closest point on the ray
-    // - The closest point on the segment
+                if (s1 >= - extDet) {
 
-    _segCenter.copy(v0).add(v1).multiplyScalar(0.5);
-    _segDir.copy(v1).sub(v0).normalize();
-    _diff.copy(this.origin).sub(_segCenter);
+                    if (s1 <= extDet) {
 
-    const segExtent = v0.distanceTo(v1) * 0.5;
-    const a01 = - this.direction.dot(_segDir);
-    const b0 = _diff.dot(this.direction);
-    const b1 = - _diff.dot(_segDir);
-    const c = _diff.lengthSq();
-    const det = Math.abs(1 - a01 * a01);
-    let s0, s1, sqrDist, extDet;
+                        // region 0
+                        // Minimum at interior points of ray and segment.
 
-    if (det > 0) {
+                        const invDet = 1 / det;
+                        s0 *= invDet;
+                        s1 *= invDet;
+                        sqrDist = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c;
 
-        // The ray and segment are not parallel.
+                    } else {
 
-        s0 = a01 * b1 - b0;
-        s1 = a01 * b0 - b1;
-        extDet = segExtent * det;
+                        // region 1
 
-        if (s0 >= 0) {
+                        s1 = segExtent;
+                        s0 = max(0, - (a01 * s1 + b0));
+                        sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
 
-            if (s1 >= - extDet) {
-
-                if (s1 <= extDet) {
-
-                    // region 0
-                    // Minimum at interior points of ray and segment.
-
-                    const invDet = 1 / det;
-                    s0 *= invDet;
-                    s1 *= invDet;
-                    sqrDist = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c;
+                    }
 
                 } else {
 
-                    // region 1
+                    // region 5
 
-                    s1 = segExtent;
-                    s0 = Math.max(0, - (a01 * s1 + b0));
+                    s1 = - segExtent;
+                    s0 = max(0, - (a01 * s1 + b0));
                     sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
 
                 }
 
             } else {
 
-                // region 5
+                if (s1 <= - extDet) {
 
-                s1 = - segExtent;
-                s0 = Math.max(0, - (a01 * s1 + b0));
-                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+                    // region 4
+
+                    s0 = max(0, - (- a01 * segExtent + b0));
+                    s1 = (s0 > 0) ? - segExtent : min(max(- segExtent, - b1), segExtent);
+                    sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+                } else if (s1 <= extDet) {
+
+                    // region 3
+
+                    s0 = 0;
+                    s1 = min(max(- segExtent, - b1), segExtent);
+                    sqrDist = s1 * (s1 + 2 * b1) + c;
+
+                } else {
+
+                    // region 2
+
+                    s0 = max(0, - (a01 * segExtent + b0));
+                    s1 = (s0 > 0) ? segExtent : min(max(- segExtent, - b1), segExtent);
+                    sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+
+                }
 
             }
 
         } else {
 
-            if (s1 <= - extDet) {
+            // Ray and segment are parallel.
 
-                // region 4
+            s1 = (a01 > 0) ? - segExtent : segExtent;
+            s0 = max(0, - (a01 * s1 + b0));
+            sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
 
-                s0 = Math.max(0, - (- a01 * segExtent + b0));
-                s1 = (s0 > 0) ? - segExtent : Math.min(Math.max(- segExtent, - b1), segExtent);
-                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+        }
 
-            } else if (s1 <= extDet) {
+        if (optionalPointOnRay) {
 
-                // region 3
+            optionalPointOnRay.__copy(this.__origin).__addScaledVector(this.__direction, s0);
 
-                s0 = 0;
-                s1 = Math.min(Math.max(- segExtent, - b1), segExtent);
-                sqrDist = s1 * (s1 + 2 * b1) + c;
+        }
 
-            } else {
+        if (optionalPointOnSegment) {
 
-                // region 2
+            optionalPointOnSegment.__copy(_segCenter).__addScaledVector(_segDir, s1);
 
-                s0 = Math.max(0, - (a01 * segExtent + b0));
-                s1 = (s0 > 0) ? segExtent : Math.min(Math.max(- segExtent, - b1), segExtent);
-                sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
+        }
+
+        return sqrDist;
+
+    },
+
+    __intersectSphere(sphere, target) {
+
+        _vector$a.__subVectors(sphere.center, this.__origin);
+        const tca = _vector$a.dot(this.__direction);
+        const d2 = _vector$a.dot(_vector$a) - tca * tca;
+        const radius2 = sphere.__radius * sphere.__radius;
+
+        if (d2 > radius2) return null;
+
+        const thc = sqrt(radius2 - d2);
+
+        // t0 = first intersect point - entrance on front of sphere
+        const t0 = tca - thc;
+
+        // t1 = second intersect point - exit point on back of sphere
+        const t1 = tca + thc;
+
+        // test to see if t1 is behind the ray - if so, return null
+        if (t1 < 0) return null;
+
+        // test to see if t0 is behind the ray:
+        // if it is, the ray is inside the sphere, so return the second exit point scaled by t1,
+        // in order to always return an intersect point that is in front of the ray.
+        if (t0 < 0) return this.at(t1, target);
+
+        // else t0 is in front of the ray, so return the first collision point scaled by t0
+        return this.at(t0, target);
+
+    },
+
+    __intersectsSphere(sphere) {
+
+        return this.__distanceSqToPoint(sphere.center) <= (sphere.__radius * sphere.__radius);
+
+    },
+
+    __distanceToPlane(plane) {
+
+        const denominator = plane.__normal.dot(this.__direction);
+
+        if (denominator === 0) {
+
+            // line is coplanar, return origin
+            if (plane.__distanceToPoint(this.__origin) === 0) {
+
+                return 0;
 
             }
 
-        }
+            // Null is preferable to undefined since undefined means.... it is undefined
 
-    } else {
-
-        // Ray and segment are parallel.
-
-        s1 = (a01 > 0) ? - segExtent : segExtent;
-        s0 = Math.max(0, - (a01 * s1 + b0));
-        sqrDist = - s0 * s0 + s1 * (s1 + 2 * b1) + c;
-
-    }
-
-    if (optionalPointOnRay) {
-
-        optionalPointOnRay.copy(this.origin).addScaledVector(this.direction, s0);
-
-    }
-
-    if (optionalPointOnSegment) {
-
-        optionalPointOnSegment.copy(_segCenter).addScaledVector(_segDir, s1);
-
-    }
-
-    return sqrDist;
-
-}
-
-intersectSphere(sphere, target) {
-
-    _vector$a.subVectors(sphere.center, this.origin);
-    const tca = _vector$a.dot(this.direction);
-    const d2 = _vector$a.dot(_vector$a) - tca * tca;
-    const radius2 = sphere.radius * sphere.radius;
-
-    if (d2 > radius2) return null;
-
-    const thc = Math.sqrt(radius2 - d2);
-
-    // t0 = first intersect point - entrance on front of sphere
-    const t0 = tca - thc;
-
-    // t1 = second intersect point - exit point on back of sphere
-    const t1 = tca + thc;
-
-    // test to see if t1 is behind the ray - if so, return null
-    if (t1 < 0) return null;
-
-    // test to see if t0 is behind the ray:
-    // if it is, the ray is inside the sphere, so return the second exit point scaled by t1,
-    // in order to always return an intersect point that is in front of the ray.
-    if (t0 < 0) return this.at(t1, target);
-
-    // else t0 is in front of the ray, so return the first collision point scaled by t0
-    return this.at(t0, target);
-
-}
-
-intersectsSphere(sphere) {
-
-    return this.distanceSqToPoint(sphere.center) <= (sphere.radius * sphere.radius);
-
-}
-
-distanceToPlane(plane) {
-
-    const denominator = plane.normal.dot(this.direction);
-
-    if (denominator === 0) {
-
-        // line is coplanar, return origin
-        if (plane.distanceToPoint(this.origin) === 0) {
-
-            return 0;
+            return null;
 
         }
 
-        // Null is preferable to undefined since undefined means.... it is undefined
+        const t = - (this.__origin.dot(plane.__normal) + plane.__constant) / denominator;
 
-        return null;
+        // Return if the ray never intersects the plane
+
+        return t >= 0 ? t : null;
+
+    },
+
+    __intersectPlane(plane, target) {
+
+        const t = this.__distanceToPlane(plane);
+
+        if (t === null) {
+
+            return null;
+
+        }
+
+        return this.at(t, target);
+
+    },
+
+    __intersectsPlane(plane) {
+
+        // check if the ray lies on the plane first
+
+        const distToPoint = plane.__distanceToPoint(this.__origin);
+
+        if (distToPoint === 0) {
+
+            return true;
+
+        }
+
+        const denominator = plane.__normal.dot(this.__direction);
+
+        if (denominator * distToPoint < 0) {
+
+            return true;
+
+        }
+
+        // ray origin is behind the plane (and is pointing behind it)
+
+        return false;
+
+    },
+
+    __intersectBox(box, target) {
+
+        let tmin, tmax, tymin, tymax, tzmin, tzmax;
+
+        const invdirx = 1 / this.__direction.x,
+            invdiry = 1 / this.__direction.y,
+            invdirz = 1 / this.__direction.z;
+
+        const origin = this.__origin;
+
+        if (invdirx >= 0) {
+
+            tmin = (box.min.x - origin.x) * invdirx;
+            tmax = (box.max.x - origin.x) * invdirx;
+
+        } else {
+
+            tmin = (box.max.x - origin.x) * invdirx;
+            tmax = (box.min.x - origin.x) * invdirx;
+
+        }
+
+        if (invdiry >= 0) {
+
+            tymin = (box.min.y - origin.y) * invdiry;
+            tymax = (box.max.y - origin.y) * invdiry;
+
+        } else {
+
+            tymin = (box.max.y - origin.y) * invdiry;
+            tymax = (box.min.y - origin.y) * invdiry;
+
+        }
+
+        if ((tmin > tymax) || (tymin > tmax)) return null;
+
+        if (tymin > tmin || isNaN(tmin)) tmin = tymin;
+
+        if (tymax < tmax || isNaN(tmax)) tmax = tymax;
+
+        if (invdirz >= 0) {
+
+            tzmin = (box.min.z - origin.z) * invdirz;
+            tzmax = (box.max.z - origin.z) * invdirz;
+
+        } else {
+
+            tzmin = (box.max.z - origin.z) * invdirz;
+            tzmax = (box.min.z - origin.z) * invdirz;
+
+        }
+
+        if ((tmin > tzmax) || (tzmin > tmax)) return null;
+
+        if (tzmin > tmin || tmin !== tmin) tmin = tzmin;
+
+        if (tzmax < tmax || tmax !== tmax) tmax = tzmax;
+
+        //return point closest to the ray (positive side)
+
+        if (tmax < 0) return null;
+
+        return this.at(tmin >= 0 ? tmin : tmax, target);
+
+    },
+
+    __intersectsBox(box) {
+
+        return this.__intersectBox(box, _vector$a) !== null;
+
+    },
+
+    __intersectTriangle(a, b, c, backfaceCulling, target) {
+
+        // Compute the offset origin, edges, and normal.
+
+        // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
+
+        _edge1.__subVectors(b, a);
+        _edge2.__subVectors(c, a);
+        _normal$1.__crossVectors(_edge1, _edge2);
+
+        // Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
+        // E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
+        //   |Dot(D,N)|*b1 = sign(Dot(D,N))*Dot(D,Cross(Q,E2))
+        //   |Dot(D,N)|*b2 = sign(Dot(D,N))*Dot(D,Cross(E1,Q))
+        //   |Dot(D,N)|*t = -sign(Dot(D,N))*Dot(Q,N)
+        let DdN = this.__direction.dot(_normal$1);
+        let sign;
+
+        if (DdN > 0) {
+
+            if (backfaceCulling) return null;
+            sign = 1;
+
+        } else if (DdN < 0) {
+
+            sign = - 1;
+            DdN = - DdN;
+
+        } else {
+
+            return null;
+
+        }
+
+        _diff.__subVectors(this.__origin, a);
+        const DdQxE2 = sign * this.__direction.dot(_edge2.__crossVectors(_diff, _edge2));
+
+        // b1 < 0, no intersection
+        if (DdQxE2 < 0) {
+
+            return null;
+
+        }
+
+        const DdE1xQ = sign * this.__direction.dot(_edge1.__cross(_diff));
+
+        // b2 < 0, no intersection
+        if (DdE1xQ < 0) {
+
+            return null;
+
+        }
+
+        // b1+b2 > 1, no intersection
+        if (DdQxE2 + DdE1xQ > DdN) {
+
+            return null;
+
+        }
+
+        // Line intersects triangle, check if ray does.
+        const QdN = - sign * _diff.dot(_normal$1);
+
+        // t < 0, no intersection
+        if (QdN < 0) {
+
+            return null;
+
+        }
+
+        // Ray intersects triangle.
+        return this.at(QdN / DdN, target);
+
+    },
+
+
+    __transformDirection(d, m) {
+
+        // input: THREE.Matrix4 affine matrix
+        // vector interpreted as a direction
+
+        const x = d.x, y = d.y, z = d.z;
+        const e = m.e;
+
+        d.x = e[0] * x + e[4] * y + e[8] * z;
+        d.y = e[1] * x + e[5] * y + e[9] * z;
+        d.z = e[2] * x + e[6] * y + e[10] * z;
+
+        return d.__normalize();
+
+    },
+
+    __applyMatrix4(matrix4) {
+
+        this.__origin.__applyMatrix4(matrix4);
+
+        this.__transformDirection(this.__direction, matrix4);
+
+        return this;
+
+    },
+
+    __equals(ray) {
+
+        return ray.__origin.equals(this.__origin) && ray.__direction.equals(this.__direction);
+
+    },
+
+    __clone() {
+
+        return new this.constructor().__copy(this);
 
     }
-
-    const t = - (this.origin.dot(plane.normal) + plane.constant) / denominator;
-
-    // Return if the ray never intersects the plane
-
-    return t >= 0 ? t : null;
-
-}
-
-intersectPlane(plane, target) {
-
-    const t = this.distanceToPlane(plane);
-
-    if (t === null) {
-
-        return null;
-
-    }
-
-    return this.at(t, target);
-
-}
-
-intersectsPlane(plane) {
-
-    // check if the ray lies on the plane first
-
-    const distToPoint = plane.distanceToPoint(this.origin);
-
-    if (distToPoint === 0) {
-
-        return true;
-
-    }
-
-    const denominator = plane.normal.dot(this.direction);
-
-    if (denominator * distToPoint < 0) {
-
-        return true;
-
-    }
-
-    // ray origin is behind the plane (and is pointing behind it)
-
-    return false;
-
-}
-
-intersectBox(box, target) {
-
-    let tmin, tmax, tymin, tymax, tzmin, tzmax;
-
-    const invdirx = 1 / this.direction.x,
-        invdiry = 1 / this.direction.y,
-        invdirz = 1 / this.direction.z;
-
-    const origin = this.origin;
-
-    if (invdirx >= 0) {
-
-        tmin = (box.min.x - origin.x) * invdirx;
-        tmax = (box.max.x - origin.x) * invdirx;
-
-    } else {
-
-        tmin = (box.max.x - origin.x) * invdirx;
-        tmax = (box.min.x - origin.x) * invdirx;
-
-    }
-
-    if (invdiry >= 0) {
-
-        tymin = (box.min.y - origin.y) * invdiry;
-        tymax = (box.max.y - origin.y) * invdiry;
-
-    } else {
-
-        tymin = (box.max.y - origin.y) * invdiry;
-        tymax = (box.min.y - origin.y) * invdiry;
-
-    }
-
-    if ((tmin > tymax) || (tymin > tmax)) return null;
-
-    if (tymin > tmin || isNaN(tmin)) tmin = tymin;
-
-    if (tymax < tmax || isNaN(tmax)) tmax = tymax;
-
-    if (invdirz >= 0) {
-
-        tzmin = (box.min.z - origin.z) * invdirz;
-        tzmax = (box.max.z - origin.z) * invdirz;
-
-    } else {
-
-        tzmin = (box.max.z - origin.z) * invdirz;
-        tzmax = (box.min.z - origin.z) * invdirz;
-
-    }
-
-    if ((tmin > tzmax) || (tzmin > tmax)) return null;
-
-    if (tzmin > tmin || tmin !== tmin) tmin = tzmin;
-
-    if (tzmax < tmax || tmax !== tmax) tmax = tzmax;
-
-    //return point closest to the ray (positive side)
-
-    if (tmax < 0) return null;
-
-    return this.at(tmin >= 0 ? tmin : tmax, target);
-
-}
-
-intersectsBox(box) {
-
-    return this.intersectBox(box, _vector$a) !== null;
-
-}
-
-intersectTriangle(a, b, c, backfaceCulling, target) {
-
-    // Compute the offset origin, edges, and normal.
-
-    // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
-
-    _edge1.subVectors(b, a);
-    _edge2.subVectors(c, a);
-    _normal$1.crossVectors(_edge1, _edge2);
-
-    // Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
-    // E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
-    //   |Dot(D,N)|*b1 = sign(Dot(D,N))*Dot(D,Cross(Q,E2))
-    //   |Dot(D,N)|*b2 = sign(Dot(D,N))*Dot(D,Cross(E1,Q))
-    //   |Dot(D,N)|*t = -sign(Dot(D,N))*Dot(Q,N)
-    let DdN = this.direction.dot(_normal$1);
-    let sign;
-
-    if (DdN > 0) {
-
-        if (backfaceCulling) return null;
-        sign = 1;
-
-    } else if (DdN < 0) {
-
-        sign = - 1;
-        DdN = - DdN;
-
-    } else {
-
-        return null;
-
-    }
-
-    _diff.subVectors(this.origin, a);
-    const DdQxE2 = sign * this.direction.dot(_edge2.crossVectors(_diff, _edge2));
-
-    // b1 < 0, no intersection
-    if (DdQxE2 < 0) {
-
-        return null;
-
-    }
-
-    const DdE1xQ = sign * this.direction.dot(_edge1.cross(_diff));
-
-    // b2 < 0, no intersection
-    if (DdE1xQ < 0) {
-
-        return null;
-
-    }
-
-    // b1+b2 > 1, no intersection
-    if (DdQxE2 + DdE1xQ > DdN) {
-
-        return null;
-
-    }
-
-    // Line intersects triangle, check if ray does.
-    const QdN = - sign * _diff.dot(_normal$1);
-
-    // t < 0, no intersection
-    if (QdN < 0) {
-
-        return null;
-
-    }
-
-    // Ray intersects triangle.
-    return this.at(QdN / DdN, target);
-
-}
-
-applyMatrix4(matrix4) {
-
-    this.origin.applyMatrix4(matrix4);
-    this.direction.transformDirection(matrix4);
-
-    return this;
-
-}
-
-equals(ray) {
-
-    return ray.origin.equals(this.origin) && ray.direction.equals(this.direction);
-
-}
-
-clone() {
-
-    return new this.constructor().copy(this);
-
-}
 
 });
 
@@ -1483,19 +1495,19 @@ makeClass(Raycaster, {
 
     },
 
-    /*
+    
         setFromXRController(controller) {
     
             _matrix.identity().extractRotation(controller.matrixWorld);
     
-            this.__ray.origin.__setFromMatrixPosition(controller.matrixWorld);
-            this.__ray.direction.set(0, 0, - 1).applyMatrix4(_matrix);
+            this.__ray.__origin.__setFromMatrixPosition(controller.matrixWorld);
+            this.__ray.__direction.set(0, 0, - 1).applyMatrix4(_matrix);
     
             return this;
     
-        }*/
+        },
 
-__intersectObject(object, recursive = true, intersects = []) {
+__intersectObject(object, recursive, intersects) {
 
     RayIntersect(object, this, intersects, recursive);
 
@@ -1533,7 +1545,8 @@ function RayIntersect(object, raycaster, intersects, recursive) {
             RayIntersect(children[i], raycaster, intersects, true);
         }
     }
-}* /
+} 
+*/
 
 
 const _testAxis = new Vector3();
@@ -2275,7 +2288,7 @@ var Interpolant = makeClass(function (parameterPositions, sampleValues, sampleSi
 
                                 i1 = pp.length;
                                 this._cachedIndex = i1;
-                                return this.copySampleValue_(i1 - 1);
+                                return this.__copySampleValue_(i1 - 1);
 
                             }
 
@@ -2323,7 +2336,7 @@ var Interpolant = makeClass(function (parameterPositions, sampleValues, sampleSi
                                 // before start
 
                                 this._cachedIndex = 0;
-                                return this.copySampleValue_(0);
+                                return this.__copySampleValue_(0);
 
                             }
 
@@ -2380,7 +2393,7 @@ var Interpolant = makeClass(function (parameterPositions, sampleValues, sampleSi
                 if (t0 === undefined) {
 
                     this._cachedIndex = 0;
-                    return this.copySampleValue_(0);
+                    return this.__copySampleValue_(0);
 
                 }
 
@@ -2388,7 +2401,7 @@ var Interpolant = makeClass(function (parameterPositions, sampleValues, sampleSi
 
                     i1 = pp.length;
                     this._cachedIndex = i1;
-                    return this.copySampleValue_(i1 - 1);
+                    return this.__copySampleValue_(i1 - 1);
 
                 }
 
@@ -2629,7 +2642,7 @@ var DiscreteInterpolant = makeClass(0, {
 
     interpolate_(i1 /*, t0, t, t1 */) {
 
-        return this.copySampleValue_(i1 - 1);
+        return this.__copySampleValue_(i1 - 1);
 
     }
 
@@ -3224,7 +3237,7 @@ var KeyframeTrack = makeClass(function (name, times, values, interpolation) {
             // empty tracks are forbidden, so keep at least one keyframe
             if (from >= to) {
 
-                to = Math.max(to, 1);
+                to = max(to, 1);
                 from = to - 1;
 
             }
@@ -3245,7 +3258,7 @@ var KeyframeTrack = makeClass(function (name, times, values, interpolation) {
         let valid = true;
 
         const valueSize = this.getValueSize();
-        if (valueSize - Math.floor(valueSize) !== 0) {
+        if (valueSize - floor(valueSize) !== 0) {
 
             console.error('KeyframeTrack: Invalid value size in track.', this);
             valid = false;
@@ -3827,7 +3840,7 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
             const track = this.tracks[i];
 
-            duration = Math.max(duration, track.times[track.times.length - 1]);
+            duration = max(duration, track.times[track.times.length - 1]);
 
         }
 

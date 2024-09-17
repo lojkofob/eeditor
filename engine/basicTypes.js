@@ -1053,6 +1053,20 @@ makeClass(Vector2, {
     sub(v) { this.x -= v.x; this.y -= v.y; return this; },
     __sub(v) { this.x -= v.x; this.y -= v.y; return this; },
 
+
+    __subVectors(a, b) {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        return this;
+    },
+
+
+    __addScaledVector(v, s) {
+        this.x += v.x * s;
+        this.y += v.y * s;
+        return this;
+    },
+
     __multiply(v) {
 
         this.x *= v.x;
@@ -1293,6 +1307,22 @@ makeClass(Vector3, {
 
     },
 
+
+    __subVectors(a, b) {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        this.z = a.z - b.z;
+        return this;
+    },
+
+
+    __addScaledVector(v, s) {
+        this.x += v.x * s;
+        this.y += v.y * s;
+        this.z += v.z * s;
+        return this;
+    },
+
     sub(v) {
 
         this.x -= v.x;
@@ -1530,6 +1560,26 @@ makeClass(Vector4, {
         this.y += v.y;
         this.z += v.z;
         this.w += v.w;
+
+        return this;
+
+    },
+
+
+    __subVectors(a, b) {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        this.z = a.z - b.z;
+        this.w = a.w - b.w;
+        return this;
+    },
+
+    __addScaledVector(v, s) {
+
+        this.x += v.x * s;
+        this.y += v.y * s;
+        this.z += v.z * s;
+        this.w += v.w * s;
 
         return this;
 
