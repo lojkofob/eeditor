@@ -513,7 +513,7 @@ var EditorEventsWithKitten = {
         eachSelected(function (n) {
             n.__unselect();
             for (var i in n.__childs) {
-                if (n.__childs[i].__validToSave)
+                if (n.__childs[i].isVisibleInHierarchy())
                     if (n.__childs[i].__select)
                         n.__childs[i].__select();
             }
@@ -524,7 +524,7 @@ var EditorEventsWithKitten = {
     'Edit.selectAll': function () {
         eachSelected(function (n) {
             for (var i in n.__childs) {
-                if (n.__childs[i].__validToSave)
+                if (n.__childs[i].isVisibleInHierarchy())
                     if (n.__childs[i].__select)
                         n.__childs[i].__select();
             }
@@ -1396,7 +1396,7 @@ gestures.__drag = function (dx, dy) {
             //             if (!hasSelected){
             looperPost(a => {
                 if (!curDraggingObject) {
-                    QuadSelectorWithKitten.activate(Editor.currentLayout.layoutView.$(n => n.__validToSave && n.__selectable), isAltPressed ? 0 : 1);
+                    QuadSelectorWithKitten.activate(Editor.currentLayout.layoutView.$(n => n.isVisibleInHierarchy() && n.__selectable), isAltPressed ? 0 : 1);
                 }
             });
             return true;
@@ -1440,7 +1440,7 @@ function __selectChildTraversing(f) {
                 if (f(n)) a.push(n)
             },
             //filter for disable childs traversing
-            n => n.__validToSave && n.__selectable
+            n => n.isVisibleInHierarchy() && n.__selectable
         );
     }
     if (isAltPressed) {

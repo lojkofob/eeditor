@@ -650,16 +650,21 @@ mergeObj(NodePrototype, {
         var j = {}, v, t = this;
         for (var i = 0; i < NodeCloneProperties.length; i++) {
             v = t[NodeCloneProperties[i]];
-            if (v !== undefined)
-                j[NodeCloneProperties[i]] = v;
+            if (v !== undefined) {
+                if (v.__clone) {
+                    j[NodeCloneProperties[i]] = v.__clone();
+                } else {
+                    j[NodeCloneProperties[i]] = deepclone(v);
+                }
+            }
         }
         t.__eachChild(cc => {
             if (cc.__validToSave) {
                 if (!j.__childs) j.__childs = [];
-                j.__childs.add(cc.__clone());
+                j.__childs.push(cc.__clone());
             }
         });
-        return newNode(y, j).__init(c);
+        return newNode(t.__parent, j).__init(j);
     },
 
     __removeClass(c) {
@@ -2439,17 +2444,17 @@ mergeObj(NodePrototype, {
             __spine(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
             //3d
             __model3d(v) { if (v) { var vv = v.__toJson(); return vv ? vv : v.__name } },
-            // __cullFace(v) {   },
+            // __cullFace(v) {  if (v) v != Default3dCullFace  },
             __is3D: undefined,
             __rotation3dDeg(v) {
                 if (v) {
-                    if (v.x != 0 || v.y != 0 || v.z != 0 || (v.w != Euler.DefaultOrder && v.w != undefined)) {
-                        var r = [v.x.toFixed(2), v.y.toFixed(2), v.z.toFixed(2)];
-                        if (v.w != Euler.DefaultOrder && v.w != undefined) {
-                            r[3] = r.w;
-                        }
-                        return r;
+                    // if (v.x != 0 || v.y != 0 || v.z != 0 || (v.w != Euler.DefaultOrder && v.w != undefined)) {
+                    var r = [Number(v.x.toFixed(2)), Number(v.y.toFixed(2)), Number(v.z.toFixed(2))];
+                    if (v.w != Euler.DefaultOrder && v.w != undefined) {
+                        r[3] = r.w;
                     }
+                    return r;
+                    // }
                 }
             },
             //no3d
@@ -2823,7 +2828,9 @@ mergeObj(NodePrototype, {
 
             var shader = selfProperties.__shader;
             if (shader) {
-                o.__shader = shader;
+                if (!shader.r) {
+                    o.__shader = shader;
+                }
             }
 
 
@@ -3000,7 +3007,7 @@ var NodeCloneProperties = [
     //undebug
     //3d
     , '__rotation3dDeg', '__model3d'
-    // , '__cullFace'
+    , '__cullFace'
     , '__is3D'
     //no3d
 ],
@@ -4222,7 +4229,11 @@ var NodeCloneProperties = [
                     if (t.__viewable && sciss) {
                         sciss = sciss.__clone();
                         //debug
-                        var cam = t.__getCamera(), zoom = cam.__zoom;
+                        if (!t.__camera) {
+                            t.__camera = (t.__root || 0).camera || camera;
+                        }
+
+                        var cam = t.__camera, zoom = cam.__zoom;
                         sciss.x = (sciss.x - cam.__x) * zoom;
                         sciss.y = (sciss.y + cam.__y) * zoom;
                         sciss.z *= zoom;
@@ -5030,6 +5041,8 @@ var NodeCloneProperties = [
 
         dt: createSomePropertyWithGetterAndSetter(function () { return __currentFrameDeltaTime / 1000; }),
         time: createSomePropertyWithGetterAndSetter(function () { return __lastOnFrameTime / 1000; }),
+        u_time: createSomePropertyWithGetterAndSetter(function () { return fract(__lastOnFrameTime / 1000); }),
+
         size: createSomePropertyWithGetterAndSetter(function () { return this.__geomSize || this.__size }),
         width: createSomePropertyWithGetterAndSetter(function () { return this.__width }),
         height: createSomePropertyWithGetterAndSetter(function () { return this.__height }),

@@ -13,7 +13,7 @@ FBXLoader = function () { };
         __load: function (url, task) {
 
             var self = this;
-
+            self.__task = task;
             self.__resourceDirectory = "/" + dirname(url);
             task.__loadTaskOne(TASKS_RAWBUFFER, url);
 
@@ -35,12 +35,10 @@ FBXLoader = function () { };
 
                 } else {
 
-                    const FBXText = FBXBuffer;
-
-                    if (!isFbxFormatASCII(FBXText)) {
+                    if (!isFbxFormatASCII(FBXBuffer)) {
                         onerr('FBXLoader: Unknown format.');
                     } else {
-
+                        const FBXText = FBXBuffer.buffer ? new TextDecoder().decode(FBXBuffer) : FBXBuffer;
                         const versionRegExp = /FBXVersion: (\d+)/;
                         const match = FBXText.match(versionRegExp);
 
@@ -60,7 +58,7 @@ FBXLoader = function () { };
                 if (fbxTree) {
                     consoleLog(fbxTree);
                     if (fbxTree.Objects) {
-                        return new FBXTreeParser(this.__resourceDirectory).__parse(fbxTree);
+                        return new FBXTreeParser(this.__task, this.__resourceDirectory).__parse(fbxTree);
                     } else {
                         onerr('FBXLoader: no objects.');
                     }
@@ -69,12 +67,14 @@ FBXLoader = function () { };
             } else {
                 onerr('FBXLoader: no data.');
             }
+            delete this.__task;
         }
 
     });
 
     // __parse the FBXTree object returned by the BinaryParser or TextParser and return a Group
-    function FBXTreeParser(rd) {
+    function FBXTreeParser(task, rd) {
+        this.__task = task;
         this.__resourceDirectory = rd;
     }
 
@@ -94,6 +94,7 @@ FBXLoader = function () { };
 
             this.__parseScene(deformers, geometryMap, materials);
 
+            delete this.__task;
             return sceneGraph;
 
         },
@@ -283,12 +284,8 @@ FBXLoader = function () { };
         // __parse individual node in FBXTree.Objects.Texture
         __parseTexture(textureNode, images) {
 
-            const texture = this.__loadTexture(textureNode, images);
-
-            texture.ID = textureNode.id;
-
-            texture.name = textureNode.attrName;
-
+            const texture = this.__loadTexture(textureNode, images, textureNode.id, textureNode.attrName);
+            /*
             const wrapModeU = textureNode.WrapModeU;
             const wrapModeV = textureNode.WrapModeV;
 
@@ -297,7 +294,7 @@ FBXLoader = function () { };
 
             // http://download.autodesk.com/us/fbx/SDKdocs/FBX_SDK_Help/files/fbxsdkref/class_k_fbx_texture.html#889640e63e2e681259ea81061b85143a
             // 0: repeat(default), 1: clamp
-
+            
             texture.__setWrapS(valueU === 0 ? 1 : 0);
             texture.__setWrapT(valueV === 0 ? 1 : 0);
 
@@ -309,24 +306,38 @@ FBXLoader = function () { };
             if ('Translation' in textureNode) {
                 const values = textureNode.Translation.value;
                 texture.__offset = new Vector2(values[0], values[1]);
-            }
+            }*/
 
             return texture;
 
         },
 
+        __loadImage(url, id, name) {
+            activateProjectOptions()
+            var tex = loadImage(url, function (tex) {
+                tex.ID = id; tex.name = name;
+            });
+            deactivateProjectOptions();
+            return tex;
+            /* todo:
+            this.__task.__loadTaskOne(TASKS_IMAGE, url, function (tex) {
+
+                tex.ID = id; tex.name = name;
+            });*/
+
+        },
+
         // load a texture specified as a blob or data URI, or via an external URL using TextureLoader
-        __loadTexture(textureNode, images) {
+        __loadTexture(textureNode, images, id, name) {
 
             const children = connections.get(textureNode.id).children;
 
             let fileName = children && children.length > 0 ? images[children[0].ID] : 0;
             if (fileName) {
                 if (fileName.indexOf('blob:') == 0 || fileName.indexOf('data:') == 0) {
-                    return loadImage({ u: fileName, n: fileName });
+                    return this.__loadImage({ u: fileName, n: fileName }, id, name);
                 }
-
-                return loadImage(this.__resourceDirectory + fileName + "?");
+                return this.__loadImage(this.__resourceDirectory + fileName + "?", id, name);
             }
 
         },
@@ -764,6 +775,10 @@ FBXLoader = function () { };
                             break;
 
                     }
+                    if (!model) {
+                        consoleWarn("FBX error: wrong node", node.attrName)
+                        continue;
+                    }
 
                     model.name = node.attrName ? PropertyBinding_sanitizeNodeName(node.attrName) : '';
                     model.__originalName = node.attrName;
@@ -806,7 +821,7 @@ FBXLoader = function () { };
                             bone.__originalName = name;
                             bone.ID = id;
 
-                            skeleton.__boneMatrices[i] = bone;
+                            skeleton.bones[i] = bone;
 
                             // In cases where a bone is shared between multiple meshes
                             // duplicate the bone here and and it as a child of the first bone
@@ -1093,7 +1108,8 @@ FBXLoader = function () { };
             }
 
             model = new Node3d({
-                __geometry: geometry, __material: material
+                __geometry: geometry,
+                __material: material
             });
 
 
@@ -1132,7 +1148,9 @@ FBXLoader = function () { };
             if ('RotationOrder' in modelNode) transformData.eulerOrder = getEulerOrder(modelNode.RotationOrder.value);
             else transformData.eulerOrder = 'ZYX';
 
-            if ('Lcl_Translation' in modelNode) transformData.translation = modelNode.Lcl_Translation.value;
+            if ('Lcl_Translation' in modelNode) {
+                transformData.translation = modelNode.Lcl_Translation.value;
+            }
 
             if ('PreRotation' in modelNode) transformData.preRotation = modelNode.PreRotation.value;
             if ('Lcl_Rotation' in modelNode) transformData.rotation = modelNode.Lcl_Rotation.value;
@@ -1211,7 +1229,7 @@ FBXLoader = function () { };
 
                                 const model = modelMap.get(geoConnParent.ID);
 
-                                model.__bind(new Skeleton(skeleton.__boneMatrices), bindMatrices[geoConnParent.ID]);
+                                model.__bind(new Skeleton(skeleton.bones), bindMatrices[geoConnParent.ID]);
 
                             }
 
@@ -2119,7 +2137,7 @@ FBXLoader = function () { };
 
             for (let i = 0, c = new Color(); i < buffer.length; i += 4) {
                 /// \todo: why 4?
-                debugger;
+
                 c.__fromJsonSRGB(buffer, i);
                 buffer[i] = c.r;
                 buffer[i + 1] = c.g;

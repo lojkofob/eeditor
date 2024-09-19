@@ -1,3 +1,5 @@
+
+
 var ComputeShaderFor = (function () {
 
 
@@ -11,6 +13,8 @@ var ComputeShaderFor = (function () {
         return a;
     }
 
+
+
     var mat4 = 'mat4', vec2 = 'vec2', vec3 = 'vec3', vec4 = 'vec4', float = 'float', uint = 'uint', int = 'int',
         sh_consts = {
             __jstype2atype: {
@@ -18,31 +22,65 @@ var ComputeShaderFor = (function () {
                 'Float32Array2': vec2,
                 'Float32Array3': vec3,
                 'Float32Array4': vec4,
-                'Matrix4': mat4,
                 'Uint16Array4': vec4,
-                'Int16Array4': vec4
-            },
-            __converts: {
-                Float32Array2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
-                Float32Array3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
-                Float32Array4vec4(a) { return a; },
-                vec2vec3(a, b) { return 'vec3(' + a + ',' + num(b) + ')'; },
-                vec3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
-                vec2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
-                vec4vec4(a) { return a; },
-                vec3vec3(a) { return a; },
-                vec2vec2(a) { return a; }
+                'Int16Array4': vec4,
+                'Number': float,
+                'Matrix4': mat4,
+                'Vector3': vec3,
+                'Vector2': vec2,
+                'Vector4': vec4,
             }
         },
-        code = '';
+        sh_converts = {
+            Float32Array2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
+            Float32Array3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
+            Float32Array4vec4(a) { return a; },
+            vec2vec3(a, b) { return 'vec3(' + a + ',' + num(b) + ')'; },
+            vec3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
+            vec2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
+            vec4vec4(a) { return a; },
+            vec3vec3(a) { return a; },
+            vec2vec2(a) { return a; }
+        },
+
+        code = '',
+
+        line = function () {
+            for (var i in arguments) {
+                code += arguments[i] + ';';
+                //cheats
+                code += '\n';
+                //nocheats
+            }
+        },
+
+        materials = setNonObfuscatedParams({}, 'phong', {
+            __uniforms_f: {
+                light_position: vec3, // Позиция источника света
+                light_color: vec3, // Цвет источника света
+                ambient_color: vec3, // Цвет окружающего освещения
+                time: float,
+                m_diffuse: vec3, // Диффузный цвет материала
+                m_specular: vec3, // Спекулярный цвет материала
+                m_shininess: float // Шероховатость материала
+            },
+            __fragment_code() {
+                line(
+                    'vec3 light_dir = normalize(light_position - gl_FragCoord.xyz*sin(time))',
+                    'vec3 view_dir = normalize(-gl_FragCoord.xyz)', // Направление на камеру (приблизительно)
+                    'float diff = max(dot(v_normal, light_dir), 0.0)', // Функция освещения Фонга
+                    'vec3 diffuse = diff * m_diffuse * light_color',
+                    'vec3 reflect_dir = reflect(-light_dir, v_normal)',
+                    'float spec = pow(max(dot(view_dir, reflect_dir), 0.0), m_shininess)',
+                    'vec3 specular = spec * m_specular * light_color',
+                    'vec3 ambient = ambient_color * m_diffuse',
+                    'vec4 mat_color = vec4(ambient + diffuse + specular, 1.0) * tc_uv0'
+                );
+                return 'mat_color';
+            }
+        });
 
 
-    function line(txt) {
-        code += txt + ';';
-        //cheats
-        code += '\n';
-        //nocheats                
-    }
 
     function sh_type(type, suff) {
         return sh_consts.__jstype2atype[stringifyTypeOfObject(type) + (suff || '')] ||
@@ -56,7 +94,7 @@ var ComputeShaderFor = (function () {
 
     }
     function sh_convertFunc(t1, t2) {
-        return sh_consts.__converts[t1 + t2];
+        return sh_converts[t1 + t2];
     }
     function sh_convert(t1, t2, a, b, c) {
         return sh_convertFunc(t1, t2)(a, b, c);
@@ -82,7 +120,15 @@ var ComputeShaderFor = (function () {
             __uniforms_f: {},
             __textures: [],
             __variyng: {}
-        };
+        }, mat = node.__material;
+
+        if (mat) {
+            mergeObj(opts, mat[0]);
+        }
+
+        if (opts.__type) {
+            mergeObjectDeep(opts, materials[opts.__type]);
+        }
 
         if (opts.__buffers.a_position) {
             opts.__uniforms_v.mw = mat4;
@@ -91,6 +137,11 @@ var ComputeShaderFor = (function () {
 
         if (opts.__buffers.a_color) {
             opts.__variyng.color = vec4;
+        }
+
+        if (opts.__buffers.a_normal) {
+            opts.__variyng.normal = vec3;
+            opts.__uniforms_v.mw_inv_trans = mat4;
         }
 
         $each(['uv0', 'uv1', 'uv2', 'uv3', 'uv4', 'uv5', 'uv6', 'uv7'], d => {
@@ -118,29 +169,43 @@ var ComputeShaderFor = (function () {
     function ComputeFShaderFor(node, opts) {
 
         function computeCode() {
+
+
             code = '';
-            var main_texture_color;
+            var main_texture_color, result_color, result_color;
             per_texture(opts, d => {
-                if (!main_texture_color) main_texture_color = 'tc_' + d;
                 line('vec4 tc_' + d + '=texture2D(t_' + d + ',v_' + d + ')');
+                if (!main_texture_color) main_texture_color = 'tc_' + d;
             });
 
-            if (opts.__variyng.color) {
-                if (main_texture_color) {
-                    line('gl_FragColor=v_color*' + main_texture_color);
-                } else {
-                    line('gl_FragColor=v_color');
+            if (opts.__fragment_code) {
+                result_color = opts.__fragment_code();
+            }
+            else {
+                if (opts.__variyng.color) {
+                    result_color = 'v_color';
                 }
-            } else if (main_texture_color) {
-                line('gl_FragColor=' + main_texture_color);
-            } else {
-                line('gl_FragColor=vec4(1.0, 0.0, 0.0, 1.0)'); // red error color
+                if (result_color && main_texture_color) {
+                    result_color = result_color + '*' + main_texture_color;
+                }
             }
 
-            line('gl_FragColor.rgb=gl_FragColor.rgb*gl_FragColor.a');
+            if (!result_color) {
+                // result_color = 'vec4(1.0,0.0,0.0,1.0)'; // red error color
+                result_color = 'v_gl_Position';
+                opts.__variyng.gl_Position = vec4;
+                opts.__uniforms_v.time = float;
+            }
+            if (opts.__premultipliedAlpha) {
+                line('vec4 rc=' + result_color,
+                    'rc.rgb*=rc.a');
+                result_color = 'rc';
+            }
+            line('gl_FragColor=' + result_color);
             return code;
         }
 
+        computeCode();
         var chunks = concatArrays(
             ["#ifdef GL_ES\n#define LOWP lowp\nprecision mediump float;\n#else\n#define LOWP\n#endif\n"],
             // uniforms
@@ -150,7 +215,7 @@ var ComputeShaderFor = (function () {
             // textures
             $map(opts.__textures, v => declare('uniform', 'sampler2D', 't_' + v)),
             // main
-            ['void main(){', computeCode(), '}']
+            ['void main(){', code, '}']
         ).filter(a => a);
 
         /// \todo: other buffers, textures and operations
@@ -171,13 +236,23 @@ var ComputeShaderFor = (function () {
                 line('v_color=' + sh_convert(opts.__variyng.color, vec4, 'a_color', 1.0, 1.0));
             }
 
+            if (opts.__variyng.normal) {
+                line('v_normal=normalize((mw_inv_trans * ' + sh_convert(buffer_type(opts.__buffers.a_normal), vec4, 'a_normal', 1.0, 1.0, 1.0) + ').xyz)');
+            }
+
             if (opts.__buffers.a_position) {
                 line('gl_Position=' + (opts.__uniforms_v.pm ? 'pm*' : '') + (opts.__uniforms_v.mw ? 'mw*' : '') + sh_convert(buffer_type(opts.__buffers.a_position), vec4, 'a_position', 1.0, 1.0));
             }
+
+            if (opts.__variyng.gl_Position) {
+                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*mw) * 1.5');
+            }
+
             /// \todo: other buffers
             return code;
         }
 
+        computeCode();
         var chunks = concatArrays(
             [_shader_defines_str],
             // attributes
@@ -187,7 +262,7 @@ var ComputeShaderFor = (function () {
             // variyngs
             $mapObjectToArray(opts.__variyng, (v, k) => declare('varying', v, 'v_' + k)),
             // main
-            ['void main(){', computeCode(), '}']
+            ['void main(){', code, '}']
         ).filter(a => a);
 
         return chunks.join('\n');

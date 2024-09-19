@@ -502,15 +502,15 @@ function ColorBuffer() {
     };
 }
 
+var gl_alpha = false
+    , gl_antialias = false
+    , gl_premultipliedAlpha = true
+    , gl_preserveDrawingBuffer = false;
 
 function WebGLRenderer(dbg) {
     // dbg = 1;
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
-        , _alpha = false
-        , _antialias = false
-        , _premultipliedAlpha = true
-        , _preserveDrawingBuffer = false
 
         , _currentProgram
         , _currentRenderTarget
@@ -1365,7 +1365,7 @@ function WebGLRenderer(dbg) {
     }
 
     function __glClearColor(r, g, b, a) {
-        if (_premultipliedAlpha) { r *= a; g *= a; b *= a; }
+        if (gl_premultipliedAlpha) { r *= a; g *= a; b *= a; }
         _colorBuffer.__setMask(1);
         _colorBuffer.__setClear(r, g, b, a);
     }
@@ -1844,10 +1844,10 @@ function WebGLRenderer(dbg) {
         _shader_defines_str += '\n#define ' + i + ' ' + _shaderDefines[i];
 
     glAttributes = {
-        alpha: _alpha,
-        antialias: _antialias,
-        premultipliedAlpha: _premultipliedAlpha,
-        preserveDrawingBuffer: _preserveDrawingBuffer
+        alpha: gl_alpha,
+        antialias: gl_antialias,
+        premultipliedAlpha: gl_premultipliedAlpha,
+        preserveDrawingBuffer: gl_preserveDrawingBuffer
     };
 
 
@@ -1940,7 +1940,7 @@ function WebGLRenderer(dbg) {
 
         renderer.__disableUnusedAttributes();
 
-        __setCullFace(object.__cullFace);
+        __setFaceCulling(object.__cullFace, object.__frontFaceDirection || 1);
 
         var mat = object.__material;
         if (mat) {

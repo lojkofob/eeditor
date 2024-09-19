@@ -111,8 +111,6 @@ $each({
         }
     },
 
-    u_time: { get: function () { return fract(__lastOnFrameTime / 1000); } },
-
     u_transform: {
         get: function () {
             if (this.__projectionMatrix)
@@ -268,67 +266,72 @@ function downloadString(text, fileType, fileName) {
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
 }
 
+function resetImgNode() {
 
+    var imagePreview = EditorUIBehavioursWithKitten.imagePreview;
+    if (imagePreview) {
+        var imgNode = imagePreview.image;
+        if (imgNode) {
+            imgNode.__init({
+                __shader: 0,
+                __img: 0,
+                __size: [1, 1, 1, 1],
+                __onModel3dLoaded: 0,
+                __keepImg: 0,
+                __model3d: 0,
+                __onImageLoaded: 0,
+                __fitImg: 1
+            });
+            return imgNode;
+        }
+    }
+}
 
-var ImagePreviewerWithKitten = {
+var Model3dPreviewerWorker = {
 
     onTap: function (node) {
 
         var m = this.match;
-        var image = m[0];
+        var path = m[0];
 
         var imagePreview = EditorUIBehavioursWithKitten.imagePreview;
         if (imagePreview) {
 
             invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.__parent });
 
-            var imgNode = imagePreview.image;
+            var imgNode = resetImgNode();
 
-            imgNode.__onImageLoaded = function () {
-                var sz = { x: imgNode.__imgSize.x, y: imgNode.__imgSize.y };
-                imagePreview.info.__text = sz.x + ' x ' + sz.y;
-                var psz = imagePreview.__size;
-                if (sz.x > sz.y) {
-                    var tmp = sz.x;
-                    sz.x = clamp(sz.x, 200, psz.x - 10);
-                    sz.y = sz.x * sz.y / tmp;
-                } else {
-                    var tmp = sz.y;
-                    sz.y = clamp(sz.y, 200, psz.y - 10);
-                    sz.x = sz.x * sz.y / tmp;
-                }
-
-                imgNode.__size = sz;
-                imgNode.update(1);
-            };
-
-            imgNode.__fitImg = 1;
             activateProjectOptions();
 
-            if (image.indexOf(options.__baseImgFolder) == 0) {
-                image = image.replace(options.__baseImgFolder, '');
-            } else {
-                if (image.indexOf('?') < 0) {
-                    var loadOpts = {
-                        __disableCache: 0,
-                        __disableCacheByVer: 0,
-                        __allServerPath: ""
-                    };
-                    activateOptions(loadOpts);
-                    image = modUrl(image);
-                    deactivateOptions(loadOpts);
+            showLoading(imagePreview);
+
+            imgNode.__onModel3dLoaded = function (scene) {
+                hideLoading(imagePreview);
+
+                if (scene) {
+
+                    var bb = scene.__computeBoundingBoxDeep();
+
+                    consoleLog("bb = ", bb, "scene = ", scene);
+
+                    // todo: bb.__getCenter
+                    var modelSize = bb.__getSize();
+
+                    scene.__parent.__scaleF = mmin(imgNode.__width / modelSize.x, imgNode.__height / modelSize.y);
+
+                } else {
+                    imagePreview.info.__text = "Error loading " + path;
                 }
-            }
+            };
 
-
-
-            imgNode.__img = image;
-            imgNode.__shader = undefined;
-
+            imgNode.__model3d = { __path: path };
             deactivateProjectOptions();
 
             imagePreview.set.__onTap = function () {
-                invokeEventWithKitten('set', { __img: imgNode.__img });
+                invokeEventWithKitten('set', {
+                    __model3d: path,
+
+                });
                 invokeEventWithKitten('Editor.closePanel', { caller: this });
                 return 1;
             }
@@ -338,6 +341,75 @@ var ImagePreviewerWithKitten = {
 
     }
 },
+
+
+    ImagePreviewerWithKitten = {
+
+        onTap: function (node) {
+
+            var m = this.match;
+            var image = m[0];
+
+            var imagePreview = EditorUIBehavioursWithKitten.imagePreview;
+            if (imagePreview) {
+
+                invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.__parent });
+
+                var imgNode = resetImgNode();
+
+                imgNode.__onImageLoaded = function () {
+                    var sz = { x: imgNode.__imgSize.x, y: imgNode.__imgSize.y };
+                    imagePreview.info.__text = sz.x + ' x ' + sz.y;
+                    var psz = imagePreview.__size;
+                    if (sz.x > sz.y) {
+                        var tmp = sz.x;
+                        sz.x = clamp(sz.x, 200, psz.x - 10);
+                        sz.y = sz.x * sz.y / tmp;
+                    } else {
+                        var tmp = sz.y;
+                        sz.y = clamp(sz.y, 200, psz.y - 10);
+                        sz.x = sz.x * sz.y / tmp;
+                    }
+
+                    imgNode.__size = sz;
+                    imgNode.update(1);
+                };
+
+                imgNode.__fitImg = 1;
+                activateProjectOptions();
+
+                if (image.indexOf(options.__baseImgFolder) == 0) {
+                    image = image.replace(options.__baseImgFolder, '');
+                } else {
+                    if (image.indexOf('?') < 0) {
+                        var loadOpts = {
+                            __disableCache: 0,
+                            __disableCacheByVer: 0,
+                            __allServerPath: ""
+                        };
+                        activateOptions(loadOpts);
+                        image = modUrl(image);
+                        deactivateOptions(loadOpts);
+                    }
+                }
+
+
+
+                imgNode.__img = image;
+
+                deactivateProjectOptions();
+
+                imagePreview.set.__onTap = function () {
+                    invokeEventWithKitten('set', { __img: imgNode.__img });
+                    invokeEventWithKitten('Editor.closePanel', { caller: this });
+                    return 1;
+                }
+                onTapHighlight(imagePreview.set);
+
+            }
+
+        }
+    },
 
     ShaderPreviewerWorker = {
 
@@ -352,9 +424,8 @@ var ImagePreviewerWithKitten = {
 
                     invokeEventWithKitten('Editor.showPanel', { panel: imagePreview.__parent });
 
-                    var imgNode = imagePreview.image;
+                    var imgNode = resetImgNode();
 
-                    imgNode.__fitImg = 1;
                     imgNode.__img = '/shaderTest.png?';
                     imgNode.__size = [1, 1];
 
@@ -870,6 +941,7 @@ var ImagePreviewerWithKitten = {
 
         '(.*\\.[to]tf)': FontFileWorker,
 
+        '(.*\\.(fbx))$': Model3dPreviewerWorker,
         '(.*/)([^/]*)\\.dbn': DragonBonesFileWorker,
         '(.*/)([^/]*)\\.spnb?': SpineFileWorker
 

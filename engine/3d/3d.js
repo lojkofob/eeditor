@@ -52,6 +52,7 @@ function load3d(opts, onload, onerror) {
 var __Object3dProxy = (function () {
 
     ObjectDefineProperties(NodePrototype, {
+
         __model3d: {
             get: function () {
                 return this.__model3dObject;
@@ -74,6 +75,7 @@ var __Object3dProxy = (function () {
             },
             set: function (v) {
                 var t = this;
+
                 if (t.____model3dObject == v)
                     return;
 
@@ -103,6 +105,9 @@ var __Object3dProxy = (function () {
     }, {
 
         __init: function (v) {
+            if (isString(v)) {
+                v = { __path: v };
+            }
             var t = this, path = v.__path;
             var bv = basename(path).replace(/\?.*$/, '');
             t.____path = path;
@@ -110,23 +115,29 @@ var __Object3dProxy = (function () {
 
             function onload(l) {
                 var loadedData = factory3d.__model3dDataMap[bv];
+
                 l.__scene = loadedData.__scene;
+
                 l.__onDataReady();
             };
 
             if (loadD) {
                 if (loadD.__loading) { loadD.__loading.push(t); return t; }
-                if (loadD.__bad) return t;
                 onload(t);
             } else {
+
                 loadD = factory3d.__model3dDataMap[bv] = { __loading: [t] };
 
                 load3d(v, function () {
                     $each(loadD.__loading, onload);
                     delete loadD.__loading;
+
                 }, function (err) {
                     consoleDebug(err)
                     factory3d.__model3dDataMap[bv] = { __bad: 1 };
+
+                    $each(loadD.__loading, onload);
+                    delete loadD.__loading;
                 });
             }
             mergeObj(t, v)
@@ -135,13 +146,20 @@ var __Object3dProxy = (function () {
 
         __onDataReady: function () {
             var t = this;
-            if (t.__sceneSave) {
-                t.__scene.__apply(t.__sceneSave);
-                delete t.__sceneSave
+            if (t.__scene) {
+                if (t.__sceneSave) {
+                    t.__scene.__apply(t.__sceneSave);
+                    delete t.__sceneSave;
+                }
+
+                t.__scene.__validToSave = 0;
+                t.__parent.__addChildBox(t.__scene);
             }
 
-            t.__scene.__validToSave = 0;
-            t.__parent.__addChildBox(t.__scene);
+
+            if (t.__parent.__onModel3dLoaded) {
+                t.__parent.__onModel3dLoaded(t.__scene);
+            }
         },
         //debug
         __toJson: function () {
@@ -230,11 +248,11 @@ makeClass(Node3d, {
 
     __destruct() {
         var t = this;
-        if (t.____geometry) {
+        /* if (t.____geometry) {
             t.____geometry.__destruct();
             t.____geometry = null;
         }
-        NodePrototype.__destruct.call(this)
+        NodePrototype.__destruct.call(this)*/
     },
 
     __clearGroups() {
@@ -263,7 +281,10 @@ makeClass(Node3d, {
 
     __drawMe() {
         var t = this;
-        if (t.__verticesCount) {
+        if (t.__needRenderRecalc) {
+            t.__recalcRenderParams();
+        }
+        if (t.__verticesCount && t.__shader) {
             if (t.__groups) {
                 var r = 0;
                 $each(t.__groups, g => {
@@ -342,7 +363,7 @@ makeClass(Node3d, {
 
         var t = this;
         Node.prototype.__updateMatrixWorld.call(t, force);
-
+        t.mw.itr = 0;
         if (t.__bindMatrix) {
             if (t.__bindMode === DetachedBindMode) {
                 t.__bindMatrixInverse.__copy(t.__bindMatrix).__invert();
@@ -359,11 +380,15 @@ makeClass(Node3d, {
 
     __hitTest(ppos) {
         var t = this;
-        if (t.__material && t.__geometry) {
+
+        if (t.____material && t.__geometry) {
             if (!t.__boundingBox) { t.__computeBoundingBox(); }
             if (t.__boundingBox) {
                 var cam = t.__getCamera();
-                _ray = CameraCachedRay(cam, ppos);
+                _ray = CameraCachedRay(cam, {
+                    x: ppos.x / __screenCenter.x - 1,
+                    y: 1 - ppos.y / __screenCenter.y,
+                });
                 _intersects = [];
                 t.__raycast()
                 return _intersects.length
@@ -381,30 +406,42 @@ makeClass(Node3d, {
 
     __computeBoundingBox() {
 
-        var t = this;
-
-        if (t.__boundingBox === null) {
-            t.__boundingBox = new Box3();
+        var t = this, positionAttribute = t.__verticesBuffer;
+        if (!positionAttribute) {
+            return;
         }
 
-        t.__boundingBox.__makeEmpty();
+        if (!t.__boundingBox) {
+            t.__boundingBox = new Box3();
+        } else {
+            t.__boundingBox.__makeEmpty();
+        }
 
-        const positionAttribute = t.__verticesBuffer;
         var _vertex = new Vector3();
-        for (let i = 0; i < positionAttribute.__array.length / 3; i++) {
+        for (let i = 0; i < positionAttribute.__array.length; i += 3) {
 
-            t.__getVertexPosition(i, _vertex);
-            t.__boundingBox.expandByPoint(_vertex);
+            _vertex.__fromArray(positionAttribute.__array, i);
+
+            t.__applyBoneTransform(i / 3 * 4, _vertex);
+
+            t.__boundingBox.__expandByPoint(_vertex);
 
         }
     },
 
-    __getVertexPosition(index, target) {
+    __computeBoundingBoxDeep() {
+        var bb = new Box3();
 
-        target.__fromArray(this.__verticesBuffer.__array, index);
-        this.__applyBoneTransform(index, target);
-        return target;
+        this.__traverse(n => {
+            if (n.__computeBoundingBox) {
+                n.__computeBoundingBox();
+                if (n.__boundingBox) {
+                    bb.__union(n.__boundingBox.__clone().__applyMatrix4(n.__matrix));
+                }
+            }
+        });
 
+        return bb;
     },
 
     __computeBoundingSphere() {
@@ -450,7 +487,7 @@ makeClass(Node3d, {
 
     __raycast() {
         var t = this,
-            matrixWorld = t.mw,
+            mw = t.mw,
             bb = t.__boundingBox;
 
 
@@ -464,7 +501,7 @@ makeClass(Node3d, {
                 if (raycaster.ray.intersectsSphere(_sphere$4) === false) return;
         */
         // convert ray to local space of skinned mesh
-        if (!mw.im) mw.im = matrixWorld.__getInverseMatrix();
+        if (!mw.im) mw.im = mw.__getInverseMatrix();
         var ray = _ray.__clone().__applyMatrix4(mw.im);
 
         // test with bounding box in local space
@@ -623,9 +660,6 @@ makeClass(Node3d, {
         if (skeleton) {
             const skinIndexB = this.__skinIndexBuffer.__array, skinWeightB = this.__skinWeightBuffer.__array;
 
-            _skinIndex.__fromArray(skinIndexB, index);
-            _skinWeight.__fromArray(skinWeightB, index);
-
             _basePosition.__copy(vector).__applyMatrix4(this.__bindMatrix);
 
             vector.set(0, 0, 0);
@@ -640,13 +674,13 @@ makeClass(Node3d, {
 
                     _matrix4.__multiplyMatrices(skeleton.__bones[boneIndex].__matrixWorld, skeleton.__boneInverses[boneIndex]);
 
-                    vector.__addScaledVector(_vector3.__copy(_basePosition).applyMatrix4(_matrix4), weight);
+                    vector.__addScaledVector(_v0$3.__copy(_basePosition).__applyMatrix4(_matrix4), weight);
 
                 }
 
             }
 
-            return vector.applyMatrix4(this.__bindMatrixInverse);
+            return vector.__applyMatrix4(this.__bindMatrixInverse);
         }
 
     }
@@ -713,13 +747,13 @@ makeClass(Node3d, {
     __updateUVS() {
         return this;
         var t = this;
-        if (t.__uvsBuffer0 && !t.__uvsBuffer0.__updated && t.__material && t.__material[0] && t.__material[0].__map) {
+        if (t.__uvsBuffer0 && !t.__uvsBuffer0.__updated && t.____material && t.____material[0].__map) {
             if (t.__groups) {
                 $each(t.__groups, g => {
-                    t.__transformUvBuf(t.__uvsBuffer0, t.__material[g[2]].__map);
+                    t.__transformUvBuf(t.__uvsBuffer0, t.____material[g[2]].__map);
                 });
             } else {
-                t.__transformUvBuf(t.__uvsBuffer0, t.__material[0].__map);
+                t.__transformUvBuf(t.__uvsBuffer0, t.____material[0].__map);
             }
             t.__uvsBuffer0.__updated = 1;
         }
@@ -797,8 +831,28 @@ makeClass(Node3d, {
         }
         return uv;
 
-    }
+    },
 
+    __discardRenderParams() {
+        this.__needRenderRecalc = 1;
+    },
+
+    __recalcRenderParams() {
+        var t = this;
+        if (t.____material) {
+            t.__shader = ComputeShaderFor(t)
+            if (t.__shader) {
+                if (t.__indecesBuffer) {
+                    t.__verticesCount = t.__indecesBuffer.__realsize;
+                } else if (t.__verticesBuffer) {
+                    t.__verticesCount = t.__verticesBuffer.__realsize / t.__verticesBuffer.__itemSize;
+                }
+            }
+        } else {
+            t.__shader = 0;
+        }
+        t.__needRenderRecalc = 0;
+    }
 
 }, {
 
@@ -891,9 +945,41 @@ makeClass(Node3d, {
     },
     //endcheats
 
+    // shading
     t_uv0: {
         get() {
-            return this.__material[this.__currentMaterialIndex].__map;
+            return this.____material ? this.____material[this.__currentMaterialIndex].__map : undefined;
+        }
+    },
+
+    /// \todo: configure
+
+    light_position: { enumerable: false, value: new Vector3(100, 100, 1000) },
+    light_color: { enumerable: false, value: new Vector3(1, 1, 1) },
+    ambient_color: { enumerable: false, value: new Vector3(1, 1, 1) },
+    m_diffuse: { enumerable: false, value: new Vector3(1, 1, 1) },
+    m_specular: { enumerable: false, value: new Vector3(1, 1, 1) },
+    m_shininess: { enumerable: false, value: 1 },
+
+    mw_inv_trans: {
+        get() {
+            if (!this.mw.itr) {
+                // а надо ли ?
+                this.mw.itr = this.mw.__getInverseMatrix().__transpose();
+            }
+            return this.mw.itr;
+        }
+    },
+
+    // end shading
+    __material: {
+        set(mat) {
+            var t = this;
+            t.____material = isObject(mat) ? [mat] : isArray(mat) && mat.length ? mat : undefined;
+            t.__discardRenderParams();
+        },
+        get() {
+            return this.____material;
         }
     },
 
@@ -911,20 +997,11 @@ makeClass(Node3d, {
 
             if (v) {
                 // todo: clone!
-                // not supported now
-                delete v.__buffers.a_skinIndex;
-                delete v.__buffers.a_skinWeight;
-                delete v.__buffers.a_normal;
+                // not used now
+
                 t.__groups = v.__groups;
                 t.__buffers = v.__buffers;
-                var mat = v.__material;
-                if (isObject(mat)) {
-                    t.__material = [v.__material];
-                } else if (isArray(mat)) {
-                    t.__material = mat;
-                }
                 t.__currentMaterialIndex = 0;
-
                 t.__verticesBuffer = v.__buffers.a_position;
                 t.__colorsBuffer = v.__buffers.a_color;
                 t.__skinIndexBuffer = v.__buffers.a_skinIndex;
@@ -939,21 +1016,11 @@ makeClass(Node3d, {
                     t.__normalizeSkinWeights();
                     v.__normalized = 1;
                 }
-                t.__shader = ComputeShaderFor(t)
 
-                if (t.__shader) {
-                    if (t.__indecesBuffer) {
-                        t.__verticesCount = t.__indecesBuffer.__realsize;
-                    } else if (t.__verticesBuffer) {
-                        t.__verticesCount = t.__verticesBuffer.__realsize / t.__verticesBuffer.__itemSize;
-                    }
-                }
                 t.__cullFace = Default3dCullFace;
 
             } else {
                 t.__groups =
-                    t.__verticesCount =
-                    t.__shader =
                     t.__material =
                     t.__buffers =
                     t.__verticesBuffer =
@@ -967,6 +1034,7 @@ makeClass(Node3d, {
                     t.__uvsBuffer3 =
                     t.__indecesBuffer = null;
             }
+            t.__discardRenderParams();
         },
         get() {
             return this.____geometry;

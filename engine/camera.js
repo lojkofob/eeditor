@@ -1,11 +1,12 @@
 
 
-var __cameraId = 0, CameraOrtho = makeClass(
+var CameraOrtho = makeClass(
     function () {
-        this.id = __cameraId++;
-        this.____zoom = 1;
-        this.__isOrthographic = 1;
+        var t = this;
+        t.____zoom = 1;
+        t.__isOrthographic = 1;
         Object3D.call(this)
+        t.__projectionMatrix = new Matrix4();
     },
     {
 
@@ -37,14 +38,15 @@ var __cameraId = 0, CameraOrtho = makeClass(
                 , zoom = t.____zoom
                 , far = t.__far
                 , near = t.__near
-                , pm = this.pm
+                , pm = t.pm
                 , te = pm.e
                 , w = zoom / (right - left)
                 , h = zoom / (top - bottom)
                 , p = 1.0 / (far - near)
                 , x = (right + left) * w
                 , y = (top + bottom) * h
-                , z = (far + near) * p;
+                , z = (far + near) * p
+                , mw = t.mw;
 
             te[0] = 2 * w;
             te[12] = - x;
@@ -55,7 +57,7 @@ var __cameraId = 0, CameraOrtho = makeClass(
             te[15] = 1;
 
             pm.im = pm.__getInverseMatrix(pm.im);
-
+            mw.im = mw.__getInverseMatrix(mw.im);
             return t;
         },
 
@@ -63,7 +65,7 @@ var __cameraId = 0, CameraOrtho = makeClass(
             var t = this, origin = new Vector3(pos.x, pos.y, (t.__near + t.__far) / (t.__near - t.__far)).__unproject(t);
             return new Ray(
                 origin,
-                new Vector3(t.__x, t.__y, 0)
+                new Vector3(t.__x, t.__y, 1)
             )
         }
     },
@@ -101,13 +103,15 @@ var __cameraId = 0, CameraOrtho = makeClass(
             get: function () { return (this.__top + this.__bottom) / 2 }
 
         }
-    }, Object3D),
-
-    CameraPerspective = makeClass(
+    }, Object3D)
+    //3d
+    , CameraPerspective = makeClass(
         function () {
-            this.id = __cameraId++;
-            this.____zoom = 1;
-            this.__isPerspective = 1;
+            var t = this;
+            t.____zoom = 1;
+            t.__isPerspective = 1;
+            Object3D.call(this)
+            t.__projectionMatrix = new Matrix4();
         },
         {
 
@@ -159,16 +163,15 @@ var __cameraId = 0, CameraOrtho = makeClass(
                 pm.im = pm.__getInverseMatrix(pm.im);
 
                 return t;
-            },
+            }
 
-            __makeRay(pos) {
+            , __makeRay(pos) {
                 var t = this, origin = t.mw.__getPosition();
                 return new Ray(
                     origin,
                     new Vector3(pos.x, pos.y, 0).__unproject(t).sub(origin).__normalize()
                 )
             }
-
 
         },
         {
@@ -181,9 +184,12 @@ var __cameraId = 0, CameraOrtho = makeClass(
                     return this.____zoom
                 }
             }
-        });
+        }, Object3D)
+    //no3d
 
+    ;
 
+//3d
 function CameraCachedRay(cam, ppos) {
     var r = cam._cray;
     if (!r || r.x != ppos.x || r.y != ppos.y || r.__currentFrame != __currentFrame) {
@@ -195,3 +201,4 @@ function CameraCachedRay(cam, ppos) {
     }
     return r;
 }
+//no3d

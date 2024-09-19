@@ -692,13 +692,13 @@ makeClass(Box3, {
     },
 
     __getCenter(target) {
-
+        target = target || new Vector3();
         return this.__isEmpty() ? target.set(0, 0, 0) : target.__copy(this.min).add(this.max).__multiplyScalar(0.5);
 
     },
 
     __getSize(target) {
-
+        target = target || new Vector3();
         return this.__isEmpty() ? target.set(0, 0, 0) : target.__copy(this.max).sub(this.min);
     },
 
@@ -999,7 +999,7 @@ makeClass(Ray, {
 
     },
 
-    __at(t, target) {
+    at(t, target) {
 
         return target.__copy(this.__origin).__addScaledVector(this.__direction, t);
 
@@ -3840,7 +3840,7 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
             const track = this.tracks[i];
 
-            duration = max(duration, track.times[track.times.length - 1]);
+            duration = mmax(duration, track.times[track.times.length - 1]);
 
         }
 

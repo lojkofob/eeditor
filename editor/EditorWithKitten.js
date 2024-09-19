@@ -126,12 +126,12 @@ EditorWithKitten.prototype = {
                 }
 
                 var plugins = concatArraysWithUniqueItems(explodeString(findGetParameter('plugins')), [
-                    'matter.min', 
-                    'physics', 
-                    'qrcode', 
+                    'matter.min',
+                    'physics',
+                    'qrcode',
                     'combiner',
-                    'renderOverTexture', 
-                    'shaderEditor', 
+                    'renderOverTexture',
+                    'shaderEditor',
                     'quadSelector',
                     'helpers'
                 ]);
@@ -335,7 +335,7 @@ EditorWithKitten.prototype = {
         }
     },
 
-    addPluginButton(){
+    addPluginButton() {
 
 
     },

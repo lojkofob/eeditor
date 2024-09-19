@@ -708,3 +708,17 @@ function looperPostOne(f) {
     }
 
 }
+
+
+function showLoading(node) {
+
+    node.__loadNode = node.__addChildBox({ __img: 'prt14' });
+    node.__loadNode.__anim({ __rotate: [0, 360] }, 1, 1, 0);
+    return node.__loadNode;
+}
+
+function hideLoading(node) {
+    if (node.__loadNode) {
+        node.__loadNode.__removeFromParent();
+    }
+}

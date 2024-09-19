@@ -691,9 +691,10 @@ makeClass(Matrix4, {
 
     __copy(m) {
         var te = this.e, me = m.e;
-        te[0] = me[0]; te[1] = me[1]; te[2] = me[2];
-        te[3] = me[3]; te[4] = me[4]; te[5] = me[5];
-        te[6] = me[6]; te[7] = me[7]; te[8] = me[8];
+        te[0] = me[0]; te[1] = me[1]; te[2] = me[2]; te[3] = me[3];
+        te[4] = me[4]; te[5] = me[5]; te[6] = me[6]; te[7] = me[7];
+        te[8] = me[8]; te[9] = me[9]; te[10] = me[10]; te[11] = me[11];
+        te[12] = me[12]; te[13] = me[13]; te[14] = me[14]; te[15] = me[15];
         return this;
     },
 
@@ -1248,6 +1249,19 @@ function Vector3(x, y, z) {
 }
 
 makeClass(Vector3, {
+
+    __project(cam) {
+
+        return this.__applyMatrix4(cam.mw.im).__applyMatrix4(camera.pm);
+
+    },
+
+    __unproject(cam) {
+
+        return this.__applyMatrix4(cam.pm.im).__applyMatrix4(camera.mw);
+
+    },
+
 
     __cross(v) {
         return this.__crossVectors(this, v);
