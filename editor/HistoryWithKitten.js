@@ -143,13 +143,13 @@ HistoryWithKitten.prototype = {
 
                             case 'emitter_remove':
                                 //                             change.emitter.__removeFromParent();
-                                //                             if (change.node.__effect.emitters.length == 0) 
+                                //                             if (change.node.__effect.__emitters.length == 0) 
                                 //                                 change.node.__effect = undefined;
                                 break;
 
                             case 'emitter_add':
                                 change.emitter.__removeFromParent();
-                                if (change.node.__effect.emitters.length == 0)
+                                if (change.node.__effect.__emitters.length == 0)
                                     change.node.__effect = undefined;
                                 if (change.emitter.panel)
                                     PanelsWithKitten.removePanel(change.emitter.panel);

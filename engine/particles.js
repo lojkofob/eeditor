@@ -990,7 +990,7 @@ EffectComponentsFactory.__registerComponent('rta',
 
                 }
 
-                vrad.normalize();
+                vrad.__normalize();
 
                 vel.x += vrad.x * x + vrad.y * y;
                 vel.y += vrad.y * x - vrad.x * y;
@@ -1056,12 +1056,12 @@ EffectComponentsFactory.__registerComponent('sub',
                 return ParticleEmitterPrototype.__render.call(this);
             }
 
-            var effect = emitter.__parent;
+            var effect = emitter.__effect;
             while (effect && !(effect instanceof ParticleEffect)) {
-                effect = effect.__emitter ? effect.__emitter.__parent : effect.__parent;
+                effect = effect.__emitter ? effect.__emitter.__effect : effect.__effect;
             }
 
-            var subEmitter = (effect.emitters).F$(function (n) {
+            var subEmitter = (effect.__emitters).F$(function (n) {
                 return n.__name == t.__subEmitter;
             });
 
@@ -1169,7 +1169,7 @@ EffectComponentsFactory.__registerComponent('tgt',
                 tgt = [tgt.__worldPosition];
             } else
                 if (isString(tgt)) {
-                    var node = emitter.__parent.__node;
+                    var node = emitter.__effect.__node;
                     if (node) {
                         tgt = (node.__root || node.__getRoot()).$(tgt).m$(function (n) {
                             return n.__worldPosition
@@ -1349,7 +1349,7 @@ EffectComponentsFactory.__registerComponent('or',
         },
 
         __update: function (emitter) {
-            this.__sz = ((emitter.__parent || 0).__node || 0).__size || defaultZeroVector2;
+            this.__sz = (emitter.__parent || (emitter.__effect || 0).__node).__size || defaultZeroVector2;
         },
 
         __updatesFuncs: {
@@ -1833,7 +1833,7 @@ function ParticleEmitter(parent) {
     t.__uvsBuilder = NormalUVSBuilder;
     t.__changesListeners = {};
     //cheats
-    renderInfo.emitters++;
+    renderInfo.__emitters++;
     //endcheats
 }
 
@@ -1935,7 +1935,7 @@ var ParticleEmitterPrototype =
 
         __destruct: function () {
             //cheats
-            renderInfo.emitters--;
+            renderInfo.__emitters--;
             renderInfo.particles -= this.__particles.length;
             //endcheats
 
@@ -1957,7 +1957,7 @@ var ParticleEmitterPrototype =
                 this.__parent = 0;
             }
 
-            this.__parent.__pop(this.__destruct());
+            this.__effect.__pop(this.__destruct());
 
             return this;
         },
@@ -1988,7 +1988,7 @@ var ParticleEmitterPrototype =
             }
 
             //cheats
-            renderInfo.emittersRendered++;
+            renderInfo.__emittersRendered++;
             //endcheats
 
             var count = t.__renderVertexCount;
@@ -2018,7 +2018,7 @@ var ParticleEmitterPrototype =
                 , particlesLength = particles.length;
 
             //cheats
-            renderInfo.emittersUpdated++;
+            renderInfo.__emittersUpdated++;
             //endcheats
 
 
@@ -2181,7 +2181,7 @@ options.__defaultParticleEmitterProperties = {
             this.__name = v;
         },
         get: function () {
-            return this.__name || ('__emitter_' + this.__parent.emitters.indexOf(this))
+            return this.__name || ('__emitter_' + this.__effect.__emitters.indexOf(this))
         }
     },
 
@@ -2193,8 +2193,9 @@ options.__defaultParticleEmitterProperties = {
     __enabled: {
         set: function (v) {
             this.____enabled = v;
-            if (v && !this.__parent.__enabled)
-                this.__parent.__enabled = v;
+            if (v && this.__effect && !this.__effect.__enabled) {
+                this.__effect.__enabled = v;
+            }
             this.__lastRenderTime = __currentFrame;
         },
         get: function () { return this.____enabled }
@@ -2486,7 +2487,7 @@ ObjectDefineProperties(ParticleEmitterPrototype, {
 
 function ParticleEffect(parent) {
     this.__node = parent;
-    this.emitters = [];
+    this.__emitters = [];
 }
 
 makeClass(ParticleEffect, {
@@ -2494,34 +2495,35 @@ makeClass(ParticleEffect, {
     __init: function (v) {
         if (isString(v)) v = getEffectByName(v);
         this.loop = v.loop;
-        if (v.emitters) {
-            for (var i = 0; i < v.emitters.length; i++)
-                this.__push(v.emitters[i]);
+        if (v.__emitters) {
+            for (var i = 0; i < v.__emitters.length; i++)
+                this.__push(v.__emitters[i]);
         }
         return this;
     },
 
     __push: function (v) {
-        var emitter = new ParticleEmitter(this);
-        this.__node.add(emitter);
-        this.emitters.push(emitter);
+        var t = this, emitter = new ParticleEmitter(t);
+        t.__node.add(emitter);
+        t.__emitters.push(emitter);
         emitter.__init(v);
-        this.__enabled = 1;
+        t.__enabled = 1;
+        emitter.__effect = t;
         return emitter;
     },
 
     __pop: function (em) {
-        removeFromArray(em, this.emitters);
+        removeFromArray(em, this.__emitters);
         return this;
     },
 
     __removeFromParent: function () {
         var t = this, e;
-        for (var i = 0; i < t.emitters.length; i++) {
-            e = t.emitters[i].__destruct();
+        for (var i = 0; i < t.__emitters.length; i++) {
+            e = t.__emitters[i].__destruct();
             if (e.__parent) e.__parent.__removeChild(e);
         }
-        t.emitters = [];
+        t.__emitters = [];
         t.__enabled = 0;
     },
 
@@ -2530,8 +2532,8 @@ makeClass(ParticleEffect, {
         var updated = 0
             , dt = mmin(0.5, __currentFrameDeltaTime / ONE_SECOND);
 
-        for (var i = 0; i < this.emitters.length; i++) {
-            updated += this.emitters[i].__update(dt);
+        for (var i = 0; i < this.__emitters.length; i++) {
+            updated += this.__emitters[i].__update(dt);
         }
 
         if (!updated) {
@@ -2543,21 +2545,21 @@ makeClass(ParticleEffect, {
         return !updated;
     },
     __reset: function (clear) {
-        $each(this.emitters, function (e) { e.__reset(clear); });
+        $each(this.__emitters, function (e) { e.__reset(clear); });
     },
     __disable: function () {
-        $each(this.emitters, function (e) { e.__enabled = 0; });
+        $each(this.__emitters, function (e) { e.__enabled = 0; });
     },
     __enable: function () {
-        $each(this.emitters, function (e) { e.__enabled = 1; });
+        $each(this.__emitters, function (e) { e.__enabled = 1; });
     }
 
     , __toJson: function () {
         var v = {};
         if (this.loop) v.loop = 1;
-        for (var j in this.emitters) {
-            if (!v.emitters) v.emitters = [];
-            v.emitters.push(this.emitters[j].__toJson())
+        for (var j in this.__emitters) {
+            if (!v.__emitters) v.__emitters = [];
+            v.__emitters.push(this.__emitters[j].__toJson())
         }
         return v;
     }

@@ -171,8 +171,18 @@ var html = (function () {
             }
             //undebug
 
-        }
+        },
+        __reload() {
+            __window.location.reload()
+        },
 
+        __redirect(url, donttrack) {
+            if (donttrack) {
+                __window.location.replace(url);
+            } else {
+                __window.location.href = url;
+            }
+        }
     });
 
 })();

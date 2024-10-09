@@ -150,36 +150,41 @@ mergeObj(Object3DPrototype, {
         return this.__parent ? this.__parent.__deepVisible() : 1;
     },
 
-    __anim(to, time, repeat, easing, delay, agasp) {
+    __makeTween(to, time, repeat, easing, delay, agasp) {
         var t = this;
-        if (isArray(to)) {
-            if (isObject(to[0])) {
-                tween.action(t, to[0], to[1], to[2], to[3], to[4], to[5]);
-                return t;
-            } else {
-                if (to.length) {
-                    var seq = new TweenSequence();
-                    for (var i = 0; i < to.length; i++) {
-                        var pp = to[i];
-                        if (isArray(pp)) {
-                            seq.__push(new TweenAction(t, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5]));
-                        }
-                    }
-                    seq.a[0].__zeroUpdate();
-                    tween.__push(seq);
+        if (isArray(to) && to.length) {
+            var seq = new TweenSequence();
+            for (var i = 0; i < to.length; i++) {
+                var pp = to[i], tw = isArray(pp) ? t.__makeTween.apply(t, pp) : t.__makeTween(pp)
+                if (tw) {
+                    seq.__push(tw);
                 }
             }
-        }
-        else
-            if (isFunction(to)) {
-                tween.__push(new TweenCallback(to.bind(t)));
-            } else {
-                //     consoleLog(to, time, repeat, easing, delay );
-                tween.action(t, to, time, repeat, easing, delay, agasp);
+            if (seq.a.length) {
+                seq.a[0].__zeroUpdate();
+                return seq;
             }
-        return t;
+        }
+        else if (isFunction(to)) {
+            return new TweenCallback(to.bind(t));
+        } else {
+            //     consoleLog(to, time, repeat, easing, delay );
+            return new TweenAction(t, to, time, repeat, easing, delay, agasp).__zeroUpdate()
+        }
+    },
+    __tween(to, time, repeat, easing, delay, agasp) {
+        var tw = this.__makeTween(to, time, repeat, easing, delay, agasp);
+        if (tw) {
+            tween.__push(tw);
+            return tw;
+        }
     },
 
+    __anim(to, time, repeat, easing, delay, agasp) {
+        var t = this;
+        t.__tween(to, time, repeat, easing, delay, agasp);
+        return t;
+    },
 
     __addOnDestruct(cb) {
 
@@ -356,7 +361,7 @@ mergeObj(Object3DPrototype, {
             var object = arguments[i];
             if (object) {
 
-                if (object.__parent) {
+                if (object.__parent && object.__parent.__removeChild) {
                     object.__parent.__removeChild(object);
                 }
 

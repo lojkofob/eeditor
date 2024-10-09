@@ -59,12 +59,14 @@ makeClass(MyBufferAttribute, {
             }
 
             t.__size = sz;
+        } else {
+            t.__changed = 1;
         }
 
         if (directSize && t.__size > sz) { //size decreased
             t.__size = sz;
         }
-        t.__changed = 1;
+
         return this.__array;
     },
 
@@ -112,11 +114,12 @@ makeClass(MyBufferAttribute, {
             t.__webglBuffer = gl.createBuffer();
             gl.bindBuffer(t.__type, t.__webglBuffer);
             gl.bufferData(t.__type, t.__array, t.__dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
-
+            t.__changed = 0;
         } else {
             gl.bindBuffer(t.__type, t.__webglBuffer);
             if (t.__changed) {
-                gl.bufferSubData(t.__type, 0, t.__array);
+                //gl.bufferData(t.__type, t.__itemSize, t.__dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+                gl.bufferSubData(t.__type, 0, t.__array, 0, t.__realsize);
                 t.__changed = 0;
             }
         }
@@ -136,7 +139,14 @@ makeClass(MyBufferAttribute, {
                 consoleLog('attribute passed', t.__name, t.__realsize + '/' + t.__size, t.__itemSize, t);
             }
             //undebug
-            renderer.__enableAttribute(programAttribute);
+            if (t.__instansing) {
+                renderer.__enableInstancingdAttribute(programAttribute);
+            } else {
+                renderer.__enableAttribute(programAttribute);
+            }
+
+
+
             gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, 0, 0);
             return t.__webglBuffer !== undefined
         } else {
@@ -146,9 +156,17 @@ makeClass(MyBufferAttribute, {
             }
             //undebug
         }
+    },
+
+    __clone() {
+        var t = this;
+        return new MyBufferAttribute(
+            t.__name, t.__arrayType,
+            t.__itemSize, t.__type,
+            t.__array, t.__notDestruct);
     }
 
-})
+});
 
 
 function Color(r, g, b) {
@@ -713,6 +731,7 @@ makeClass(Matrix4, {
     },
 
     __getPosition() {
+        var te = this.e;
         return new Vector3(te[12], te[13], te[14]);
     },
 

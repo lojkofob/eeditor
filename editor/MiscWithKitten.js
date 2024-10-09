@@ -480,7 +480,7 @@ function removeEmptyEffects() {
     Editor.currentLayout.layoutView.$(function (n) {
 
         if (n.__effect) {
-            if (n.__effect.emitters.length == 0) {
+            if (n.__effect.__emitters.length == 0) {
                 n.__effect = undefined;
                 c++;
             }

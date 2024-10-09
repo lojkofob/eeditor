@@ -3007,7 +3007,7 @@ var NodeCloneProperties = [
     //undebug
     //3d
     , '__rotation3dDeg', '__model3d'
-    , '__cullFace'
+    , '__cullFace', '__instancesCount',
     , '__is3D'
     //no3d
 ],

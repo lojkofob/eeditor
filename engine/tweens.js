@@ -46,112 +46,131 @@ var easeArrayForEasingConversionFromDigit = [
 /*  25  */ easeBackIO,      /*  26  */ easeBackI,       /*  27  */ easeBackO,
 /*  28  */ easeBounceIO,    /*  29  */ easeBounceI,     /*  30  */ easeBounceO
 ];
- 
 
-var tween = new UpdatableProto();
 
-tween.__update = function (t, dt) {
-    this.a.e$(function (b) { b.__markedForRemove = b.__update(t, dt) });
-    this.a = this.a.filter(function (b) { return !b.__markedForRemove });
+
+
+function Tween() {
+    UpdatableProto.call(this);
 }
 
-function TweenSequence(arr) { this.i = 0; this.a = []; for (var i in arr) this.__push(tween._to(arr[i])); }
+makeClass(Tween, {
 
-var tsp = TweenSequence.prototype = Object.create(UpdatableProto.prototype);
-tsp.constructor = TweenSequence;
-tsp.__update = function (time, dt) {
-    var t = this;
-    var current = t.a[t.i];
-    if (!current || current.__update(time, dt)) {
-        t.i++;
-        if (t.i >= t.a.length)
-            return 1;
-        else
-            return t.__update(time, dt);
+    __zeroUpdate() { },
+
+    __update(t, dt) {
+        this.a.e$(function (b) { b.__markedForRemove = b.__update(t, dt) });
+        this.a = this.a.filter(function (b) { return !b.__markedForRemove });
+    },
+
+    __setOnComplete(c) {
+        this.__onCompleted = c; return this;
+    },
+
+    __finishOf(obj, property) {
+        var t = this;
+        if (property) {
+            $each(t.a, function (action) {
+                if (action && (action == obj || (action.A && action.o == obj && action.A[property])) && action.__finish) {
+                    action.__finish();
+                }
+                else {
+                    if (action.__finishOf)
+                        return action.__finishOf(obj, property);
+                }
+            });
+        } else {
+            $each(t.a, function (action) {
+                if (action && (action == obj || action.o == obj) && action.__finish) {
+                    action.__finish();
+                }
+                else {
+                    if (action.__finishOf)
+                        action.__finishOf(obj);
+                }
+            });
+
+        }
+        return t;
+    },
+
+    __killOf(obj, property) {
+        var t = this;
+
+        if (property) {
+
+            t.a = t.a.filter(function (action) {
+
+                // removing tween
+                if (action == obj)
+                    return 0;
+
+                // removing TweenAction by object and property
+                if (action.A && action.o && action.o == obj && action.A[property])
+                    return 0;
+
+                // removing TweenSequence by object and property
+                if (action.__killOf)
+                    return action.__killOf(obj, property);
+
+                return 1;
+            });
+
+        } else {
+
+            t.a = t.a.filter(function (action) {
+                // removing tween
+                if (action == obj)
+                    return 0;
+
+                // removing TweenAction by object
+                if (action.o && action.o == obj)
+                    return 0;
+
+                // removing TweenSequence by object
+                if (action.__killOf)
+                    return action.__killOf(obj);
+
+                return 1;
+            });
+
+        }
+
+        return t.a.length;
     }
-    return 0;
-};
 
+}, {}, UpdatableProto);
 
-tween.__finishOf = tsp.__finishOf = function (obj, property) {
-    var t = this;
-    if (property) {
-        $each(t.a, function (action) {
-            if (action && (action == obj || (action.A && action.o == obj && action.A[property])) && action.__finish) {
-                action.__finish();
-            }
-            else {
-                if (action.__finishOf)
-                    return action.__finishOf(obj, property);
-            }
-        });
-    } else {
-        $each(t.a, function (action) {
-            if (action && (action == obj || action.o == obj) && action.__finish) {
-                action.__finish();
-            }
-            else {
-                if (action.__finishOf)
-                    action.__finishOf(obj);
-            }
-        });
+var tween = new Tween();
 
-    }
-    return t;
+function TweenSequence(arr) {
+    this.i = 0;
+    Tween.call(this);
+    for (var i in arr) this.__push(tween._to(arr[i]));
 }
 
-tween.__killOf = tsp.__killOf = function (obj, property) {
-    var t = this;
-
-    if (property) {
-
-        t.a = t.a.filter(function (action) {
-
-            // removing tween
-            if (action == obj)
-                return 0;
-
-            // removing TweenAction by object and property
-            if (action.A && action.o && action.o == obj && action.A[property])
-                return 0;
-
-            // removing TweenSequence by object and property
-            if (action.__killOf)
-                return action.__killOf(obj, property);
-
-            return 1;
-        });
-
-    } else {
-
-        t.a = t.a.filter(function (action) {
-            // removing tween
-            if (action == obj)
-                return 0;
-
-            // removing TweenAction by object
-            if (action.o && action.o == obj)
-                return 0;
-
-            // removing TweenSequence by object
-            if (action.__killOf)
-                return action.__killOf(obj);
-
-            return 1;
-        });
-
+makeClass(TweenSequence, {
+    __update(time, dt) {
+        var t = this;
+        var current = t.a[t.i];
+        if (!current || current.__update(time, dt)) {
+            t.i++;
+            if (t.i >= t.a.length)
+                return 1;
+            else
+                return t.__update(time, dt);
+        }
+        return 0;
     }
-
-    return t.a.length;
-}
+}, {}, Tween);
 
 
 function TweenCallback(cb) { this.cb = cb; }
 
-TweenCallback.prototype = {
-    constructor: TweenCallback,
+makeClass(TweenCallback, {
+    __killOf: 0,
     __update: function (t, dt) { var r = this.cb(dt); return r == undefined ? 1 : r }
-};
+}, {}, Tween);
 
 function getEasingFunc(e) {
 
@@ -166,9 +185,7 @@ function CustomTweenAction(object, params) { // ActionChanger3 js impl
     t.t = 0.5; // default time
     mergeObj(t, params);
 }
-
-CustomTweenAction.prototype = {
-    constructor: CustomTweenAction,
+makeClass(CustomTweenAction, {
 
     __shiftBy: function (time) {
         var t = this;
@@ -219,8 +236,10 @@ CustomTweenAction.prototype = {
                 return t.__onCompleted ? t.__onCompleted() : 1;
             }
         }
-    }
-};
+    },
+
+    __killOf: 0
+}, {}, Tween);
 
 
 function TweenAction(parameters, a, b, c, d, e, agasp) { // ActionChanger3 js impl
@@ -262,9 +281,9 @@ function TweenAction(parameters, a, b, c, d, e, agasp) { // ActionChanger3 js im
     //   consoleLog(t);
 }
 
+makeClass(TweenAction, {
 
-TweenAction.prototype = {
-    constructor: TweenAction,
+    __killOf: 0,
 
     __shiftBy: function (time) {
         var t = this;
@@ -307,8 +326,13 @@ TweenAction.prototype = {
 
             if (isArray(propTargets)) {
                 t.A[i] = { s: baseValue + propTargets[0], d: baseValue + propTargets[1] };
+            } else if (isObject(propTargets)) {
+                t.A[i] = propTargets;
+            } else if (isFunction(propTargets)) {
+                t.A[i] = { s: t.o[i] };
+                ObjectDefineProperty(t.A[i], 'd', { get: propTargets })
             } else {
-                t.A[i] = isObject(propTargets) ? propTargets : { s: t.o[i], d: baseValue + propTargets };
+                t.A[i] = { s: t.o[i], d: baseValue + propTargets };
             }
         }
     },
@@ -359,6 +383,7 @@ TweenAction.prototype = {
             if (linearPart == 1) {  // completed
 
                 if (!t.r) {
+                    if (t.__onCompleted) t.__onCompleted();
                     return 1; // end of repeat loop or all animation :(
                 }
                 else {
@@ -375,6 +400,7 @@ TweenAction.prototype = {
                                 t.A = 0;
                                 t.d = 0;
                                 if (t.r == 0) {
+                                    if (t.__onCompleted) t.__onCompleted();
                                     return 1;
                                 } else {
                                     t.__initA();
@@ -398,6 +424,7 @@ TweenAction.prototype = {
                     }
 
                     if (t.r == 0) {
+                        if (t.__onCompleted) t.__onCompleted();
                         return 1;
                     }
                 }
@@ -405,7 +432,7 @@ TweenAction.prototype = {
             }
         }
     }
-};
+}, {}, Tween);
 
 function KeyframesAnimation(o, p, frames, loopTime, easing, loopDisabled, lerpFactor) {
     var t = this;
@@ -429,8 +456,9 @@ var __forceAnimTime = 0;
 var __forceAnimDt = 0;
 //undebug
 
-var KeyframesAnimationPrototype = KeyframesAnimation.prototype = {
-    constructor: KeyframesAnimation,
+makeClass(KeyframesAnimation, {
+
+    __killOf: 0,
 
     __setFrames: function (frames) {
         var t = this;
@@ -746,7 +774,7 @@ var KeyframesAnimationPrototype = KeyframesAnimation.prototype = {
         return options.__autoRemoveKeyFrameAnimation;
 
     }
-};
+}, {}, Tween);
 
 // __window.__debugMatricesUpdates = 1;
 

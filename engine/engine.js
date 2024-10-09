@@ -376,6 +376,7 @@ function updateTimeNow() {
 
 }
 
+
 var PerformanceProfiler = (function () {
 
     var __lastCurrentFrame = 0, __active = 0, t = {
@@ -406,7 +407,6 @@ var PerformanceProfiler = (function () {
 
     return makeSingleton(
         t
-        /*, { __active: createSomePropertyWithGetterAndSetter( function() { return __active }, function() { __active = v } ) } */
     );
 
 })();

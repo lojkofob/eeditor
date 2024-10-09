@@ -68,6 +68,7 @@ module.exports = function () {
 
     this.deepclone = function (a) {
         if (isArrayOrObject(a)) {
+            if (a.__clone) return a.__clone();
             //debug
             if (a.constructor !== Object && a.constructor !== Array) {
                 throw "can't copy non real objects by deepclone!"

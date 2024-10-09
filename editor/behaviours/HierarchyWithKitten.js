@@ -1,5 +1,11 @@
 
 var hierarchyPanel;
+
+
+function isVisibleInHierarchy(n) {
+    return n.__validToSave || n.__hierarchyColor
+}
+
 (function () {
 
     if (window.HierarchyPanelDisabled)
@@ -56,16 +62,12 @@ var hierarchyPanel;
         }
     }
 
-    NodePrototype.isVisibleInHierarchy = function () {
-        return this.__validToSave || this.__hierarchyColor
-    };
-
     var oldadd = NodePrototype.add;
     NodePrototype.add = function (child) {
         if (child) {
             var t = this, r = oldadd.call(t, child);
 
-            if (t && t.treeEntry) {
+            if (t && t.treeEntry && child.toTree) {
                 var c = child.toTree();
                 if (c) {
                     t.treeEntry.add(c, 1);
@@ -120,7 +122,7 @@ var hierarchyPanel;
 
         var t = this;
 
-        if (t.isVisibleInHierarchy()) {
+        if (isVisibleInHierarchy(t)) {
             function GetText() {
                 var name = t.name;
                 var desc = isString(t.__description) ? '\\#aaf;\\s13;[' + t.__description + ']' : '';
@@ -458,13 +460,13 @@ var hierarchyPanel;
                                             function finder(p, re) {
 
                                                 return re ? function (n) {
-                                                    if (n.isVisibleInHierarchy()) {
+                                                    if (isVisibleInHierarchy(n)) {
                                                         var f = n[p];
                                                         if (f && f.match(v))
                                                             return n;
                                                     }
                                                 } : function (n) {
-                                                    if (n.isVisibleInHierarchy()) {
+                                                    if (isVisibleInHierarchy(n)) {
                                                         var f = n[p];
                                                         if (f && f.indexOf(v) >= 0)
                                                             return n;

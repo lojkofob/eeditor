@@ -297,16 +297,21 @@ Texture.prototype = {
         }
     },
 
-    __onContextLost: function () {
+    __clone() {
+        // please never clone textures!
+        return this;
+    },
+
+    __onContextLost() {
         this.__destruct(1);
         this.__needsUpdate = 1;
     },
     //cheats
-    __getMem: function () {
+    __getMem() {
         return (this.__image ? (this.__image.width * this.__image.height * 4 / 1024 / 1024) : 0) || 0;
     },
     //endcheats
-    __destruct: function (keepInCache) {
+    __destruct(keepInCache) {
         if (this.__webglTexture) {
             this.__webgl.deleteTexture(this.__webglTexture);
             this.__webglTexture = 0;
@@ -327,7 +332,7 @@ Texture.prototype = {
         }
     },
 
-    __checkGLTexture: function () {
+    __checkGLTexture() {
 
         if (!this.__webglTexture) {
 
@@ -356,7 +361,7 @@ Texture.prototype = {
 
     __init: defaultMergeInit,
 
-    __setWrapS: function (v) {
+    __setWrapS(v) {
         if (v != undefined) {
             v = textureRepeatsList[v] || GL_CLAMP_TO_EDGE;
             if (this.__wraps != v) {
@@ -366,7 +371,7 @@ Texture.prototype = {
         }
     },
 
-    __setWrapT: function (v) {
+    __setWrapT(v) {
         if (v != undefined) {
             v = textureRepeatsList[v] || GL_CLAMP_TO_EDGE;
             if (this.__wrapt != v) {
@@ -410,7 +415,7 @@ function WebGLRenderTarget(width, height, params) {
 
 WebGLRenderTarget.prototype = {
 
-    __setSize: function (width, height) {
+    __setSize(width, height) {
 
         if (this.width !== width || this.height !== height) {
 
@@ -435,7 +440,7 @@ WebGLRenderTarget.prototype = {
             }
         },*/
 
-    __destruct: function () {
+    __destruct() {
 
         //cheats
         renderInfo.renderTargetsCount--;
@@ -455,7 +460,7 @@ WebGLRenderTarget.prototype = {
     },
 
 
-    __onContextLost: function () {
+    __onContextLost() {
         if (this.__texture) {
             this.__texture.__destruct(1);
         }
@@ -466,7 +471,7 @@ WebGLRenderTarget.prototype = {
 
     },
 
-    __clear: function (r, g, b, a) {
+    __clear(r, g, b, a) {
         renderer.__setRenderTarget(this);
         renderer.__glClearColor(r, g, b, a);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -482,20 +487,20 @@ WebGLRenderTarget.prototype = {
 function ColorBuffer() {
     var color = new Vector4(), currentColorMask = null, currentColorClear = new Vector4(0, 0, 0, 1);
     return {
-        __setMask: function (colorMask) {
+        __setMask(colorMask) {
             if (currentColorMask !== colorMask) {
                 gl.colorMask(colorMask, colorMask, colorMask, colorMask);
                 currentColorMask = colorMask;
             }
         },
-        __setClear: function (r, g, b, a) {
+        __setClear(r, g, b, a) {
             color.set(r, g, b, a);
             if (currentColorClear.__equals(color) === false) {
                 gl.clearColor(r, g, b, a);
                 currentColorClear.__copy(color);
             }
         },
-        __reset: function () {
+        __reset() {
             currentColorMask = null;
             currentColorClear.set(0, 0, 0, 1);
         }
@@ -512,6 +517,7 @@ function WebGLRenderer(dbg) {
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
 
+        , gl_instanced_ext
         , _currentProgram
         , _currentRenderTarget
         , _currentFramebuffer = 0
@@ -540,6 +546,7 @@ function WebGLRenderer(dbg) {
         , _newAttributes
         , _maxVertexAttributes = 4
         , _enabledAttributes
+        , _enabledInstancingdAttributes
         , _maxTextures
         , _maxTextureSize = 2048
 
@@ -628,9 +635,25 @@ function WebGLRenderer(dbg) {
             _enabledAttributes[attribute] = 1;
 
         }
-
-
     }
+
+    function __enableInstancingdAttribute(attribute) {
+
+        _newAttributes[attribute] = 1;
+
+        if (_enabledAttributes[attribute] === 0) {
+
+            gl.enableVertexAttribArray(attribute);
+            _enabledAttributes[attribute] = 1;
+
+        }
+
+        if (_enabledInstancingdAttributes[attribute] === 0) {
+            gl.vertexAttribDivisor(attribute, 1); // Указываем, что это инстанс-атрибут
+            _enabledInstancingdAttributes[attribute] = 1;
+        }
+    }
+
 
     function __disableUnusedAttributes() {
 
@@ -640,6 +663,7 @@ function WebGLRenderer(dbg) {
 
                 gl.disableVertexAttribArray(i);
                 _enabledAttributes[i] = 0;
+                _enabledInstancingdAttributes[i] = 0;
 
             }
 
@@ -1384,6 +1408,8 @@ function WebGLRenderer(dbg) {
 
         _enabledAttributes = new Uint8Array(_maxVertexAttributes);
 
+        _enabledInstancingdAttributes = new Uint8Array(_maxVertexAttributes);
+
         _enabledGLFlags = {};
     }
 
@@ -1391,12 +1417,20 @@ function WebGLRenderer(dbg) {
 
         __resetGLState();
 
-        gl =
+        gl = __domElement.getContext('webgl2', glAttributes);
+
+        if (!gl) {
             //debug
-            __domElement.getContext('webgl2', glAttributes) ||
+            debugger;
             //undebug
             __domElement.getContext('webgl', glAttributes) ||
-            __domElement.getContext('experimental-webgl', glAttributes);
+                __domElement.getContext('experimental-webgl', glAttributes);
+
+            if (gl) {
+                gl_instanced_ext = gl.getExtension("ANGLE_instanced_arrays");
+            }
+
+        }
 
         if (!gl) {
 
@@ -1620,6 +1654,10 @@ function WebGLRenderer(dbg) {
 
             toList = tmp.__renderList;
 
+        }
+
+        if (object.__allProjectionMatrix) {
+            _currentProjectionMatrix = object.__allProjectionMatrix;
         }
 
         object.__projectionMatrix = _currentProjectionMatrix;
@@ -1942,19 +1980,30 @@ function WebGLRenderer(dbg) {
 
         __setFaceCulling(object.__cullFace, object.__frontFaceDirection || 1);
 
-        var mat = object.__material;
-        if (mat) {
-            depthBuffer.__setTest(1);
-        } else {
-            depthBuffer.__setTest(0);
-        }
+        depthBuffer.__setTest(object.__useDepth || 0);
 
         if (r) {
+            var icount = round(object.__instancesCount), dmode = object.__drawMode || gl.TRIANGLES;
             if (object.__indecesBuffer) {
-                gl.drawElements(object.__drawMode || gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+                if (icount) {
+                    gl.drawElementsInstanced(dmode, count, gl.UNSIGNED_SHORT, 0, icount);
+                } else {
+                    gl.drawElements(dmode, count, gl.UNSIGNED_SHORT, 0);
+                }
             } else {
-                gl.drawArrays(object.__drawMode || gl.TRIANGLES, start || 0, count)
+                start = start || 0;
+                if (icount) {
+                    if (gl_instanced_ext) {
+                        gl_instanced_ext.drawArraysInstancedANGLE(dmode, start, count, icount);
+                    } else {
+                        gl.drawArraysInstanced(dmode, start, count, icount);
+                    }
+                } else {
+                    gl.drawArrays(dmode, start, count);
+                }
             }
+
+
         } else {
 
         }
@@ -1988,6 +2037,7 @@ function WebGLRenderer(dbg) {
         __domElement: __domElement
         , __initAttributes: __initAttributes
         , __enableAttribute: __enableAttribute
+        , __enableInstancingdAttribute: __enableInstancingdAttribute
         , __disableUnusedAttributes: __disableUnusedAttributes
         , __setPixelRatio: __setPixelRatio
         , __setSize: __setSize

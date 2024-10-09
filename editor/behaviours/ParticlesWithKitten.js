@@ -291,13 +291,13 @@
         eachSelected(function (sn) {
             var effect = sn.__effect;
             if (effect) {
-                for (var i in effect.emitters) {
+                for (var i in effect.__emitters) {
 
                     count++;
 
-                    var emitter = effect.emitters[i];
+                    var emitter = effect.__emitters[i];
 
-                    var cell = emittersList.__addChildBox(templates.emittersList);
+                    var cell = emittersList.__addChildBox(templates.__emittersList);
 
                     Editor.prepareEditorUINode(cell, emitter);
 
@@ -348,7 +348,7 @@
                     templates[type] = extractLayoutFromLayout(type + '_template', templates.emitter);
                 });
 
-            templates.emittersList = extractLayoutFromLayout('emittersList_template', Editor.uiLayout);
+            templates.__emittersList = extractLayoutFromLayout('emittersList_template', Editor.uiLayout);
 
             consoleLog('templates', templates);
 
