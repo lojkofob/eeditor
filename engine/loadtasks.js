@@ -63,6 +63,7 @@ function writeDataTableArray(t, tbl, format, byObject, ignoreNullFields, clearMo
 }
 
 function getCachedData(name, obj) {
+
     var obj = obj || globalConfigsData;
     if (isString(name)) {
         var j = obj[name];

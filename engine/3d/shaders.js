@@ -1,9 +1,11 @@
 
+
 function ToGLES3(sh) {
 
     function genvsh() {
         var vsh = getVertexShaderData(sh.v),
             vp = options.__baseShadersFolder + sh.v + '_3.v';
+
         vsh = "#version 300 es\n" + vsh.replace(/attribute/g, 'in').replace(/varying/g, 'out');
         globalConfigsData[vp] = vsh;
     }
@@ -11,7 +13,12 @@ function ToGLES3(sh) {
     function genfsh() {
         var fsh = getFragmentShaderData(sh.f),
             fp = options.__baseShadersFolder + sh.f + '_3.f',
-            fsh = "#version 300 es\n" + 'out lowp vec4 glFragColor;\n' + fsh.replace(/varying/g, 'in').replace(/gl_FragColor/g, 'glFragColor').replace(/texture2D/g, 'texture');
+            fsh = "#version 300 es\n" +
+                fsh.replace(/varying/g, 'in')
+                    .replace(/gl_FragColor/g, 'glFragColor')
+                    .replace(/texture2D/g, 'texture')
+                    .replace(/void main/g, 'out vec4 glFragColor;\nvoid main');
+
         globalConfigsData[fp] = fsh;
     }
 
@@ -80,7 +87,7 @@ var ComputeShaderFor = (function () {
                 light_position: vec3, // Позиция источника света
                 light_color: vec3, // Цвет источника света
                 ambient_color: vec3, // Цвет окружающего освещения
-                time: float,
+                // time: float,
                 m_diffuse: vec3, // Диффузный цвет материала
                 m_specular: vec3, // Спекулярный цвет материала
                 m_shininess: float // Шероховатость материала
@@ -95,6 +102,7 @@ var ComputeShaderFor = (function () {
                     'float spec = pow(max(dot(view_dir, reflect_dir), 0.0), m_shininess)',
                     'vec3 specular = spec * m_specular * light_color',
                     'vec3 ambient = ambient_color * m_diffuse',
+                    // 'vec4 mat_color = v_normal.x * tc_uv0'
                     'vec4 mat_color = vec4(ambient + diffuse + specular, 1.0) * tc_uv0'
                 );
                 return 'mat_color';
@@ -125,8 +133,8 @@ var ComputeShaderFor = (function () {
         return a && b && c ? a + ' ' + b + ' ' + c + ';' : undefined;
     }
 
-    function declare_lowp(a, b, c) {
-        return a && b && c ? a + ' LOWP ' + b + ' ' + c + ';' : undefined;
+    function declare_withp(a, b, c) {
+        return a && b && c ? a + ' ' + _shader_precision + ' ' + b + ' ' + c + ';' : undefined;
     }
 
     function per_texture(opts, f) {
@@ -215,7 +223,7 @@ var ComputeShaderFor = (function () {
                 // result_color = 'vec4(1.0,0.0,0.0,1.0)'; // red error color
                 result_color = 'v_gl_Position';
                 opts.__variyng.gl_Position = vec4;
-                opts.__uniforms_v.time = float;
+                // opts.__uniforms_v.time = float;
             }
             if (opts.__premultipliedAlpha) {
                 line('vec4 rc=' + result_color,
@@ -228,11 +236,11 @@ var ComputeShaderFor = (function () {
 
         computeCode();
         var chunks = concatArrays(
-            ["#ifdef GL_ES\n#define LOWP lowp\nprecision mediump float;\n#else\n#define LOWP\n#endif\n"],
+            [_shader_defines_str],
             // uniforms
-            $mapObjectToArray(opts.__uniforms_f, (v, k) => declare_lowp('uniform', sh_type(node[k]) || v.t || v, k)),
+            $mapObjectToArray(opts.__uniforms_f, (v, k) => declare_withp('uniform', sh_type(node[k]) || v.t || v, k)),
             // variyngs
-            $mapObjectToArray(opts.__variyng, (v, k) => declare_lowp('varying', v, 'v_' + k)),
+            $mapObjectToArray(opts.__variyng, (v, k) => declare_withp('varying', v, 'v_' + k)),
             // textures
             $map(opts.__textures, v => declare('uniform', 'sampler2D', 't_' + v)),
             // main
@@ -266,7 +274,8 @@ var ComputeShaderFor = (function () {
             }
 
             if (opts.__variyng.gl_Position) {
-                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*mw) * 1.5');
+                // line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*mw) * 1.5');
+                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*mw)');
             }
 
             /// \todo: other buffers

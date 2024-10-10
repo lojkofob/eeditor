@@ -2146,7 +2146,7 @@ makeClass(Quaternion, {
             r1 * sin(theta1),
             r1 * cos(theta1),
             r2 * sin(theta2),
-            r2 * cos(theta2),
+            r2 * cos(theta2)
         );
 
     },
@@ -3566,9 +3566,14 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
 
     },
 
-    __toJson(clip) {
 
-        const tracks = [],
+    // __toJson() {
+    // return this.constructor.__toJson(this);
+    // },
+
+    __toJson() {
+
+        const tracks = [], clip = this,
             clipTracks = clip.tracks;
 
         const json = {
@@ -3899,11 +3904,6 @@ var AnimationClip = makeClass(function (name = '', duration = - 1, tracks = [], 
         }
 
         return new this.constructor(this.name, this.duration, tracks, this.blendMode);
-
-    },
-    __toJson() {
-
-        return this.constructor.__toJson(this);
 
     }
 

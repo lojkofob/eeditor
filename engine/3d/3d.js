@@ -121,6 +121,8 @@ var __Object3dProxy = (function () {
                 l.__onDataReady();
             };
 
+            mergeObj(t, v)
+
             if (loadD) {
                 if (loadD.__loading) { loadD.__loading.push(t); return t; }
                 onload(t);
@@ -140,7 +142,7 @@ var __Object3dProxy = (function () {
                     delete loadD.__loading;
                 });
             }
-            mergeObj(t, v)
+
             return t;
         },
 
@@ -156,6 +158,9 @@ var __Object3dProxy = (function () {
                 t.__parent.__addChildBox(t.__scene);
             }
 
+            if (t.__onload) {
+                t.__onload(t.__scene);
+            }
 
             if (t.__parent.__onModel3dLoaded) {
                 t.__parent.__onModel3dLoaded(t.__scene);

@@ -16,6 +16,8 @@ var EDM = createDeobfuscatingMap({
 
     //shader params
     , matrixWorld = "matrixWorld"
+    , pm = "pm"
+    , mw = "mw"
     , projectionMatrix = "projectionMatrix";
 
 
@@ -97,7 +99,8 @@ var consoleError = function () { }, consoleWarn = function () { }, consoleLog = 
 consoleDebug = function () { console.error.apply(console, arguments); debugger; }
 consoleError = console.error.bind(console);
 consoleWarn = console.warn.bind(console);
-consoleLog = console.log.bind(console); //function(){ if ( isString( arguments[0] ) &&  arguments[0].startsWith('js_Ana') ) console.log.apply(console, arguments); } 
+consoleLog = console.log.bind(console);
+//function(){ if ( isString( arguments[0] ) &&  arguments[0].startsWith('js_Ana') ) console.log.apply(console, arguments); } 
 
 var __cachedReadableDumps = [];
 var ddeepper = 0;
@@ -353,7 +356,7 @@ var ArrayPrototype = Array.prototype, ObjectPrototype = Object.prototype;
 
 var __$countProto = function (f) {
     var r = 0, c;
-    this.e$(function (ei, i) {
+    $each(this, function (ei, i) {
         c = f(ei, i);
         if (isNumeric(c)) r += c;
         else if (c) r++;
@@ -614,7 +617,9 @@ var ALIGN_START = 0, ALIGN_CENTER = 1, ALIGN_END = 2,
 
 function invertMap(obj, out) {
     out = out || obj;
-    $each(obj, function (n, i) { out[n] = i; });
+    $each(obj, function (n, i) {
+        out[n] = i;
+    });
     return out;
 }
 
@@ -1257,6 +1262,17 @@ var base64coder = (function () {
                 coded = coded.join('');
                 return UTF8.decode(coded);
             }
+        },
+
+        toUint8Array: function (b64) {
+            b64 = b64.split(',')[1] || b64;
+            const binaryString = atob(b64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
         }
     }
 })();

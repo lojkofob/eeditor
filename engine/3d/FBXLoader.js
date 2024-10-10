@@ -1,5 +1,4 @@
-
-FBXLoader = function () { };
+var FBXLoader = function () { };
 
 (a => {
 
@@ -29,6 +28,13 @@ FBXLoader = function () { };
 
             if (FBXBuffer) {
                 var fbxTree;
+
+                if (FBXBuffer.startsWith && FBXBuffer.startsWith("data:")) { // base64?
+
+                    FBXBuffer = base64coder.toUint8Array(FBXBuffer);
+
+                }
+
                 if (isFbxFormatBinary(FBXBuffer)) {
 
                     fbxTree = new BinaryParser().__parse(FBXBuffer, onerr);

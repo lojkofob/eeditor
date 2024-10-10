@@ -242,6 +242,7 @@ var
     __realScreenCenter = new Vector2();
 
 var _projScreenMatrix = new Matrix4();
+
 function updateCamera(w, h, cam, x, y) {
     var cp = 0.5;
     x = x || 0; y = y || 0;
@@ -276,13 +277,11 @@ function onWindowResize(force) {
 
     if (predefinedLayoutsResolutionMult) {
         layoutsResolutionMult = predefinedLayoutsResolutionMult;
-    } else
-        if (options.__upscaleResolution) {
-            layoutsResolutionMult = mmin(w / options.__upscaleResolution.x, h / options.__upscaleResolution.y);
-        } else
-            if (options.__goodResolution) {
-                layoutsResolutionMult = mmin(mmin(1.0, w / options.__goodResolution.x), mmin(1.0, h / options.__goodResolution.y));
-            }
+    } else if (options.__upscaleResolution) {
+        layoutsResolutionMult = mmin(w / options.__upscaleResolution.x, h / options.__upscaleResolution.y);
+    } else if (options.__goodResolution) {
+        layoutsResolutionMult = mmin(mmin(1.0, w / options.__goodResolution.x), mmin(1.0, h / options.__goodResolution.y));
+    }
 
     var scaleFactorMult = 1;
     if (options.__isDeviceQualityLow) {
@@ -586,7 +585,6 @@ function registerClasses(j) {
     else if (j.pkd) registerClasses(unpackJson(j.pkd));
     else if (isArray(j)) for (var i in j) registerClasses(j[i]);
     else if (isObject(j)) {
-        //         console.log('registerClasses', j);
         if (j.name) {
             if (j.name == 'classes') {
                 for (var i in j.__childs) registerClasses(j.__childs[i]);

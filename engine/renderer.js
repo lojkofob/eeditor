@@ -126,7 +126,7 @@ var gl
     , textureRepeatsList
     , defaultShader = 'base'
     , _shader_precision
-    , _shader_defines_str = ""
+    , _shader_defines_str = "#ifdef GL_ES\n#define LOWP lowp\n#define MEDIUMP mediump\n#define HIGHP highp\n#else\n#define LOWP\n#define MEDIUMP\n#define HIGHP\n#endif\n"
     , depthBuffer;
 
 function __setGLGlobals(gl) {
@@ -625,19 +625,7 @@ function WebGLRenderer(dbg) {
 
     }
 
-    function __enableAttribute(attribute) {
-
-        _newAttributes[attribute] = 1;
-
-        if (_enabledAttributes[attribute] === 0) {
-
-            gl.enableVertexAttribArray(attribute);
-            _enabledAttributes[attribute] = 1;
-
-        }
-    }
-
-    function __enableInstancingdAttribute(attribute) {
+    function __enableAttribute(attribute, divisor) {
 
         _newAttributes[attribute] = 1;
 
@@ -648,9 +636,13 @@ function WebGLRenderer(dbg) {
 
         }
 
-        if (_enabledInstancingdAttributes[attribute] === 0) {
-            gl.vertexAttribDivisor(attribute, 1); // Указываем, что это инстанс-атрибут
-            _enabledInstancingdAttributes[attribute] = 1;
+        if (_enabledInstancingdAttributes[attribute] !== divisor) {
+            if (gl_instanced_ext) {
+                gl_instanced_ext.vertexAttribDivisorANGLE(attribute, divisor)
+            } else {
+                gl.vertexAttribDivisor(attribute, divisor);
+            }
+            _enabledInstancingdAttributes[attribute] = divisor;
         }
     }
 
@@ -1471,7 +1463,14 @@ function WebGLRenderer(dbg) {
         gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         __texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, new Uint8Array(4));
 
-        _shader_precision = _shader_precision || __getMaxPrecision('highp');
+        // _shader_precision = _shader_precision || __getMaxPrecision('highp');
+
+        _shader_precision = _shader_precision || __getMaxPrecision('mediump');
+
+        _shader_defines_str += '\nprecision ' + _shader_precision + ' float;\n';
+        _shader_defines_str += 'precision ' + _shader_precision + ' int;\n'
+
+        _shader_precision = _shader_precision.toUpperCase()
 
         __setFlipSided(false);
 
@@ -2037,7 +2036,6 @@ function WebGLRenderer(dbg) {
         __domElement: __domElement
         , __initAttributes: __initAttributes
         , __enableAttribute: __enableAttribute
-        , __enableInstancingdAttribute: __enableInstancingdAttribute
         , __disableUnusedAttributes: __disableUnusedAttributes
         , __setPixelRatio: __setPixelRatio
         , __setSize: __setSize

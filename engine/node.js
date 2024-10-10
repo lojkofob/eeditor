@@ -2657,7 +2657,6 @@ mergeObj(NodePrototype, {
         return function () {
 
             var t = this, o = {}, selfProperties = t.__selfProperties;
-            //     console.log('tojson ', t);
 
             if (selfProperties.__eWidth || selfProperties.__eHeight) {
                 selfProperties.__size = undefined;
@@ -5215,7 +5214,6 @@ var NodeCloneProperties = [
                                 //                         t.__anc.y = t.__anc.y * 0.9998 + wap.y * dt / 10 * sign(t.__an.y+0.0001);
                                 //                         t.__an.x = lerp( t.__an.x + t.__anc.x, 0, dt/10);
                                 //                         t.__an.y = lerp( t.__an.y + t.__anc.y, 0, dt/10);
-                                // //                         console.log( t.__an.x );
                                 //                         t.__matrixWorldNeedsUpdate = 1;
                                 //                     }
                                 t.__wap = wp;

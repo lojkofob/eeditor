@@ -65,7 +65,7 @@ ObjectDefineProperties(Object3DPrototype,
 
         matrixWorld, { get(v) { return this.mw; } },
         projectionMatrix, { get(v) { return this.__projectionMatrix; } },
-        'pm', { get(v) { return this.__projectionMatrix; } }
+        pm, { get(v) { return this.__projectionMatrix; } }
     )
 )
 

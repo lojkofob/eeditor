@@ -139,13 +139,8 @@ makeClass(MyBufferAttribute, {
                 consoleLog('attribute passed', t.__name, t.__realsize + '/' + t.__size, t.__itemSize, t);
             }
             //undebug
-            if (t.__instansing) {
-                renderer.__enableInstancingdAttribute(programAttribute);
-            } else {
-                renderer.__enableAttribute(programAttribute);
-            }
 
-
+            renderer.__enableAttribute(programAttribute, t.__instansingDivisor || 0);
 
             gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, 0, 0);
             return t.__webglBuffer !== undefined

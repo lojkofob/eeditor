@@ -169,12 +169,12 @@ function mkdir(d) {
     var dir = path.dirname(d);
     if (dir != '.') {
         if (process.platform == "win32") {
-            dir = dir.replace(/\//g,"\\");
+            dir = dir.replace(/\//g, "\\");
         }
         if (!fs.existsSync(dir)) {
             try {
                 spawn(['mkdir', dir]);
-            } catch(ex) {
+            } catch (ex) {
                 spawn(['mkdir', '-p', dir]);
             }
         }
@@ -231,7 +231,7 @@ var subtargetsBuilders = {
         var src = collectSourcesStr(d.src, d.srcdir);
         mkdir(d.dst);
         // ${TEXTURE_PACKER_OPTIONS} ifeq ($(OS),Windows_NT) TEXTURE_PACKER_OPTIONS=--tmpDir C:/tmp/ endif
- 
+
         var useProxyFile = 1; // d.useProxyFile || src.length > 50000; // coined magic number. may be wrong. see E2BIG
 
         if (useProxyFile) {
@@ -298,9 +298,11 @@ var subtargetsBuilders = {
             spawntool('node-minify', [
                 args || '',
                 '-t', compressor,
-                d.es6 ? '--es6' : '',
+                d.es6 != false ? '--es6' : '',
                 advanced ? '--ADVANCED_OPTIMIZATIONS' : '',
+                d.myminify ? '--myminify' : '',
                 d.pretty ? '--PRETTY' : '',
+                d.rmdebug ? '--rmdebug ' + d.rmdebug : '',
                 '-o', dst,
                 src || collectSourcesStr(d.src, d.srcdir)
             ]);
@@ -317,7 +319,7 @@ var subtargetsBuilders = {
             // advanced @suppress sample https://github.com/google/closure-compiler/wiki/Warnings
 
             var header = "";
-            
+
             if (d.useStrict) {
                 header += "'use strict';";
             }
@@ -338,11 +340,11 @@ var subtargetsBuilders = {
             }
 
             if (!d.wrap.noFunc) {
-                wrapfile = "(function" + (d.wrapFuncName ? " " + d.wrapFuncName : "") + "(){" + header + wrapfile + "})()";
+                wrapfile = "(function" + (d.wrapFuncName ? " " + d.wrapFuncName : "") + "(){" + header + wrapfile + "}).bind(this)()";
             }
 
             fs.writeFileSync(wdst, wrapfile);
-            
+
             minify(d.dst, d.wrap.args, d.advanced, wdst);
 
         }

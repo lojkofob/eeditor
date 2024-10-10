@@ -1,4 +1,4 @@
-var minify = (function(undefined) {
+var minify = (function (undefined) {
   'use strict';
 
   var exec = require('child_process').exec;
@@ -9,7 +9,7 @@ var minify = (function(undefined) {
   var uuid = require('node-uuid');
   var mkdirp = require('mkdirp');
 
-  var minify = function(options) {
+  var minify = function (options) {
     this.type = options.type;
     this.compilation_level = options.compilation_level;
     this.pretty = options.pretty;
@@ -54,7 +54,7 @@ var minify = (function(undefined) {
       options.fileIn instanceof Array &&
       options.type !== 'gcc'
     ) {
-      var out = options.fileIn.map(function(path) {
+      var out = options.fileIn.map(function (path) {
         return _fs.readFileSync(path, 'utf8');
       });
 
@@ -92,16 +92,16 @@ var minify = (function(undefined) {
     copyright: false,
     callback: null,
     buffer: null, // with larger files you will need a bigger buffer for closure compiler
-    compress: function() {
+    compress: function () {
       var self = this;
       var command;
       var platform = require('os').platform();
       var nodeModulesV2 = path.normalize(__dirname + '/../node_modules');
       var isNPMv2 = dirExistsSync(nodeModulesV2);
       var dirToScan = isNPMv2 ? nodeModulesV2 : '';
-      var getPath = function(bin) {
+      var getPath = function (bin) {
         var binPath = glob.sync(dirToScan + '**/.bin/' + bin +
-          ((platform === 'win32') ? '.cmd' : ''), {realpath: true})[0];
+          ((platform === 'win32') ? '.cmd' : ''), { realpath: true })[0];
         if (!binPath) {
           throw new Error(bin + ' not found !');
         }
@@ -121,14 +121,14 @@ var minify = (function(undefined) {
             '" --type js ' + this.options.join(' ');
           break;
         case 'gcc':
-          var fileInCommand = this.fileIn.map(function(file) {
+          var fileInCommand = this.fileIn.map(function (file) {
             return '--js="' + file + '"';
           });
           command = 'java -server -XX:+TieredCompilation ' +
-          
+
             '-jar -Xss2048k "' + __dirname + '/closure-compiler-v20180506.jar" ' +
             fileInCommand.join(' ') +
-            (this.pretty ? ' --formatting PRETTY_PRINT' : '' ) +
+            (this.pretty ? ' --formatting PRETTY_PRINT' : '') +
             (this.compilation_level ? ' --compilation_level ' + this.compilation_level : '') +
             ' --warning_level=QUIET --language_in=' + (this.language || 'ECMASCRIPT3') +
             ' --js_output_file="' + this.fileOut + '" ' + this.options.join(' ');
@@ -166,10 +166,10 @@ var minify = (function(undefined) {
           throw new Error('Type does not exist');
       }
 
-      var callbackEnd = function(err) {
+      var callbackEnd = function (err) {
         if (self.fileIn === self.tempFile) {
           // remove the temp concat file here
-          _fs.unlink(self.tempFile, function(){});
+          _fs.unlink(self.tempFile, function () { });
         }
 
         if (self.callback) {
@@ -183,14 +183,14 @@ var minify = (function(undefined) {
 
       // console.log(command);
 
-      var runAsync = function() {
-        exec(command, {maxBuffer: self.buffer}, callbackEnd);
+      var runAsync = function () {
+        exec(command, { maxBuffer: self.buffer }, callbackEnd);
       };
 
-      var runSync = function() {
+      var runSync = function () {
         if (command !== '') {
           try {
-            execSync(command, {maxBuffer: self.buffer});
+            execSync(command, { maxBuffer: self.buffer });
             callbackEnd(null);
           } catch (e) {
             callbackEnd(e);

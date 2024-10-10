@@ -378,7 +378,7 @@ void main(){\
                     
                 // debugger;
                     if (ncat) {
-                        console.log( data.__data.skins[0].attachments.body.body );
+                        consoleLog( data.__data.skins[0].attachments.body.body );
                         jsonDiff(data.__data.animations.mm_NPC_cat_idle.deform.default.head.head, ncat.animations.mm_NPC_cat_idle.deform.default.head.head);
                         data.__data.animations = ncat.animations;
                     }
@@ -406,22 +406,22 @@ void main(){\
                 if (options.__spineLogEvents) {
                     animationState.addListener({
                         start: function (track) {
-                            console.log("Animation on track " + track.trackIndex + " started");
+                            consoleLog("Animation on track " + track.trackIndex + " started");
                         },
                         interrupt: function (track) {
-                            console.log("Animation on track " + track.trackIndex + " interrupted");
+                            consoleLog("Animation on track " + track.trackIndex + " interrupted");
                         },
                         end: function (track) {
-                            console.log("Animation on track " + track.trackIndex + " ended");
+                            consoleLog("Animation on track " + track.trackIndex + " ended");
                         },
                         disposed: function (track) {
-                            console.log("Animation on track " + track.trackIndex + " disposed");
+                            consoleLog("Animation on track " + track.trackIndex + " disposed");
                         },
                         complete: function (track) {
-                            console.log("Animation on track " + track.trackIndex + " completed");
+                            consoleLog("Animation on track " + track.trackIndex + " completed");
                         },
                         event: function (track, event) {
-                            console.log("Event on track " + track.trackIndex + ": " + JSON.stringify(event));
+                            consoleLog("Event on track " + track.trackIndex + ": " + JSON.stringify(event));
                         }
                     });
                 }
