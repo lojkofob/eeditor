@@ -212,7 +212,7 @@ mergeObj(NodePrototype, {
             sciss = t.__getScissor();
         }
 
-        t.__childs.e$(function (n) {
+        $each(t.__childs, n => {
             if (n.____visible) {
                 n.__parentScrollVector = scrollVector;
                 if (sciss) n.__parentSciss = sciss;
@@ -647,17 +647,17 @@ mergeObj(NodePrototype, {
     },
 
     __clone() {
-        var j = {}, v, t = this;
-        for (var i = 0; i < NodeCloneProperties.length; i++) {
-            v = t[NodeCloneProperties[i]];
+        var j = {}, t = this;
+        $each(NodeCloneProperties, (v, k) => {
+            v = t[k];
             if (v !== undefined) {
                 if (v.__clone) {
-                    j[NodeCloneProperties[i]] = v.__clone();
+                    j[k] = v.__clone();
                 } else {
-                    j[NodeCloneProperties[i]] = deepclone(v);
+                    j[k] = deepclone(v);
                 }
             }
-        }
+        });
         t.__eachChild(cc => {
             if (cc.__validToSave) {
                 if (!j.__childs) j.__childs = [];
@@ -2992,24 +2992,24 @@ function pushNodeHandlerTo(node, v, name, fname) {
 
 
 //сомнительный эксперимент, но пусть пока поживет
-var NodeCloneProperties = [
-    '__margin', '__spacing', '__padding', '__alpha', '__size', '__img', '__fitImgX', '__fitImgY', '__imgRepeatX', '__imgRepeatY',
-    'ha', 'va', 'sha', 'sva', 'cropx', 'cropy', '__scale', '__anchor', '__rotate', '__centerFill', '__transformAnchor',
-    '__corner', '__visible', '__blending', '__maxImageSize', '__maxsize', '__minsize', '__color',
-    '__shader', '__userData', '__animatronix',
-    '__text', '__uvsTransform', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', '__dragonBones', '__spine', '__model3d', '__disabled',
-    '__onTap', '__uniforms', '__tableAlignRows', '__tableAlignColumns', '__tableAlignColumnWidth', '__tableAlignRowHeight',
-    '__drag', '__useMaxSizeForScale'
+var NodeCloneProperties = {
+    __margin: 1, __spacing: 1, __padding: 1, __alpha: 1, __size: 1, __img: 1, __fitImgX: 1, __fitImgY: 1, __imgRepeatX: 1, __imgRepeatY: 1,
+    ha: 1, va: 1, sha: 1, sva: 1, cropx: 1, cropy: 1, __scale: 1, __anchor: 1, __rotate: 1, __centerFill: 1, __transformAnchor: 1,
+    __corner: 1, __visible: 1, __blending: 1, __maxImageSize: 1, __maxsize: 1, __minsize: 1, __color: 1,
+    __shader: 1, __userData: 1, __animatronix: 1,
+    __text: 1, __uvsTransform: 1, f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1, f7: 1, f8: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
+    __onTap: 1, __uniforms: 1, __tableAlignRows: 1, __tableAlignColumns: 1, __tableAlignColumnWidth: 1, __tableAlignRowHeight: 1,
+    __drag: 1, __useMaxSizeForScale: 1,
     //debug
-    , '__description', '__selectable', '__onKey', '__onLoad', '__propertyBinding',
-    '__behaviour', '__classesObj', '__physics', '__numericInputStep', '__contextMenu', '__wheel'
+    __description: 1, __selectable: 1, __onKey: 1, __onLoad: 1, __propertyBinding: 1,
+    __behaviour: 1, __classesObj: 1, __physics: 1, __numericInputStep: 1, __contextMenu: 1, __wheel: 1,
     //undebug
     //3d
-    , '__rotation3dDeg', '__model3d'
-    , '__cullFace', '__instancesCount',
-    , '__is3D'
+    __rotation3dDeg: 1, __model3d: 1,
+    __cullFace: 1, __instancesCount: 1,
+    __is3D: 1
     //no3d
-],
+},
 
     NodePropertiesObject = {
 
@@ -3587,14 +3587,14 @@ var NodeCloneProperties = [
 
                             if (isArray(frames)) {
 
-                                preparedFames = $map(frames, function (a) {
+                                preparedFames = $mapAndFilter(frames, function (a) {
                                     var frame = globalConfigsData.__frames[a];
                                     if (!frame) {
                                         consoleError('no sprite frame ' + a);
-                                        //                                     debugger;  
+                                        // debugger;  
                                     }
                                     return frame;
-                                }).f$(function (d) { return d });
+                                });
 
                                 if (!preparedFames.length) {
                                     consoleError('no frames prepared to sprite sheet anim', filename);
@@ -4418,7 +4418,7 @@ var NodeCloneProperties = [
 
                 } else {
                     if (t.____classModificator && c) {
-                        t.__classes = c.m$(function (ci) { return ci.split(":")[0] });
+                        t.__classes = $map(c, ci => ci.split(":")[0]);
                     }
                 }
                 t.____classModificator = v;

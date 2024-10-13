@@ -851,7 +851,7 @@ mergeObj(TextPrototype, {
                             t.map = texture;
                         }
 
-                        var shaderOpts = setNonObfuscatedParams({
+                        var shaderOpts = set({
                             __shader: textShader,
                             map: texture,
                             color: jsonToColor(t.__color)

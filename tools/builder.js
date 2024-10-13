@@ -90,6 +90,11 @@ function spawn(a, returnOutput) {
 
 }
 
+function magick_convert() {
+    // return "convert";
+    return "magick";
+}
+
 
 function getDeepFieldFromObject() {
     var r = arguments[0];
@@ -154,7 +159,7 @@ function downscalex2(src, dst) {
     if (!dst) {
         dst = path.resolve(src, '../..', path.basename(src));
     }
-    return spawn(["convert", src, "-transpose -filter cubic -define filter:b=0 -define filter:c=1.8 -define filter:blur=1.05 -resize 50% -transpose ", dst]);
+    return spawn([magick_convert(), src, "-transpose -filter cubic -define filter:b=0 -define filter:c=1.8 -define filter:blur=1.05 -resize 50% -transpose ", dst]);
 }
 
 function makePath(d) {
@@ -221,7 +226,7 @@ var subtargetsBuilders = {
                 To get the exact original filename the source image came from use "%i", "%d/%f" or "%d/%t.%e". Of course these all have the filename suffix, in the filename setting, whch IM does not use, but that should be okay as it is the same image file format.
             */
             for (var i in src) {
-                spawn(['convert', quotesWrap(src[i]), "-set filename:fname '%t'", '-resize ' + sz + 'x' + sz, outname]);
+                spawn([magick_convert(), quotesWrap(src[i]), "-set filename:fname \"%t\"", '-resize ' + sz + 'x' + sz, outname]);
             }
         }
     },
@@ -265,8 +270,8 @@ var subtargetsBuilders = {
             var result = glob.sync(d.dst + d.name + '-?.png');
             for (var i in result) {
                 var aname = result[i];
-                spawn(['convert', aname, "-set filename:fname '%t'", '-quality', alphaQuality, d.dst + '%[filename:fname].jpg']);
-                spawn(['convert', aname, "-set filename:fname '%t'", '-alpha extract -depth 5 -define png:compression-level=9', d.dst + '%[filename:fname]-alpha.png']);
+                spawn([magick_convert(), aname, "-set filename:fname \"%t\"", '-quality', alphaQuality, d.dst + '%[filename:fname].jpg']);
+                spawn([magick_convert(), aname, "-set filename:fname \"%t\"", '-alpha extract -depth 5 -define png:compression-level=9', d.dst + '%[filename:fname]-alpha.png']);
             }
         }
     },

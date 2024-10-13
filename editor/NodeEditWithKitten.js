@@ -220,7 +220,7 @@ NodeEditWithKitten.prototype = {
 
                         __propertiesAppliedByClass = 1;
 
-                        node.__projectionMatrix = node.__projectionMatrix || cam.pm;
+                        node.__projectionMatrix = node.__projectionMatrix || cam.__projectionMatrix;
 
                         var s = node.__size
                             , sizeSq = clamp(mmin(s.x, s.y), 1.0000001, 300)

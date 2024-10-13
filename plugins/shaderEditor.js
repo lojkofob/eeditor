@@ -206,7 +206,7 @@ let ShaderEditorPlugin = (() => {
 
     let parsers = {
         typename: (a) =>
-            setNonObfuscatedParams({}, a + ' t s ;', (type, name) => {
+            set({}, a + ' t s ;', (type, name) => {
                 return {
                     type: getVarType(type),
                     name: name
@@ -214,13 +214,13 @@ let ShaderEditorPlugin = (() => {
             }),
 
         typename_value: () =>
-            setNonObfuscatedParams({},
+            set({},
                 't s ;', (a, type, name) => { return { type: getVarType(type), name: name } },
                 't s = v ;', (a, type, name, value) => { return { type: getVarType(type), name: name, value: value } }
             ),
 
         func: (funcName, args) =>
-            setNonObfuscatedParams({}, 's ( v , v ) ;', (a, args) => {
+            set({}, 's ( v , v ) ;', (a, args) => {
                 return {
                     input: args
                 }

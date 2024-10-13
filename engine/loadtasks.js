@@ -760,9 +760,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     var resourceName = l[1].__path
                         , ext = fileext(resourceName);
 
-                    if (LoadTask__loaders[ext]) {
-                        LoadTask__loaders[ext](t, l)
-                    }
+                    LoadTask__loaders[ext](t, l);
                     break;
 
 

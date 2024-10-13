@@ -45,31 +45,31 @@ var ComputeShaderFor = (function () {
 
     var mat4 = 'mat4', vec2 = 'vec2', vec3 = 'vec3', vec4 = 'vec4', float = 'float', uint = 'uint', int = 'int',
         sh_consts = {
-            __jstype2atype: {
-                'Float32Array1': float,
-                'Float32Array2': vec2,
-                'Float32Array3': vec3,
-                'Float32Array4': vec4,
-                'Uint16Array4': vec4,
-                'Int16Array4': vec4,
-                'Number': float,
-                'Matrix4': mat4,
-                'Vector3': vec3,
-                'Vector2': vec2,
-                'Vector4': vec4,
-            }
+            __jstype2atype: set({},
+                'Float32Array1', float,
+                'Float32Array2', vec2,
+                'Float32Array3', vec3,
+                'Float32Array4', vec4,
+                'Uint16Array4', vec4,
+                'Int16Array4', vec4,
+                'Number', float,
+                stringifyTypeOfObject(Matrix4), mat4,
+                stringifyTypeOfObject(Vector4), vec4,
+                stringifyTypeOfObject(Vector3), vec3,
+                stringifyTypeOfObject(Vector2), vec2
+            )
         },
-        sh_converts = {
-            Float32Array2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
-            Float32Array3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
-            Float32Array4vec4(a) { return a; },
-            vec2vec3(a, b) { return 'vec3(' + a + ',' + num(b) + ')'; },
-            vec3vec4(a, b) { return 'vec4(' + a + ',' + num(b) + ')'; },
-            vec2vec4(a, b, c) { return 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')'; },
-            vec4vec4(a) { return a; },
-            vec3vec3(a) { return a; },
-            vec2vec2(a) { return a; }
-        },
+        sh_converts = set({},
+            'Float32Array2vec4', (a, b, c) => 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')',
+            'Float32Array3vec4', (a, b) => 'vec4(' + a + ',' + num(b) + ')',
+            'Float32Array4vec4', (a) => a,
+            'vec2vec3', (a, b) => 'vec3(' + a + ',' + num(b) + ')',
+            'vec3vec4', (a, b) => 'vec4(' + a + ',' + num(b) + ')',
+            'vec2vec4', (a, b, c) => 'vec4(' + a + ',' + num(b) + ',' + num(c) + ')',
+            'vec4vec4', (a) => a,
+            'vec3vec3', (a) => a,
+            'vec2vec2', (a) => a
+        ),
 
         code = '',
 
@@ -82,16 +82,16 @@ var ComputeShaderFor = (function () {
             }
         },
 
-        materials = setNonObfuscatedParams({}, 'phong', {
-            __uniforms_f: {
-                light_position: vec3, // Позиция источника света
-                light_color: vec3, // Цвет источника света
-                ambient_color: vec3, // Цвет окружающего освещения
+        materials = set({}, 'phong', {
+            __uniforms_f: set({},
+                'light_position', vec3, // Позиция источника света
+                'light_color', vec3, // Цвет источника света
+                'ambient_color', vec3, // Цвет окружающего освещения
                 // time: float,
-                m_diffuse: vec3, // Диффузный цвет материала
-                m_specular: vec3, // Спекулярный цвет материала
-                m_shininess: float // Шероховатость материала
-            },
+                'm_diffuse', vec3, // Диффузный цвет материала
+                'm_specular', vec3, // Спекулярный цвет материала
+                'm_shininess', float // Шероховатость материала
+            ),
             __fragment_code() {
                 line(
                     'vec3 light_dir = normalize(light_position)',
@@ -159,18 +159,18 @@ var ComputeShaderFor = (function () {
             mergeObjectDeep(opts, materials[opts.__type]);
         }
 
-        if (opts.__buffers.a_position) {
-            opts.__uniforms_v.mw = mat4;
-            opts.__uniforms_v.pm = mat4;
+        if (get(opts.__buffers, 'a_position')) {
+            set(opts.__uniforms_v, matrixWorld, mat4);
+            set(opts.__uniforms_v, projectionMatrix, mat4);
         }
 
-        if (opts.__buffers.a_color) {
-            opts.__variyng.color = vec4;
+        if (get(opts.__buffers, 'a_color')) {
+            set(opts.__variyng, 'color', vec4);
         }
 
-        if (opts.__buffers.a_normal) {
-            opts.__variyng.normal = vec3;
-            opts.__uniforms_v.mw_inv_trans = mat4;
+        if (get(opts.__buffers, 'a_normal')) {
+            set(opts.__variyng, 'normal', vec3);
+            set(opts.__uniforms_v, 'mw_inv_trans', mat4);
         }
 
         $each(['uv0', 'uv1', 'uv2', 'uv3', 'uv4', 'uv5', 'uv6', 'uv7'], d => {
@@ -211,7 +211,7 @@ var ComputeShaderFor = (function () {
                 result_color = opts.__fragment_code();
             }
             else {
-                if (opts.__variyng.color) {
+                if (get(opts.__variyng, 'color')) {
                     result_color = 'v_color';
                 }
                 if (result_color && main_texture_color) {
@@ -222,12 +222,13 @@ var ComputeShaderFor = (function () {
             if (!result_color) {
                 // result_color = 'vec4(1.0,0.0,0.0,1.0)'; // red error color
                 result_color = 'v_gl_Position';
-                opts.__variyng.gl_Position = vec4;
+
+                set(opts.__variyng, 'gl_Position', vec4);
                 // opts.__uniforms_v.time = float;
             }
+
             if (opts.__premultipliedAlpha) {
-                line('vec4 rc=' + result_color,
-                    'rc.rgb*=rc.a');
+                line('vec4 rc=' + result_color, 'rc.rgb*=rc.a');
                 result_color = 'rc';
             }
             line('gl_FragColor=' + result_color);
@@ -261,21 +262,22 @@ var ComputeShaderFor = (function () {
                 line('v_' + d + '=a_' + d);
             });
 
-            if (opts.__variyng.a_color) {
-                line('v_color=' + sh_convert(opts.__variyng.color, vec4, 'a_color', 1.0, 1.0));
+            if (get(opts.__variyng, 'a_color')) {
+                line('v_color=' + sh_convert(get(opts.__variyng, 'color'), vec4, 'a_color', 1.0, 1.0));
             }
 
-            if (opts.__variyng.normal) {
-                line('v_normal=normalize((mw_inv_trans * ' + sh_convert(buffer_type(opts.__buffers.a_normal), vec4, 'a_normal', 1.0, 1.0, 1.0) + ').xyz)');
+            if (get(opts.__variyng, 'normal')) {
+                line('v_normal=normalize((mw_inv_trans * ' + sh_convert(buffer_type(get(opts.__buffers, 'a_normal')), vec4, 'a_normal', 1.0, 1.0, 1.0) + ').xyz)');
             }
 
-            if (opts.__buffers.a_position) {
-                line('gl_Position=' + (opts.__uniforms_v.pm ? 'pm*' : '') + (opts.__uniforms_v.mw ? 'mw*' : '') + sh_convert(buffer_type(opts.__buffers.a_position), vec4, 'a_position', 1.0, 1.0));
+            var pos = get(opts.__buffers, 'a_position');
+            if (pos) {
+                line('gl_Position=' + (get(opts.__uniforms_v, 'projectionMatrix') ? 'projectionMatrix*' : '') + (get(opts.__uniforms_v, 'matrixWorld') ? 'matrixWorld*' : '') + sh_convert(buffer_type(pos), vec4, 'a_position', 1.0, 1.0));
             }
 
-            if (opts.__variyng.gl_Position) {
-                // line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*mw) * 1.5');
-                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*mw)');
+            if (get(opts.__variyng, 'gl_Position')) {
+                // line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*matrixWorld) * 1.5');
+                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*matrixWorld)');
             }
 
             /// \todo: other buffers

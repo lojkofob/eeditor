@@ -93,7 +93,7 @@ let RenderOverTexturePlugin = (() => {
             var nsz = node.__size.__divideScalar(2);
 
             function getVec(x, y) {
-                var v = new Vector3(x * nsz.x, y * nsz.y, 0).__applyMatrix4(node.mw).__applyMatrix4(l.camera.pm).__toVector2();
+                var v = new Vector3(x * nsz.x, y * nsz.y, 0).__applyMatrix4(node.mw).__applyMatrix4(l.camera.__projectionMatrix).__toVector2();
                 v.x = (v.x + 1) / 2;
                 v.y = (v.y + 1) / 2;
                 return v;
@@ -123,7 +123,7 @@ let RenderOverTexturePlugin = (() => {
         var dropRT = node.$("dropRT");
         dropRT = dropRT ? dropRT[0] : 0;
 
-        if (node.__img && !node.map3){
+        if (node.__img && !node.map3) {
             node.map3 = globalConfigsData.__frames[node.__img].tex;
         }
 
@@ -131,7 +131,7 @@ let RenderOverTexturePlugin = (() => {
             var rt2 = new WebGLRenderTarget(sz.x, sz.y, { __dynamic: 1 });
             node.__render = function () {
                 renderer.__setRenderTarget(rt2);
-                renderer.__clear();                
+                renderer.__clear();
             };
 
             dropRT.__render = function () {
@@ -150,13 +150,13 @@ let RenderOverTexturePlugin = (() => {
 
         }
         else {
-            
+
             node.__render = function () {
 
                 renderer.__setRenderTarget(0);
 
                 renderer.__render(nod, camera);
-                  
+
                 if (node.map != rt.__texture) {
                     node.map2 = node.map;
                 }

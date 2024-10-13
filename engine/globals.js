@@ -342,15 +342,15 @@ function isNumber(a) { return (typeof a === 'number') && isFinite(a); }
 function overrideNotEnumerableProperty(f) { return { enumerable: false, value: f } }
 
 function override$(a, e$, f$, m$, F$, c$, r$, M$) {
-    ObjectDefineProperties(a, {
-        e$: overrideNotEnumerableProperty(e$),
-        f$: overrideNotEnumerableProperty(f$),
-        m$: overrideNotEnumerableProperty(m$),
-        F$: overrideNotEnumerableProperty(F$),
-        c$: overrideNotEnumerableProperty(c$),
-        r$: overrideNotEnumerableProperty(r$),
-        M$: overrideNotEnumerableProperty(M$)
-    });
+    ObjectDefineProperties(a, set({},
+        'e$', overrideNotEnumerableProperty(e$),
+        'f$', overrideNotEnumerableProperty(f$),
+        'm$', overrideNotEnumerableProperty(m$),
+        'F$', overrideNotEnumerableProperty(F$),
+        'c$', overrideNotEnumerableProperty(c$),
+        'r$', overrideNotEnumerableProperty(r$),
+        'M$', overrideNotEnumerableProperty(M$)
+    ));
 }
 var ArrayPrototype = Array.prototype, ObjectPrototype = Object.prototype;
 
@@ -384,15 +384,18 @@ override$(ObjectPrototype,
     function (f, fl) { var a = {}, i; for (i in this) { var r = f(this[i], i); if (fl(r)) a[i] = r; } return a; } // $mapAndFilter
 );
 
-function $each(a, f) { return a && isFunction(a.e$) ? a.e$(f) : [] }
-function $filter(a, f) { return a && isFunction(a.f$) ? a.f$(f) : [] }
-function $map(a, f) { return a && isFunction(a.m$) ? a.m$(f) : [] }
-function $find(a, f) { return a && isFunction(a.F$) ? a.F$(f) : undefined }
-function $count(a, f) { return a && isFunction(a.c$) ? a.c$(f) : 0 }
-function $replace(a, f) { return a && isFunction(a.r$) ? a.r$(f) : [] }
+function $getf(a, k, f) { var b = a ? a[k] : 0; if (isFunction(b)) return b.bind(a)(f); }
+function $getff(a, k, f, f1) { var b = a ? a[k] : 0; if (isFunction(b)) return b.bind(a)(f, f1); }
+
+function $each(a, f) { return $getf(a, 'e$', f) || [] }
+function $filter(a, f) { return $getf(a, 'f$', f) || [] }
+function $map(a, f) { return $getf(a, 'm$', f) || [] }
+function $find(a, f) { return $getf(a, 'F$', f) }
+function $count(a, f) { return $getf(a, 'c$', f) || 0 }
+function $replace(a, f) { return $getf(a, 'r$', f) }
 
 function $findResult(a, f) { for (var i in a) { var r = f(a[i], i); if (r) return r } }
-function $mapAndFilter(a, f, fl) { return a && isFunction(a.M$) ? a.M$(f, fl || function (a) { return a ? 1 : 0; }) : undefined; }
+function $mapAndFilter(a, f, fl) { return $getff(a, 'M$', f, fl || (a => a)); }
 
 function $filterObject(a, f) { var b = {}; for (var i in a) if (f(a[i], i)) b[i] = a[i]; return b; }
 function $mapArrayToObject(a, f) { var o = {}; if (a) { for (var i = 0; i < a.length; i++) o[f(a[i], i)] = a[i]; } return o; }
@@ -514,7 +517,7 @@ function mergeObjectDeep(data, merged) {
 }
 
 
-function setNonObfuscatedParams() {
+function set() {
 
     for (var i = 1; i < arguments.length; i += 2) {
         arguments[0][arguments[i]] = arguments[i + 1];
@@ -1395,6 +1398,8 @@ function getDeepFieldFromObjectAndSetIfUndefined() {
         }
     return r;
 }
+
+var get = getDeepFieldFromObject;
 
 function addToScene(node, sc) {
     sc = sc || scene;

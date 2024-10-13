@@ -204,13 +204,12 @@ var __Object3dProxy = (function () {
 
     });
 
-
 })();
 
-mergeObj(LoadTask__loaders, {
-    fbx: function (t, l) {
-        new FBXLoader().__load(l[1].__path, t)
-    }
+set(LoadTask__loaders, 'fbx', function (t, l) {
+    new FBXLoader().__load(l[1].__path, t, (url, data) => {
+        factory3d.__onDataLoaded(url, data);
+    })
 });
 
 
@@ -221,19 +220,12 @@ function Node3d(a) {
     // t.__notNormalNode = 1;
 
     t.____rotation3d = new Euler();
-    t.__quaternion = new Quaternion();
+    t.____quaternion = new Quaternion();
 
     t.____rotation3d.__onChangeCallback = function () {
-        t.__quaternion.__setFromEuler(t.____rotation3d, false);
+        t.____rotation3d.__dirty = 3;
         t.__dirty = 3;
     };
-
-    t.__quaternion.__onChangeCallback = function () {
-        t.____rotation3d.__setFromQuaternion(t.__quaternion, undefined, false);
-        t.__dirty = 3;
-    };
-
-    t.__quaternion.__setFromEuler(t.____rotation3d, false);
 
     Node.call(this, a)
 
@@ -282,11 +274,6 @@ makeClass(Node3d, {
         t.__matrix.__premultiply(m);
         t.__matrix.__decompose(t.__offset, t.__quaternion, t.____scale, 1);
         t.__offset.y *= -1;
-    },
-
-    __applyQuaternion(q) {
-        this.__quaternion.__premultiply(q);
-        return this;
     },
 
     __updateMatrix() {
@@ -714,17 +701,17 @@ makeClass(Node3d, {
         }
 
         //debug
-        (t.__verticesBuffer || 0).__debugDrawing =
-            (t.__uvsBuffer || 0).__debugDrawing =
-            (t.__colorsBuffer || 0).__debugDrawing =
-            (t.__indecesBuffer || 0).__debugDrawing =
-            (t.__skinIndexBuffer || 0).__debugDrawing =
-            (t.__skinWeightBuffer || 0).__debugDrawing =
-            (t.__normalBuffer || 0).__debugDrawing =
-            (t.__uvsBuffer0 || 0).__debugDrawing =
-            (t.__uvsBuffer1 || 0).__debugDrawing =
-            (t.__uvsBuffer2 || 0).__debugDrawing =
-            (t.__uvsBuffer3 || 0).__debugDrawing = t.__debugDrawing;
+        (t.__verticesBuffer || t).__debugDrawing =
+            (t.__uvsBuffer || t).__debugDrawing =
+            (t.__colorsBuffer || t).__debugDrawing =
+            (t.__indecesBuffer || t).__debugDrawing =
+            (t.__skinIndexBuffer || t).__debugDrawing =
+            (t.__skinWeightBuffer || t).__debugDrawing =
+            (t.__normalBuffer || t).__debugDrawing =
+            (t.__uvsBuffer0 || t).__debugDrawing =
+            (t.__uvsBuffer1 || t).__debugDrawing =
+            (t.__uvsBuffer2 || t).__debugDrawing =
+            (t.__uvsBuffer3 || t).__debugDrawing = t.__debugDrawing;
         //undebug
         var programAttributes = program.attributes;
         for (var i in t.__buffers) {
@@ -881,114 +868,205 @@ makeClass(Node3d, {
         return t;
     }
 
-}, {
-
-    __ofs: { // offset
-        get() { return this.__offset; },
-        set(v) {
-            var tofs = this.__offset; v = v || 0;
-            if (isArray(v)) { v = { x: v[0], y: v[1], z: v[2] }; }
-            tofs.set(v.x || 0, v.y || 0, v.z || 0);
-            //debug
-            if (!__propertiesAppliedByClass) {
-                this.__selfProperties.__ofs = tofs.__clone();
-            }
-            //undebug
-            this.__dirty = 3;
-            this.__needUpdateDeep = 0;
-        }
-    },
-
-    ____rotation: {
-        get() { return this.____rotation3d._z; },
-        set(v) { this.____rotation3d.z = v; }
-    },
-
-    __rotation3dDeg: {
-        set(v) {
-            var r = this.____rotation3d, ch = r.__onChangeCallback;
-            r.__onChangeCallback = function () { }
-            if (!v) {
-                r.set(0, 0, 0);
-            } else if (isArray(v)) {
-                r.__fromArray(v)
-            } else if (v.__isEuler) {
-                r.__copy(v);
-            } else if (v.__isVector3) {
-                r.__setFromVector3(v);
-            } else if (isObject(v)) {
-                r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
-            }
-            r._x = degToRad(r._x);
-            r._y = degToRad(r._y);
-            r._z = degToRad(r._z);
-            r.__onChangeCallback = ch;
-            ch();
-        },
-        get() {
-            var r = this.____rotation3d;
-            return {
-                x: radToDeg(r._x),
-                y: radToDeg(r._y),
-                z: radToDeg(r._z),
-                w: r._w
-            }
-        }
-    },
-
-    __rotation3d: {
-        set(v) {
-            var r = this.____rotation3d;
-            if (!v) {
-                r.set(0, 0, 0);
-            } else if (isArray(v)) {
-                r.__fromArray(v)
-            } else if (v.__isEuler) {
-                r.__copy(v);
-            } else if (v.__isVector3) {
-                r.__setFromVector3(v);
-            } else if (v.__isQuternion) {
-                r.__setFromQuaternion(q, r._w, true);
-            } else if (isObject(v)) {
-                r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
+},
+    set({
+        __ofs: { // offset
+            get() { return this.__offset; },
+            set(v) {
+                var tofs = this.__offset; v = v || 0;
+                if (isArray(v)) { v = { x: v[0], y: v[1], z: v[2] }; }
+                tofs.set(v.x || 0, v.y || 0, v.z || 0);
+                //debug
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__ofs = tofs.__clone();
+                }
+                //undebug
+                this.__dirty = 3;
+                this.__needUpdateDeep = 0;
             }
         },
-        get() { return this.____rotation3d; }
-    },
 
-    //cheats
-    __EditorColors: {
-        enumerable: false, value: {
-            'DarkSimple': '#aac',
-            'DarkBlue': '#88d',
-            'LightBlue': '#335'
+        ____rotation: {
+            get() { return this.____rotation3d._z; },
+            set(v) { this.____rotation3d.z = v; }
+        },
+
+        __quaternion: {
+            get() {
+                var t = this;
+                if (t.____rotation3d.__dirty) {
+                    t.____rotation3d.__dirty = 0;
+                    t.____quaternion.__setFromEuler(t.____rotation3d, false);
+                }
+                return t.____quaternion;
+            }
+        },
+
+        __rotation3dDeg: {
+            set(v) {
+                var r = this.____rotation3d, ch = r.__onChangeCallback;
+                r.__onChangeCallback = function () { }
+                if (!v) {
+                    r.set(0, 0, 0);
+                } else if (isArray(v)) {
+                    r.__fromArray(v)
+                } else if (v.__isEuler) {
+                    r.__copy(v);
+                } else if (v.__isVector3) {
+                    r.__setFromVector3(v);
+                } else if (isObject(v)) {
+                    r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
+                }
+                r._x = degToRad(r._x);
+                r._y = degToRad(r._y);
+                r._z = degToRad(r._z);
+                r.__onChangeCallback = ch;
+                ch();
+            },
+            get() {
+                var r = this.____rotation3d;
+                return {
+                    x: radToDeg(r._x),
+                    y: radToDeg(r._y),
+                    z: radToDeg(r._z),
+                    w: r._w
+                }
+            }
+        },
+
+        __rotation3d: {
+            set(v) {
+                var r = this.____rotation3d;
+                if (!v) {
+                    r.set(0, 0, 0);
+                } else if (isArray(v)) {
+                    r.__fromArray(v)
+                } else if (v.__isEuler) {
+                    r.__copy(v);
+                } else if (v.__isVector3) {
+                    r.__setFromVector3(v);
+                } else if (v.__isQuternion) {
+                    r.__setFromQuaternion(q, r._w, true);
+                } else if (isObject(v)) {
+                    r.set(v.x || 0, v.y || 0, v.z || 0, v.w || 0);
+                }
+            },
+            get() { return this.____rotation3d; }
+        },
+
+        __rotation3d_x: {
+            set(v) { this.____rotation3d.x = v; },
+            get() { return this.____rotation3d.x; }
+        },
+        __rotation3d_y: {
+            set(v) { this.____rotation3d.y = v; },
+            get() { return this.____rotation3d.y; }
+        },
+        __rotation3d_z: {
+            set(v) { this.____rotation3d.z = v; },
+            get() { return this.____rotation3d.z; }
+        },
+
+        //cheats
+        __EditorColors: {
+            enumerable: false, value: {
+                'DarkSimple': '#aac',
+                'DarkBlue': '#88d',
+                'LightBlue': '#335'
+            }
+        },
+
+        __hierarchyColor: {
+            enumerable: false, get() {
+                return this.__EditorColors[Editor.uiTheme]
+            }
+        },
+        //endcheats
+
+        __material: {
+            set(mat) {
+                var t = this;
+                t.____material = isObject(mat) ? [mat] : isArray(mat) && mat.length ? mat : undefined;
+                t.__discardRenderParams();
+            },
+            get() {
+                return this.____material;
+            }
+        },
+
+        __geometry: {
+            set(v) {
+
+                var t = this;
+                if (t.____geometry == v)
+                    return;
+
+                t.____geometry = v;
+                // t.__debugDrawing = 1;
+                t.__verticesCount = 0;
+                t.__dirty = 4;
+
+                if (v) {
+                    // todo: clone!
+                    // not used now
+                    var buffers = v.__buffers;
+                    t.__groups = v.__groups;
+                    t.__buffers = buffers;
+                    t.__currentMaterialIndex = 0;
+                    t.__verticesBuffer = get(buffers, 'a_position');
+                    t.__colorsBuffer = get(buffers, 'a_color');
+                    t.__skinIndexBuffer = get(buffers, 'a_skinIndex');
+                    t.__skinWeightBuffer = get(buffers, 'a_skinWeight');
+                    t.__normalBuffer = get(buffers, 'a_normal');
+                    t.__uvsBuffer0 = get(buffers, 'a_uv0');
+                    t.__uvsBuffer1 = get(buffers, 'a_uv1');
+                    t.__uvsBuffer2 = get(buffers, 'a_uv2');
+                    t.__uvsBuffer3 = get(buffers, 'a_uv3');
+                    t.__indecesBuffer = buffers.indices;
+                    if (!v.__normalized) {
+                        t.__normalizeSkinWeights();
+                        v.__normalized = 1;
+                    }
+
+                    t.__cullFace = Default3dCullFace;
+
+                } else {
+                    t.__groups =
+                        t.__material =
+                        t.__buffers =
+                        t.__verticesBuffer =
+                        t.__colorsBuffer =
+                        t.__skinIndexBuffer =
+                        t.__skinWeightBuffer =
+                        t.__normalBuffer =
+                        t.__uvsBuffer0 =
+                        t.__uvsBuffer1 =
+                        t.__uvsBuffer2 =
+                        t.__uvsBuffer3 =
+                        t.__indecesBuffer = null;
+                }
+                t.__discardRenderParams();
+            },
+            get() {
+                return this.____geometry;
+            }
         }
     },
 
-    __hierarchyColor: {
-        enumerable: false, get() {
-            return this.__EditorColors[Editor.uiTheme]
-        }
-    },
-    //endcheats
 
-    // shading
-    t_uv0: {
-        get() {
-            return this.____material ? this.____material[this.__currentMaterialIndex].__map : undefined;
-        }
-    },
+        // shading
+        't_uv0', { get() { return this.____material[this.__currentMaterialIndex].__map; } },
 
-    /// \todo: configure
+        /// \todo: configure
 
-    light_position: { enumerable: false, value: new Vector3(100, 100, 10000) },
-    light_color: { enumerable: false, value: new Vector3(1, 1, 1) },
-    ambient_color: { enumerable: false, value: new Vector3(1, 1, 1) },
-    m_diffuse: { enumerable: false, value: new Vector3(0.8, 0.8, 0.8) },
-    m_specular: { enumerable: false, value: new Vector3(1, 1, 1) },
-    m_shininess: { enumerable: false, value: 1 },
+        'light_position', { enumerable: false, value: new Vector3(100, 100, 1000) },
+        'light_color', { enumerable: false, value: new Vector3(0.4, 0.4, 0.4) },
+        'ambient_color', { enumerable: false, value: new Vector3(1, 1, 1) },
+        'm_diffuse', { enumerable: false, value: new Vector3(0.8, 0.8, 0.8) },
+        'm_specular', { enumerable: false, value: new Vector3(1, 1, 1) },
+        'm_shininess', { enumerable: false, value: 1 },
 
-    mw_inv_trans: {
+        'mw_inv_trans', {
         get() {
             if (!this.mw.itr) {
                 // а надо ли ?
@@ -996,79 +1074,12 @@ makeClass(Node3d, {
             }
             return this.mw.itr;
         }
-    },
+    }
+    )
 
     // end shading
-    __material: {
-        set(mat) {
-            var t = this;
-            t.____material = isObject(mat) ? [mat] : isArray(mat) && mat.length ? mat : undefined;
-            t.__discardRenderParams();
-        },
-        get() {
-            return this.____material;
-        }
-    },
 
-    __geometry: {
-        set(v) {
-
-            var t = this;
-            if (t.____geometry == v)
-                return;
-
-            t.____geometry = v;
-            // t.__debugDrawing = 1;
-            t.__verticesCount = 0;
-            t.__dirty = 4;
-
-            if (v) {
-                // todo: clone!
-                // not used now
-
-                t.__groups = v.__groups;
-                t.__buffers = v.__buffers;
-                t.__currentMaterialIndex = 0;
-                t.__verticesBuffer = v.__buffers.a_position;
-                t.__colorsBuffer = v.__buffers.a_color;
-                t.__skinIndexBuffer = v.__buffers.a_skinIndex;
-                t.__skinWeightBuffer = v.__buffers.a_skinWeight;
-                t.__normalBuffer = v.__buffers.a_normal;
-                t.__uvsBuffer0 = v.__buffers.a_uv0;
-                t.__uvsBuffer1 = v.__buffers.a_uv1;
-                t.__uvsBuffer2 = v.__buffers.a_uv2;
-                t.__uvsBuffer3 = v.__buffers.a_uv3;
-                t.__indecesBuffer = v.__buffers.indices;
-                if (!v.__normalized) {
-                    t.__normalizeSkinWeights();
-                    v.__normalized = 1;
-                }
-
-                t.__cullFace = Default3dCullFace;
-
-            } else {
-                t.__groups =
-                    t.__material =
-                    t.__buffers =
-                    t.__verticesBuffer =
-                    t.__colorsBuffer =
-                    t.__skinIndexBuffer =
-                    t.__skinWeightBuffer =
-                    t.__normalBuffer =
-                    t.__uvsBuffer0 =
-                    t.__uvsBuffer1 =
-                    t.__uvsBuffer2 =
-                    t.__uvsBuffer3 =
-                    t.__indecesBuffer = null;
-            }
-            t.__discardRenderParams();
-        },
-        get() {
-            return this.____geometry;
-        }
-    },
-
-}, Node);
+    , Node);
 
 
 

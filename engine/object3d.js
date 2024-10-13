@@ -57,15 +57,10 @@ function Object3D() {
 var Object3DPrototype = Object3D.prototype;
 
 ObjectDefineProperties(Object3DPrototype,
-    setNonObfuscatedParams({},
-        'color', {
-        set(v) { this.__selfColor = v; },
-        get(v) { return this.__selfColor; }
-    },
-
+    set({},
+        'color', { set(v) { this.__selfColor = v; }, get(v) { return this.__selfColor; } },
         matrixWorld, { get(v) { return this.mw; } },
-        projectionMatrix, { get(v) { return this.__projectionMatrix; } },
-        pm, { get(v) { return this.__projectionMatrix; } }
+        projectionMatrix, { get(v) { return this.__projectionMatrix; } }
     )
 )
 
@@ -566,10 +561,10 @@ mergeObj(Object3DPrototype, {
     __setupVertexAttributes(program) {
         var t = this, r = 0;
         //debug
-        (t.__verticesBuffer || 0).__debugDrawing =
-            (t.__uvsBuffer || 0).__debugDrawing =
-            (t.__colorsBuffer || 0).__debugDrawing =
-            (t.__indecesBuffer || 0).__debugDrawing = t.__debugDrawing;
+        (t.__verticesBuffer || t).__debugDrawing =
+            (t.__uvsBuffer || t).__debugDrawing =
+            (t.__colorsBuffer || t).__debugDrawing =
+            (t.__indecesBuffer || t).__debugDrawing = t.__debugDrawing;
         //undebug
         var programAttributes = program.attributes;
 
@@ -585,7 +580,7 @@ mergeObj(Object3DPrototype, {
         if (t.__indecesBuffer)
             r |= t.__indecesBuffer.__passToGL(programAttributes);
 
-        return 1;
+        return r;
     }
 
 });

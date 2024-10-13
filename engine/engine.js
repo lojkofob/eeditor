@@ -539,7 +539,7 @@ function createGame(parameters) {
     //bad?
     _setInterval(onWindowResize, PI / 10);
 
-    addEventListenersToElement(__window, setNonObfuscatedParams({},
+    addEventListenersToElement(__window, set({},
         'resize', onWindowResize,
         'deviceorientation', function (event) {
             // TODO: fix fluctuations 
@@ -639,6 +639,12 @@ function registerLayout(name, j) {
     }
 }
 
+
+function registerSpriteSheetAnimation(animname, opts) {
+    if (!globalConfigsData.__spriteSheetAnimations)
+        globalConfigsData.__spriteSheetAnimations = {};
+    globalConfigsData.__spriteSheetAnimations[animname] = opts;
+}
 
 function registerSpriteSheetAnimations(anims) {
     if (!globalConfigsData.__spriteSheetAnimations)
@@ -1143,7 +1149,7 @@ function computeAtlasTexture(atlas) {
             }
 
             bufferTexture = renderOverTexture(img.width, img.height,
-                setNonObfuscatedParams({
+                set({
                     __shader: '__computeAtlas',
                     map: texture
                     //                     __generateMipmaps: 1

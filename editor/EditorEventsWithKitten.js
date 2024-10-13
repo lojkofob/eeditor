@@ -1509,7 +1509,7 @@ gestures.tap = function (pos) {
                             __color: 0x111111, __alpha: 0.4
                         }).__removeAfter(5);
 
-                    n.e$(function (n) {
+                    $each(n, n => {
                         if (n.__hitTest(ppos)) {
                             ddebug.__color = 0xffffff;
                             ddebug.__alpha = 0.7;

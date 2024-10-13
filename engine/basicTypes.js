@@ -1266,13 +1266,13 @@ makeClass(Vector3, {
 
     __project(cam) {
 
-        return this.__applyMatrix4(cam.mw.im).__applyMatrix4(camera.pm);
+        return this.__applyMatrix4(cam.mw.im).__applyMatrix4(cam.__projectionMatrix);
 
     },
 
     __unproject(cam) {
 
-        return this.__applyMatrix4(cam.pm.im).__applyMatrix4(camera.mw);
+        return this.__applyMatrix4(cam.__projectionMatrix.im).__applyMatrix4(camera.mw);
 
     },
 

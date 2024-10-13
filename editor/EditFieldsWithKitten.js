@@ -577,7 +577,7 @@ var EditFieldsWithKitten = {
 
 
                     var pm = this.__projectionMatrix;
-                    if (pm.e[0] == 1) pm = camera.pm;
+                    if (pm.e[0] == 1) pm = camera.__projectionMatrix;
 
                     pm.e[13] = -pm.e[13]; // wtf????
 

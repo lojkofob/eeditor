@@ -43,7 +43,7 @@ function makeParallax3dCam(coeff, fov, cam) {
             , zoom = t.____zoom
             , far = t.__far
             , near = t.__near
-            , pm = this.pm
+            , pm = t.__projectionMatrix
             , te = pm.e
             , w = zoom / (right - left)
             , h = zoom / (top - bottom)

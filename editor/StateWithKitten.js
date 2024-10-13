@@ -23,7 +23,7 @@ var StateWithKitten = (function () {
 
     function updatePanelState(d, s) {
         if (Editor.currentProject && d.panel && !d.panel.__needRemoveOnClose) {
-            StateWithKitten.apply(genProjectsStateFor(Editor.currentProject.name, { panels: setNonObfuscatedParams({}, d.panel.name, s) }));
+            StateWithKitten.apply(genProjectsStateFor(Editor.currentProject.name, { panels: set({}, d.panel.name, s) }));
         }
     }
 

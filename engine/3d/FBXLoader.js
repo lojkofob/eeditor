@@ -2,6 +2,20 @@ var FBXLoader = function () { };
 
 (a => {
 
+    function geta(v, k) {
+        return (get(v, k) || 0).a;
+    }
+
+    var Objects = 'Objects',
+        Geometry = 'Geometry',
+        Material = 'Material',
+        Materials = 'Materials',
+        Connections = 'Connections',
+        Video = 'Video',
+        Content = 'Content',
+        Texture = 'Texture';
+
+
     /// \todo:
     var SRGBColorSpace = 123;
 
@@ -9,7 +23,7 @@ var FBXLoader = function () { };
 
     makeClass(FBXLoader, {
 
-        __load: function (url, task) {
+        __load: function (url, task, __onDataLoaded) {
 
             var self = this;
             self.__task = task;
@@ -18,7 +32,7 @@ var FBXLoader = function () { };
 
             task.__addOnCompleted(a => {
 
-                factory3d.__onDataLoaded(url, self.__parse(globalConfigsData[url], task.__onError || consoleDebug));
+                __onDataLoaded(url, self.__parse(globalConfigsData[url], task.__onError || consoleDebug));
 
             });
 
@@ -62,8 +76,9 @@ var FBXLoader = function () { };
                 }
 
                 if (fbxTree) {
-                    consoleLog(fbxTree);
-                    if (fbxTree.Objects) {
+                    // consoleLog(fbxTree);
+                    var objects = get(fbxTree, Objects);
+                    if (objects) {
                         return new FBXTreeParser(this.__task, this.__resourceDirectory).__parse(fbxTree);
                     } else {
                         onerr('FBXLoader: no objects.');
@@ -88,7 +103,7 @@ var FBXLoader = function () { };
 
         __parse(fbxTree) {
             this.__fbxTree = fbxTree;
-            this.__objects = fbxTree.Objects;
+            this.__objects = get(fbxTree, Objects);
 
             connections = this.__parseConnections();
 
@@ -111,43 +126,39 @@ var FBXLoader = function () { };
 
             const connectionMap = new Map();
 
-            if ('Connections' in this.__fbxTree) {
+            const rawConnections = get(this.__fbxTree, Connections).connections;
 
-                const rawConnections = this.__fbxTree.Connections.connections;
+            $each(rawConnections, function (rawConnection) {
 
-                rawConnections.forEach(function (rawConnection) {
+                const fromID = rawConnection[0];
+                const toID = rawConnection[1];
+                const relationship = rawConnection[2];
 
-                    const fromID = rawConnection[0];
-                    const toID = rawConnection[1];
-                    const relationship = rawConnection[2];
+                if (!connectionMap.has(fromID)) {
 
-                    if (!connectionMap.has(fromID)) {
+                    connectionMap.set(fromID, {
+                        __parents: [],
+                        children: []
+                    });
 
-                        connectionMap.set(fromID, {
-                            __parents: [],
-                            children: []
-                        });
+                }
 
-                    }
+                const parentRelationship = { ID: toID, relationship: relationship };
+                connectionMap.get(fromID).__parents.push(parentRelationship);
 
-                    const parentRelationship = { ID: toID, relationship: relationship };
-                    connectionMap.get(fromID).__parents.push(parentRelationship);
+                if (!connectionMap.has(toID)) {
 
-                    if (!connectionMap.has(toID)) {
+                    connectionMap.set(toID, {
+                        __parents: [],
+                        children: []
+                    });
 
-                        connectionMap.set(toID, {
-                            __parents: [],
-                            children: []
-                        });
+                }
 
-                    }
+                const childRelationship = { ID: fromID, relationship: relationship };
+                connectionMap.get(toID).children.push(childRelationship);
 
-                    const childRelationship = { ID: fromID, relationship: relationship };
-                    connectionMap.get(toID).children.push(childRelationship);
-
-                });
-
-            }
+            });
 
             return connectionMap;
 
@@ -160,10 +171,9 @@ var FBXLoader = function () { };
 
             const images = {};
             const blobs = {};
+            const videoNodes = get(this.__objects, Video);
 
-            if ('Video' in this.__objects) {
-
-                const videoNodes = this.__objects.Video;
+            if (videoNodes) {
 
                 for (const nodeID in videoNodes) {
 
@@ -171,22 +181,17 @@ var FBXLoader = function () { };
 
                     const id = parseInt(nodeID);
 
-                    images[id] = videoNode.RelativeFilename || videoNode.Filename;
+                    images[id] = get(videoNode, 'RelativeFilename') || get(videoNode, 'Filename');
 
                     // raw image data is in videoNode.Content
-                    if ('Content' in videoNode) {
-
-                        const arrayBufferContent = (videoNode.Content instanceof ArrayBuffer) && (videoNode.Content.byteLength > 0);
-                        const base64Content = (typeof videoNode.Content === 'string') && (videoNode.Content !== '');
-
+                    var content = get(videoNode, Content);
+                    if (content) {
+                        const arrayBufferContent = (content instanceof ArrayBuffer) && (content.byteLength > 0);
+                        const base64Content = (typeof content === 'string') && (content !== '');
                         if (arrayBufferContent || base64Content) {
-
                             const image = this.__parseImage(videoNodes[nodeID]);
-
-                            blobs[videoNode.RelativeFilename || videoNode.Filename] = image;
-
+                            blobs[images[id]] = image;
                         }
-
                     }
 
                 }
@@ -210,8 +215,8 @@ var FBXLoader = function () { };
         // __parse embedded image data in FBXTree.Video.Content
         __parseImage(videoNode) {
 
-            const content = videoNode.Content;
-            const fileName = videoNode.RelativeFilename || videoNode.Filename;
+            const content = get(videoNode, Content);
+            const fileName = get(videoNode, 'RelativeFilename') || get(videoNode, 'Filename');
             const extension = fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase();
 
             let type;
@@ -273,7 +278,7 @@ var FBXLoader = function () { };
 
             if ('Texture' in this.__objects) {
 
-                const textureNodes = this.__objects.Texture;
+                const textureNodes = get(this.__objects, Texture);
                 for (const nodeID in textureNodes) {
 
                     const texture = this.__parseTexture(textureNodes[nodeID], images);
@@ -321,7 +326,8 @@ var FBXLoader = function () { };
         __loadImage(url, id, name) {
             activateProjectOptions()
             var tex = loadImage(url, function (tex) {
-                tex.ID = id; tex.name = name;
+                tex.ID = id;
+                tex.name = name;
             });
             deactivateProjectOptions();
             return tex;
@@ -353,7 +359,7 @@ var FBXLoader = function () { };
             var t = this;
             const materialMap = new Map();
 
-            $each(this.__objects.Material, (v, nodeID) => {
+            $each(get(this.__objects, Material), (v, nodeID) => {
 
                 var material = t.__parseMaterial(v, textureMap);
                 if (material !== null) materialMap.set(parseInt(nodeID), material);
@@ -369,11 +375,11 @@ var FBXLoader = function () { };
         __parseMaterial(materialNode, textureMap) {
 
             const ID = materialNode.id;
-            let type = materialNode.ShadingModel;
+            let type = get(materialNode, 'ShadingModel');
 
             // Case where FBX wraps shading model in property object.
             if (typeof type === 'object') {
-                type = type.value;
+                type = get(type, 'value');
             }
 
             // Ignore unused materials which don't have any connections.
@@ -384,54 +390,31 @@ var FBXLoader = function () { };
                 __type: type.toLowerCase()
             };
 
-            if (materialNode.BumpFactor) {
-                material.__bumpScale = materialNode.BumpFactor.value;
+            function getmat(k1) {
+                return get(materialNode, k1, 'value')
+            }
+            function getmatcolor(k1) {
+                var c = getmat(k1)
+                if (c) {
+                    return new Color().__fromJsonSRGB(c)
+                }
             }
 
-            if (materialNode.Diffuse) {
-                material.__color = new Color().__fromJsonSRGB(materialNode.Diffuse.value);
-            } else if (materialNode.DiffuseColor && (materialNode.DiffuseColor.type === 'Color' || materialNode.DiffuseColor.type === 'ColorRGB')) {
-                // The blender exporter exports diffuse here instead of in materialNode.Diffuse
-                material.color = new Color().__fromJsonSRGB(materialNode.DiffuseColor.value);
-            }
+            material.__bumpScale = getmat('BumpFactor');
 
-            if (materialNode.DisplacementFactor) {
-                material.__displacementScale = materialNode.DisplacementFactor.value;
-            }
-
-            if (materialNode.Emissive) {
-                material.__emissive = new Color().__fromJsonSRGB(materialNode.Emissive.value);
-            } else if (materialNode.EmissiveColor && (materialNode.EmissiveColor.type === 'Color' || materialNode.EmissiveColor.type === 'ColorRGB')) {
-                // The blender exporter exports emissive color here instead of in materialNode.Emissive
-                material.__emissive = new Color().__fromJsonSRGB(materialNode.EmissiveColor.value);
-            }
-
-            if (materialNode.EmissiveFactor) {
-                material.__emissiveIntensity = parseFloat(materialNode.EmissiveFactor.value);
-            }
-
-            if (materialNode.Opacity) {
-                material.__opacity = parseFloat(materialNode.Opacity.value);
-            }
+            material.__color = getmatcolor('Diffuse') || getmatcolor('DiffuseColor');
+            material.__displacementScale = getmat('DisplacementFactor');
+            material.__emissive = getmatcolor('Emissive') || getmatcolor('EmissiveColor');
+            material.__emissiveIntensity = getmat('EmissiveFactor');
+            material.__opacity = getmat('Opacity');
 
             if (material.__opacity < 1.0) {
                 material.__transparent = true;
             }
 
-            if (materialNode.ReflectionFactor) {
-                material.__reflectivity = materialNode.ReflectionFactor.value;
-            }
-
-            if (materialNode.Shininess) {
-                material.__shininess = materialNode.Shininess.value;
-            }
-
-            if (materialNode.Specular) {
-                material.__specular = new Color().__fromJsonSRGB(materialNode.Specular.value);
-            } else if (materialNode.SpecularColor && materialNode.SpecularColor.type === 'Color') {
-                // The blender exporter exports specular color here instead of in materialNode.Specular
-                material.__specular = new Color().__fromJsonSRGB(materialNode.SpecularColor.value);
-            }
+            material.__reflectivity = getmat('ReflectionFactor');
+            material.__shininess = getmat('Shininess');
+            material.__specular = getmatcolor('Specular') || getmatcolor('SpecularColor');
 
             const scope = this;
             connections.get(ID).children.forEach(function (child) {
@@ -523,7 +506,8 @@ var FBXLoader = function () { };
         __getTexture(textureMap, id) {
 
             // if the texture is a layered texture, just use the first layer and issue a warning
-            if ('LayeredTexture' in this.__objects && id in this.__objects.LayeredTexture) {
+            var LayeredTexture = get(this.__objects, 'LayeredTexture')
+            if (LayeredTexture && (id in LayeredTexture)) {
 
                 consoleWarn('FBXLoader: layered textures are not supported. Discarding all but first layer.');
                 id = connections.get(id).children[0].ID;
@@ -542,44 +526,38 @@ var FBXLoader = function () { };
             const skeletons = {};
             const morphTargets = {};
 
-            if ('Deformer' in this.__objects) {
+            const DeformerNodes = get(this.__objects, 'Deformer');
 
-                const DeformerNodes = this.__objects.Deformer;
+            $each(DeformerNodes, (deformerNode, nodeID) => {
 
-                for (const nodeID in DeformerNodes) {
+                const relationships = connections.get(parseInt(nodeID));
+                const attrType = get(deformerNode, 'attrType')
+                if (attrType === 'Skin') {
 
-                    const deformerNode = DeformerNodes[nodeID];
+                    const skeleton = this.__parseSkeleton(relationships, DeformerNodes);
+                    skeleton.ID = nodeID;
 
-                    const relationships = connections.get(parseInt(nodeID));
+                    if (relationships.__parents.length > 1) consoleWarn('FBXLoader: skeleton attached to more than one geometry is not supported.');
+                    skeleton.geometryID = relationships.__parents[0].ID;
 
-                    if (deformerNode.attrType === 'Skin') {
+                    skeletons[nodeID] = skeleton;
 
-                        const skeleton = this.__parseSkeleton(relationships, DeformerNodes);
-                        skeleton.ID = nodeID;
+                } else if (attrType === 'BlendShape') {
 
-                        if (relationships.__parents.length > 1) consoleWarn('FBXLoader: skeleton attached to more than one geometry is not supported.');
-                        skeleton.geometryID = relationships.__parents[0].ID;
+                    const morphTarget = {
+                        id: nodeID,
+                    };
 
-                        skeletons[nodeID] = skeleton;
+                    morphTarget.rawTargets = this.__parseMorphTargets(relationships, DeformerNodes);
+                    morphTarget.id = nodeID;
 
-                    } else if (deformerNode.attrType === 'BlendShape') {
+                    if (relationships.__parents.length > 1) consoleWarn('FBXLoader: morph target attached to more than one geometry is not supported.');
 
-                        const morphTarget = {
-                            id: nodeID,
-                        };
-
-                        morphTarget.rawTargets = this.__parseMorphTargets(relationships, DeformerNodes);
-                        morphTarget.id = nodeID;
-
-                        if (relationships.__parents.length > 1) consoleWarn('FBXLoader: morph target attached to more than one geometry is not supported.');
-
-                        morphTargets[nodeID] = morphTarget;
-
-                    }
+                    morphTargets[nodeID] = morphTarget;
 
                 }
 
-            }
+            });
 
             return {
 
@@ -600,15 +578,16 @@ var FBXLoader = function () { };
             relationships.children.forEach(function (child) {
 
                 const boneNode = deformerNodes[child.ID];
+                const attrType = get(boneNode, 'attrType')
 
-                if (boneNode.attrType !== 'Cluster') return;
+                if (attrType !== 'Cluster') return;
 
                 const rawBone = {
 
                     ID: child.ID,
                     indices: [],
                     weights: [],
-                    transformLink: new Matrix4(boneNode.TransformLink.a, 1),
+                    transformLink: new Matrix4(geta(boneNode, 'TransformLink'), 1),
                     // transform: new Matrix4().__fromArray( boneNode.Transform.a ),
                     // linkMode: boneNode.Mode,
 
@@ -616,8 +595,8 @@ var FBXLoader = function () { };
 
                 if ('Indexes' in boneNode) {
 
-                    rawBone.indices = boneNode.Indexes.a;
-                    rawBone.weights = boneNode.Weights.a;
+                    rawBone.indices = geta(boneNode, 'Indexes');
+                    rawBone.weights = geta(boneNode, 'Weights');
 
                 }
 
@@ -677,7 +656,7 @@ var FBXLoader = function () { };
 
             const modelMap = t.__parseModels(deformers.skeletons, geometryMap, materialMap);
 
-            const modelNodes = t.__objects.Model;
+            const modelNodes = get(t.__objects, 'Model');
 
             const scope = t;
             modelMap.forEach(function (model) {
@@ -745,7 +724,7 @@ var FBXLoader = function () { };
         __parseModels(skeletons, geometryMap, materialMap) {
             var t = this;
             const modelMap = new Map();
-            const modelNodes = t.__objects.Model;
+            const modelNodes = get(t.__objects, 'Model');
 
             for (const nodeID in modelNodes) {
 
@@ -1147,30 +1126,23 @@ var FBXLoader = function () { };
         // __parse the model node for transform data
         __getTransformData(model, modelNode) {
 
-            const transformData = {};
-
-            if ('InheritType' in modelNode) transformData.inheritType = parseInt(modelNode.InheritType.value);
-
-            if ('RotationOrder' in modelNode) transformData.eulerOrder = getEulerOrder(modelNode.RotationOrder.value);
-            else transformData.eulerOrder = 'ZYX';
-
-            if ('Lcl_Translation' in modelNode) {
-                transformData.translation = modelNode.Lcl_Translation.value;
+            function getvalue(k) {
+                return get(modelNode, k, 'value')
             }
 
-            if ('PreRotation' in modelNode) transformData.preRotation = modelNode.PreRotation.value;
-            if ('Lcl_Rotation' in modelNode) transformData.rotation = modelNode.Lcl_Rotation.value;
-            if ('PostRotation' in modelNode) transformData.postRotation = modelNode.PostRotation.value;
-
-            if ('Lcl_Scaling' in modelNode) transformData.__scale = modelNode.Lcl_Scaling.value;
-
-            if ('ScalingOffset' in modelNode) transformData.scalingOffset = modelNode.ScalingOffset.value;
-            if ('ScalingPivot' in modelNode) transformData.scalingPivot = modelNode.ScalingPivot.value;
-
-            if ('RotationOffset' in modelNode) transformData.rotationOffset = modelNode.RotationOffset.value;
-            if ('RotationPivot' in modelNode) transformData.rotationPivot = modelNode.RotationPivot.value;
-
-            model.__transformData = transformData;
+            model.__transformData = {
+                inheritType: parseInt(getvalue('InheritType')),
+                eulerOrder: getEulerOrder(getvalue('RotationOrder')) || 'ZYX',
+                translation: getvalue('Lcl_Translation'),
+                preRotation: getvalue('PreRotation'),
+                rotation: getvalue('Lcl_Rotation'),
+                postRotation: getvalue('PostRotation'),
+                __scale: getvalue('Lcl_Scaling'),
+                scalingOffset: getvalue('ScalingOffset'),
+                scalingPivot: getvalue('ScalingPivot'),
+                rotationOffset: getvalue('RotationOffset'),
+                rotationPivot: getvalue('RotationPivot')
+            };
 
         },
 
@@ -1184,11 +1156,11 @@ var FBXLoader = function () { };
 
                     if (child.relationship === 'LookAtProperty') {
 
-                        const lookAtTarget = this.__objects.Model[child.ID];
+                        const lookAtTarget = get(t.__objects, 'Model', child.ID);
 
                         if ('Lcl_Translation' in lookAtTarget) {
 
-                            const pos = lookAtTarget.Lcl_Translation.value;
+                            const pos = get(lookAtTarget, 'Lcl_Translation', 'value');
 
                             // DirectionalLight, SpotLight
                             if (model.target) {
@@ -1255,7 +1227,7 @@ var FBXLoader = function () { };
 
             if ('Pose' in this.__objects) {
 
-                const BindPoseNode = this.__objects.Pose;
+                const BindPoseNode = get(this.__objects, 'Pose');
 
                 for (const nodeID in BindPoseNode) {
 
@@ -1339,7 +1311,7 @@ var FBXLoader = function () { };
 
             if ('Geometry' in t.__objects) {
 
-                const geoNodes = t.__objects.Geometry;
+                const geoNodes = get(t.__objects, Geometry);
 
                 for (const nodeID in geoNodes) {
 
@@ -1383,10 +1355,8 @@ var FBXLoader = function () { };
             const skeletons = deformers.skeletons;
             const morphTargets = [];
             var t = this;
-            const modelNodes = relationships.__parents.map(function (parent) {
-
-                return t.__objects.Model[parent.ID];
-
+            const modelNodes = $map(relationships.__parents, parent => {
+                return get(t.__objects, 'Model', parent.ID);
             });
 
             // don't create geometry if it is not associated with any models
@@ -1414,14 +1384,19 @@ var FBXLoader = function () { };
             // if there is more than one model associated with the geometry this may cause problems
             const modelNode = modelNodes[0];
 
-            const transformData = {};
 
-            if ('RotationOrder' in modelNode) transformData.eulerOrder = getEulerOrder(modelNode.RotationOrder.value);
-            if ('InheritType' in modelNode) transformData.inheritType = parseInt(modelNode.InheritType.value);
+            function getvalue(k) {
+                return get(modelNode, k, 'value')
+            }
 
-            if ('GeometricTranslation' in modelNode) transformData.translation = modelNode.GeometricTranslation.value;
-            if ('GeometricRotation' in modelNode) transformData.rotation = modelNode.GeometricRotation.value;
-            if ('GeometricScaling' in modelNode) transformData.__scale = modelNode.GeometricScaling.value;
+
+            const transformData = {
+                inheritType: parseInt(getvalue('InheritType')),
+                eulerOrder: getEulerOrder(getvalue('RotationOrder')) || 'ZYX',
+                translation: getvalue('GeometricTranslation'),
+                rotation: getvalue('GeometricRotation'),
+                __scale: getvalue('GeometricScaling')
+            };
 
             const preTransform = generateTransform(transformData);
 
@@ -1459,7 +1434,7 @@ var FBXLoader = function () { };
             }
 
             if (skeleton) {
-                geo.__buffers['a_skinIndex'] = new MyBufferAttribute('a_skinIndex', Uint16Array, 4, GL_ARRAY_BUFFER, buffers.weightsIndices);
+                set(geo.__buffers, 'a_skinIndex', new MyBufferAttribute('a_skinIndex', Uint16Array, 4, GL_ARRAY_BUFFER, buffers.weightsIndices));
                 geo.__addAttributeBuffer('a_skinWeight', 4, buffers.vertexWeights);
                 // used later to bind the skeleton to the model
                 geo.FBX_Deformer = skeleton;
@@ -1534,45 +1509,13 @@ var FBXLoader = function () { };
             const geoInfo = {};
             var t = this;
 
-            geoInfo.vertexPositions = (geoNode.Vertices) ? geoNode.Vertices.a : [];
-            geoInfo.vertexIndices = (geoNode.PolygonVertexIndex) ? geoNode.PolygonVertexIndex.a : [];
+            geoInfo.vertexPositions = geta(geoNode, 'Vertices') || [];
+            geoInfo.vertexIndices = geta(geoNode, 'PolygonVertexIndex') || [];
 
-            if (geoNode.LayerElementColor) {
-
-                geoInfo.color = t.__parseVertexColors(geoNode.LayerElementColor[0]);
-
-            }
-
-            if (geoNode.LayerElementMaterial) {
-
-                geoInfo.material = t.__parseMaterialIndices(geoNode.LayerElementMaterial[0]);
-
-            }
-
-            if (geoNode.LayerElementNormal) {
-
-                geoInfo.normal = t.__parseNormals(geoNode.LayerElementNormal[0]);
-
-            }
-
-            if (geoNode.LayerElementUV) {
-
-                geoInfo.uv = [];
-
-                let i = 0;
-                while (geoNode.LayerElementUV[i]) {
-
-                    if (geoNode.LayerElementUV[i].UV) {
-
-                        geoInfo.uv.push(t.__parseUVs(geoNode.LayerElementUV[i]));
-
-                    }
-
-                    i++;
-
-                }
-
-            }
+            geoInfo.color = t.__parseVertexColors(get(geoNode, 'LayerElementColor', 0));
+            geoInfo.material = t.__parseMaterialIndices(get(geoNode, 'LayerElementMaterial', 0));
+            geoInfo.normal = t.__parseNormals(get(geoNode, 'LayerElementNormal', 0));
+            geoInfo.uv = $filter($map(get(geoNode, 'LayerElementUV'), v => t.__parseUVs(v)), a => a);
 
             geoInfo.weightTable = {};
 
@@ -1580,7 +1523,7 @@ var FBXLoader = function () { };
 
                 geoInfo.skeleton = skeleton;
 
-                skeleton.rawBones.forEach(function (rawBone, i) {
+                $each(skeleton.rawBones, (rawBone, i) => {
 
                     // loop over the bone's vertex indices and weights
                     rawBone.indices.forEach(function (index, j) {
@@ -1588,10 +1531,8 @@ var FBXLoader = function () { };
                         if (geoInfo.weightTable[index] === undefined) geoInfo.weightTable[index] = [];
 
                         geoInfo.weightTable[index].push({
-
                             id: i,
-                            weight: rawBone.weights[j],
-
+                            weight: rawBone.weights[j]
                         });
 
                     });
@@ -2017,7 +1958,7 @@ var FBXLoader = function () { };
 
                 morphTarget.rawTargets.forEach(function (rawTarget) {
 
-                    const morphGeoNode = this.__objects.Geometry[rawTarget.geoID];
+                    const morphGeoNode = get(this.__objects, Geometry, rawTarget.geoID);
 
                     if (morphGeoNode) {
 
@@ -2037,13 +1978,13 @@ var FBXLoader = function () { };
         // Normal and position attributes only have data for the vertices that are affected by the morph
         __genMorphGeometry(parentGeo, parentGeoNode, morphGeoNode, preTransform, name) {
 
-            const basePositions = parentGeoNode.Vertices ? parentGeoNode.Vertices.a : [];
-            const baseIndices = parentGeoNode.PolygonVertexIndex ? parentGeoNode.PolygonVertexIndex.a : [];
+            const basePositions = (get(parentGeoNode, 'Vertices') || 0).a || [];
+            const baseIndices = (get(parentGeoNode, 'PolygonVertexIndex') || 0).a || [];
 
-            const morphPositionsSparse = morphGeoNode.Vertices ? morphGeoNode.Vertices.a : [];
-            const morphIndices = morphGeoNode.Indexes ? morphGeoNode.Indexes.a : [];
+            const morphPositionsSparse = (get(morphGeoNode, 'Vertices') || 0).a || [];
+            const morphIndices = (get(morphGeoNode, 'Indexes') || 0).a || [];
 
-            const length = parentGeo.__buffers.a_position.__array.length;
+            const length = get(parentGeo.__buffers, 'a_position').__array.length;
             const morphPositions = new Float32Array(length);
 
             for (let i = 0; i < morphIndices.length; i++) {
@@ -2077,22 +2018,14 @@ var FBXLoader = function () { };
         // __parse normal from FBXTree.Objects.Geometry.LayerElementNormal if it exists
         __parseNormals(NormalNode) {
 
-            const mappingType = NormalNode.MappingInformationType;
-            const referenceType = NormalNode.ReferenceInformationType;
-            const buffer = NormalNode.Normals.a;
+            if (!NormalNode) return;
+
+            const mappingType = get(NormalNode, 'MappingInformationType');
+            const referenceType = get(NormalNode, 'ReferenceInformationType');
+            const buffer = geta(NormalNode, 'Normals');
             let indexBuffer = [];
             if (referenceType === 'IndexToDirect') {
-
-                if ('NormalIndex' in NormalNode) {
-
-                    indexBuffer = NormalNode.NormalIndex.a;
-
-                } else if ('NormalsIndex' in NormalNode) {
-
-                    indexBuffer = NormalNode.NormalsIndex.a;
-
-                }
-
+                indexBuffer = geta(NormalNode, 'NormalIndex') || geta(NormalNode, 'NormalsIndex');
             }
 
             return {
@@ -2107,14 +2040,17 @@ var FBXLoader = function () { };
 
         // __parse UVs from FBXTree.Objects.Geometry.LayerElementUV if it exists
         __parseUVs(UVNode) {
+            if (!UVNode) return;
+            const buffer = geta(UVNode, 'UV');
+            if (!buffer) return;
 
-            const mappingType = UVNode.MappingInformationType;
-            const referenceType = UVNode.ReferenceInformationType;
-            const buffer = UVNode.UV.a;
+            const mappingType = get(UVNode, 'MappingInformationType');
+            const referenceType = get(UVNode, 'ReferenceInformationType');
+
             let indexBuffer = [];
             if (referenceType === 'IndexToDirect') {
 
-                indexBuffer = UVNode.UVIndex.a;
+                indexBuffer = geta(UVNode, 'UVIndex');
 
             }
 
@@ -2130,20 +2066,18 @@ var FBXLoader = function () { };
 
         // __parse Vertex Colors from FBXTree.Objects.Geometry.LayerElementColor if it exists
         __parseVertexColors(ColorNode) {
+            if (!ColorNode) return;
 
-            const mappingType = ColorNode.MappingInformationType;
-            const referenceType = ColorNode.ReferenceInformationType;
-            const buffer = ColorNode.Colors.a;
+            const mappingType = get(ColorNode, 'MappingInformationType');
+            const referenceType = get(ColorNode, 'ReferenceInformationType');
+            const buffer = geta(ColorNode, 'Colors');
             let indexBuffer = [];
             if (referenceType === 'IndexToDirect') {
-
-                indexBuffer = ColorNode.ColorIndex.a;
-
+                indexBuffer = geta(ColorNode, 'ColorIndex');
             }
 
             for (let i = 0, c = new Color(); i < buffer.length; i += 4) {
                 /// \todo: why 4?
-
                 c.__fromJsonSRGB(buffer, i);
                 buffer[i] = c.r;
                 buffer[i + 1] = c.g;
@@ -2164,8 +2098,10 @@ var FBXLoader = function () { };
         // __parse mapping and material data in FBXTree.Objects.Geometry.LayerElementMaterial if it exists
         __parseMaterialIndices(MaterialNode) {
 
-            const mappingType = MaterialNode.MappingInformationType;
-            const referenceType = MaterialNode.ReferenceInformationType;
+            if (!MaterialNode) return;
+
+            const mappingType = get(MaterialNode, 'MappingInformationType');
+            const referenceType = get(MaterialNode, 'ReferenceInformationType');
 
             if (mappingType === 'NoMappingInformation') {
 
@@ -2179,7 +2115,7 @@ var FBXLoader = function () { };
 
             }
 
-            const materialIndexBuffer = MaterialNode.Materials.a;
+            const materialIndexBuffer = geta(MaterialNode, Materials);
 
             // Since materials are stored as indices, there's a bit of a mismatch between FBX and what
             // we expect.So we create an intermediate buffer that points to the index in the buffer,
@@ -2292,16 +2228,17 @@ var FBXLoader = function () { };
 
             // since the actual transformation data is stored in FBXTree.Objects.AnimationCurve,
             // if this is undefined we can safely assume there are no animations
-            if (this.__objects.AnimationCurve === undefined) return undefined;
+            if (get(this.__objects, 'AnimationCurve')) {
 
-            const curveNodesMap = this.__parseAnimationCurveNodes();
+                const curveNodesMap = this.__parseAnimationCurveNodes();
 
-            this.__parseAnimationCurves(curveNodesMap);
+                this.__parseAnimationCurves(curveNodesMap);
 
-            const layersMap = this.__parseAnimationLayers(curveNodesMap);
-            const rawClips = this.__parseAnimStacks(layersMap);
+                const layersMap = this.__parseAnimationLayers(curveNodesMap);
+                const rawClips = this.__parseAnimStacks(layersMap);
 
-            return rawClips;
+                return rawClips;
+            }
 
         },
 
@@ -2310,22 +2247,20 @@ var FBXLoader = function () { };
         // and is referenced by an AnimationLayer
         __parseAnimationCurveNodes() {
 
-            const rawCurveNodes = this.__objects.AnimationCurveNode;
+            const rawCurveNodes = get(this.__objects, 'AnimationCurveNode');
 
             const curveNodesMap = new Map();
 
             for (const nodeID in rawCurveNodes) {
 
                 const rawCurveNode = rawCurveNodes[nodeID];
-
-                if (rawCurveNode.attrName.match(/S|R|T|DeformPercent/) !== null) {
+                var attrName = rawCurveNode.attrName;
+                if (attrName.match(/S|R|T|DeformPercent/) !== null) {
 
                     const curveNode = {
-
                         id: rawCurveNode.id,
-                        attr: rawCurveNode.attrName,
-                        curves: {},
-
+                        attr: attrName,
+                        curves: {}
                     };
 
                     curveNodesMap.set(curveNode.id, curveNode);
@@ -2343,7 +2278,7 @@ var FBXLoader = function () { };
         // axis ( e.g. times and values of x rotation)
         __parseAnimationCurves(curveNodesMap) {
 
-            const rawCurves = this.__objects.AnimationCurve;
+            const rawCurves = get(this.__objects, 'AnimationCurve');
 
             // TODO: Many values are identical up to roundoff error, but won't be optimised
             // e.g. position times: [0, 0.4, 0. 8]
@@ -2352,13 +2287,13 @@ var FBXLoader = function () { };
             // times: [0], positions [7.23538335023477e-7, 93.67518615722656, -0.9982695579528809]
             // this shows up in nearly every FBX file, and generally time array is length > 100
 
-            for (const nodeID in rawCurves) {
+            $each(rawCurves, curve => {
 
                 const animationCurve = {
 
-                    id: rawCurves[nodeID].id,
-                    times: rawCurves[nodeID].KeyTime.a.map(convertFBXTimeToSeconds),
-                    values: rawCurves[nodeID].KeyValueFloat.a,
+                    id: curve.id,
+                    times: $map(geta(curve, 'KeyTime'), convertFBXTimeToSeconds),
+                    values: geta(curve, 'KeyValueFloat')
 
                 };
 
@@ -2389,7 +2324,7 @@ var FBXLoader = function () { };
 
                 }
 
-            }
+            });
 
         },
 
@@ -2398,7 +2333,7 @@ var FBXLoader = function () { };
         // note: theoretically a stack can have multiple layers, however in practice there always seems to be one per stack
         __parseAnimationLayers(curveNodesMap) {
             var t = this;
-            const rawLayers = t.__objects.AnimationLayer;
+            const rawLayers = get(t.__objects, 'AnimationLayer');
 
             const layersMap = new Map();
 
@@ -2432,7 +2367,7 @@ var FBXLoader = function () { };
 
                                     if (modelID !== undefined) {
 
-                                        const rawModel = t.__objects.Model[modelID.toString()];
+                                        const rawModel = get(t.__objects, 'Model', modelID.toString());
 
                                         if (rawModel === undefined) {
 
@@ -2467,8 +2402,8 @@ var FBXLoader = function () { };
 
                                         // if the animated model is pre rotated, we'll have to apply the pre rotations to every
                                         // animation value as well
-                                        if ('PreRotation' in rawModel) node.preRotation = rawModel.PreRotation.value;
-                                        if ('PostRotation' in rawModel) node.postRotation = rawModel.PostRotation.value;
+                                        node.preRotation = get(rawModel, 'PreRotation', 'value');
+                                        node.postRotation = get(rawModel, 'PostRotation', 'value');
 
                                         layerCurveNodes[i] = node;
 
@@ -2494,12 +2429,12 @@ var FBXLoader = function () { };
                                     // assuming geometry is not used in more than one model
                                     const modelID = connections.get(geoID).__parents[0].ID;
 
-                                    const rawModel = t.__objects.Model[modelID];
+                                    const rawModel = get(t.__objects, 'Model', modelID);
 
                                     const node = {
 
                                         modelName: rawModel.attrName ? PropertyBinding_sanitizeNodeName(rawModel.attrName) : '',
-                                        morphName: t.__objects.Deformer[deformerID].attrName,
+                                        morphName: get(t.__objects, 'Deformer', deformerID, 'attrName')
 
                                     };
 
@@ -2529,7 +2464,7 @@ var FBXLoader = function () { };
         // hierarchy. Each Stack node will be used to create a AnimationClip
         __parseAnimStacks(layersMap) {
 
-            const rawStacks = this.__objects.AnimationStack;
+            const rawStacks = get(this.__objects, 'AnimationStack');
 
             // connect the stacks (clips) up to the layers
             const rawClips = {};
@@ -2607,7 +2542,9 @@ var FBXLoader = function () { };
 
             }
 
-            if (rawTracks.DeformPercent) {
+            var DeformPercent = get(rawTracks, 'DeformPercent')
+
+            if (DeformPercent) {
 
                 const morphTrack = this.__generateMorphTrack(rawTracks);
                 if (morphTrack) tracks.push(morphTrack);

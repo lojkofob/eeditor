@@ -1600,7 +1600,7 @@ function WebGLRenderer(dbg) {
 
     function __render(object, camera) {
 
-        _currentProjectionMatrix = camera.pm;
+        _currentProjectionMatrix = camera.__projectionMatrix;
 
         _currentRenderList = [];
 
@@ -1912,7 +1912,7 @@ function WebGLRenderer(dbg) {
         __setDefaultGLState();
     }
 
-    addEventListenersToElement(__domElement, setNonObfuscatedParams({},
+    addEventListenersToElement(__domElement, set({},
         'webglcontextlost', onContextLost,
         'webglcontextrestored', onContextRestored
     ));

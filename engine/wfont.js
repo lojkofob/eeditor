@@ -110,7 +110,7 @@ function loadFont(fontName, cb, timeout) {
 
     var data_base64 = getCachedData(url);
 
-    consoleLog('loadFont', fontName, shouldUseNativeLoader);
+    // consoleLog('loadFont', fontName, shouldUseNativeLoader);
 
     if (data_base64) {
 

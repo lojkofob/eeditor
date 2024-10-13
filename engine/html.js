@@ -75,7 +75,7 @@ var html = (function () {
             return h.call(d, e);
         };
         addEventListenersToElement(d,
-            setNonObfuscatedParams({},
+            set({},
                 'mousemove', b,
                 'touchmove', b,
                 'mousedown', b,

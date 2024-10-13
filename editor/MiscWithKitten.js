@@ -261,7 +261,7 @@ function deactivateOptions(opts) {
         optionsStack.splice(i, 1);
         options.__reset();
 
-        optionsStack.e$(function (o) {
+        $each(optionsStack, o => {
             mergeObjectDeep(options, o);
         });
 

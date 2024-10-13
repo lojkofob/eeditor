@@ -2,74 +2,74 @@
 var localizationDict,
     localizationOptions = {
 
-    ru: {
-        __pluralizeForm: function (d, n, f) { f = floor(d); n = f % 10; return (d > 19 || d < 11) ? (n > 0 ? n > 1 ? n > 4 ? 2 : 1 : (f != d ? 1 : 0) : 2) : 2; },
+        ru: {
+            __pluralizeForm: function (d, n, f) { f = floor(d); n = f % 10; return (d > 19 || d < 11) ? (n > 0 ? n > 1 ? n > 4 ? 2 : 1 : (f != d ? 1 : 0) : 2) : 2; },
 
 
-        // под нормальными буквами мы понимаем \w, т.е. символы [A-Za-z0-9_]
-        // для не латинских буков надо дописывать. особенно если слова состоят из одних символов вроде î, которые не считаются за \w
-        __normalSymbolRegexp: new RegExp(/[\wa-яёА-ЯЁ]/),
-        __doubleNormalSymbolRegexp: new RegExp(/[\wa-яёА-ЯЁ][\wa-яёА-ЯЁ]/),
-        __notNormalSymbolRegexp: new RegExp(/[^\wa-яёА-ЯЁ]/),
+            // под нормальными буквами мы понимаем \w, т.е. символы [A-Za-z0-9_]
+            // для не латинских буков надо дописывать. особенно если слова состоят из одних символов вроде î, которые не считаются за \w
+            __normalSymbolRegexp: new RegExp(/[\wa-яёА-ЯЁ]/),
+            __doubleNormalSymbolRegexp: new RegExp(/[\wa-яёА-ЯЁ][\wa-яёА-ЯЁ]/),
+            __notNormalSymbolRegexp: new RegExp(/[^\wa-яёА-ЯЁ]/),
 
-        __thousandsSeparator: ' ',
-        __decimalMark: ','
-    },
+            __thousandsSeparator: ' ',
+            __decimalMark: ','
+        },
 
-    en: {
-        __pluralizeForm: function (d) { return d == 1 ? 0 : 1; },
-        __thousandsSeparator: ',',
-        __decimalMark: '.'
-    },
+        en: {
+            __pluralizeForm: function (d) { return d == 1 ? 0 : 1; },
+            __thousandsSeparator: ',',
+            __decimalMark: '.'
+        },
 
-    pt: {
-        __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
-        __thousandsSeparator: ',',
-        __decimalMark: '.'
-    },
+        pt: {
+            __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
+            __thousandsSeparator: ',',
+            __decimalMark: '.'
+        },
 
-    fr: {
-        __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
-        __thousandsSeparator: ',',
-        __decimalMark: '.'
-    },
+        fr: {
+            __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
+            __thousandsSeparator: ',',
+            __decimalMark: '.'
+        },
 
-    ja: {
-        __pluralizeForm: function (d, n, f) { return 0; },
+        ja: {
+            __pluralizeForm: function (d, n, f) { return 0; },
 
-        // 3040-309F : hiragana
-        // 30A0-30FF : katakana
-        // FF66-FF9D : half-width katakana
-        // 4E00-9FAF : Common and uncommon kanji
-        // 3005 : 々
+            // 3040-309F : hiragana
+            // 30A0-30FF : katakana
+            // FF66-FF9D : half-width katakana
+            // 4E00-9FAF : Common and uncommon kanji
+            // 3005 : 々
 
-        __normalSymbolRegexp: new RegExp(/[\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]/),
-        __doubleNormalSymbolRegexp: new RegExp(/[\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]{2}/),
-        __notNormalSymbolRegexp: new RegExp(/[^\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]/),
+            __normalSymbolRegexp: new RegExp(/[\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]/),
+            __doubleNormalSymbolRegexp: new RegExp(/[\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]{2}/),
+            __notNormalSymbolRegexp: new RegExp(/[^\w\u3040-\u309F\u30A0-\u30FA\u30FC-\u30FF\uFF66-\uFF9D\u4E00-\u9FAF\u3005]/),
 
-        __thousandsSeparator: ' ',
-        __decimalMark: '.',
+            __thousandsSeparator: ' ',
+            __decimalMark: '.',
 
-        // NotEndLine & NotStartLine
-        __autowrapMap: {
-            ne: "「",
-            ns: "」・！。%、/―：？…（）Ｘ.:$,～-+#＠＄％＾＆＊＿＝ー",
-            __smallKana: 'ァィゥェォッャュョヶぁぅぇぉっゃゅょ々',
-            __canWrapSymRegexp: new RegExp(/[^\w;\\#]/)
-        }
-    },
+            // NotEndLine & NotStartLine
+            __autowrapMap: {
+                ne: "「",
+                ns: "」・！。%、/―：？…（）Ｘ.:$,～-+#＠＄％＾＆＊＿＝ー",
+                __smallKana: 'ァィゥェォッャュョヶぁぅぇぉっゃゅょ々',
+                __canWrapSymRegexp: new RegExp(/[^\w;\\#]/)
+            }
+        },
 
-};
+    };
 
 
-function js_GetLanguage(){ /* override me */ }
+function js_GetLanguage() { /* override me */ }
 
 function getUserBrowserLanguage() {
     var loc = __window.navigator.languages ? __window.navigator.languages[0] : null;
     loc = loc || __window.navigator.language || __window.navigator.browserLanguage || __window.navigator.userLanguage;
     return loc;
 }
- 
+
 var localizationLang;
 function getUserLanguage() {
     var l = ((PlayerState || 0).lang || LocalGetKey('lang') || js_GetLanguage() || getUserBrowserLanguage() || 'en_US')
@@ -97,9 +97,17 @@ function setLocalization(l, force) {
     if (!localizationDict && force)
         localizationDict = {};
 
+    if (isArray(localizationDict)) {
+        var dict = {};
+        for (i = 0; i < localizationDict.length / 2; i += 2) {
+            dict[localizationDict[i]] = localizationDict[i + 1]
+        }
+        localizationDict = dict;
+    }
+
     options.__localization = localizationOptions[l] || localizationOptions.en;
-    options.__localization.__thousandsSeparator = localizationDict.thousands_separator != undefined ? localizationDict.thousands_separator : "";
-    options.__localization.__decimalMark = localizationDict.decimal_mark != undefined ? localizationDict.decimal_mark : ".";
+    options.__localization.__thousandsSeparator = get(localizationDict, 'thousands_separator') || "";
+    options.__localization.__decimalMark = get(localizationDict, 'decimal_mark') || ".";
 
     __defaultTextProperties.__addedLineSpacing = l == 'ja' ? 8 : 0;
 

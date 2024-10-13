@@ -59,7 +59,7 @@ makeClass(Tween, {
     __zeroUpdate() { },
 
     __update(t, dt) {
-        this.a.e$(function (b) { b.__markedForRemove = b.__update(t, dt) });
+        $each(this.a, b => { b.__markedForRemove = b.__update(t, dt) });
         this.a = this.a.filter(function (b) { return !b.__markedForRemove });
     },
 

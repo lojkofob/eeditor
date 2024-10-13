@@ -849,7 +849,7 @@ function addEventListenersToElement(elem, listeners) {
 function addEventListeners(elem) {
 
     addEventListenersToElement(elem,
-        setNonObfuscatedParams({},
+        set({},
             'mousemove', onDocumentMouseMove,
             'touchmove', onDocumentTouchMove,
 
@@ -877,7 +877,7 @@ function addEventListeners(elem) {
         }
     }
 
-    addEventListenersToElement(__document, setNonObfuscatedParams({},
+    addEventListenersToElement(__document, set({},
         'visibilitychange', checkVisibilityChanged,
         'msvisibilitychange', checkVisibilityChanged,
         'webkitvisibilitychange', checkVisibilityChanged,
@@ -886,7 +886,7 @@ function addEventListeners(elem) {
         'contextmenu', onContextMenu
     ));
 
-    addEventListenersToElement(__window, setNonObfuscatedParams({},
+    addEventListenersToElement(__window, set({},
         'beforeunload', checkVisibilityChanged,
         'focus', checkVisibilityChanged,
         'blur', checkVisibilityChanged
@@ -908,7 +908,7 @@ var Gamepads = makeClass(function () {
     t.__haveEvents = "ongamepadconnected" in __window;
 
     addEventListenersToElement(__window,
-        setNonObfuscatedParams({},
+        set({},
             "gamepadconnected", (e) => { t.__addGamepad(e.gamepad); },
             "gamepaddisconnected", e => { t.__removeGamepad(e.gamepad) }
         ));
