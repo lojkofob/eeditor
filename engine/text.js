@@ -402,14 +402,14 @@ mergeObj(TextPrototype, {
     __calcWidth: function (txt) {
         var t = this;
         txt = txt.replace(/\\[^;]*;/g, '');
-        return floor(t.__charw > 0 ? (t.__charw * txt.length) : (tempCalcCanvasContext.measureText(txt).width + txt.length * t.__fontspacing + 1))
+        return floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1)
     },
 
     __calcWidthReturnObj: function (txt) {
         var t = this;
         txt = txt.replace(/\\[^;]*;/g, '');
         return {
-            w: floor(t.__charw > 0 ? (t.__charw * txt.length) : (tempCalcCanvasContext.measureText(txt).width + txt.length * t.__fontspacing + 1)),
+            w: floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1),
             t: txt
         }
     },
@@ -431,7 +431,7 @@ mergeObj(TextPrototype, {
                         c = text.charAt(k);
                         t.__fill(c, x, y);
                         //Increment X by wChar + spacing
-                        x += charw > 0 ? charw : t.__ctx.measureText(c).width + t.__fontspacing;
+                        x += (charw > 0 ? charw : t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
 
                     }
                 } else {
