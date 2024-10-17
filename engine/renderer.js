@@ -1380,6 +1380,11 @@ function WebGLRenderer(dbg) {
         return 'lowp';
     }
 
+    function __setClearColor(c, a){
+        _clearColor = c;
+        _clearAlpha = a || c.a || 0;
+    }
+
     function __glClearColor(r, g, b, a) {
         if (gl_premultipliedAlpha) { r *= a; g *= a; b *= a; }
         _colorBuffer.__setMask(1);
@@ -2042,6 +2047,7 @@ function WebGLRenderer(dbg) {
         , __render: __render
         , __finishRender: __finishRender
         , __clear: __clear
+        , __setClearColor: __setClearColor
         , __glClearColor: __glClearColor
         , __setRenderTarget: __setRenderTarget
         , __draw: __draw

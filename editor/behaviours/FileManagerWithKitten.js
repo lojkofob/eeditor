@@ -1273,6 +1273,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                 onDocumentMouseMove(e);
 
                 var nod, entries = [];
+                mouse.__normalized = tappableObjects.__normalize(mouse);
                 if (fileManagerPanel.__hitTest(mouse)) {
 
                     entries = [fileManagerPanel];

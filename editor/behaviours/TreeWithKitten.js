@@ -58,6 +58,21 @@ TreeEntry.prototype = {
         return newentry;
     },
 
+    removeChild: function (child) {
+        var entry = this;
+
+        if (child && child.treeItem && child.treeItem.__parentEntry == entry) {
+            if (child.treeItem.__parent) {
+                child.treeItem.__parent.__removeChild(child.treeItem);
+            } else  if (child.treeItem.content.__parent) {
+                child.treeItem.content.__parent.__removeChild(child.treeItem.content);
+            }
+        }
+
+        removeFromArray(child, entry.data);
+        entry.root().updateItem();
+    },
+
     remove: function () {
         var entry = this;
 

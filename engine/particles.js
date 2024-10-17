@@ -372,9 +372,10 @@ var ComponentDefaultsProtoMethods = {
     __setNeedUpdate: function () { this.__needReinit = 1 }
 };
 
-var EffectComponentsFactory = {
+var EffectComponentsFactory = makeSingleton({
 
-    __registeredComponents: {},
+    __registeredComponents: {}
+}, {
 
     __createByType: function (type, args) {
         if (this.__registeredComponents[type]) return new this.__registeredComponents[type](args)
@@ -415,7 +416,7 @@ var EffectComponentsFactory = {
 
     }
 
-};
+});
 
 
 /* Component Template
@@ -1080,7 +1081,7 @@ EffectComponentsFactory.__registerComponent('sub',
 
             if (t.__subEmitterJson) {
 
-                var subEmitter = new ParticleEmitter(particle);
+                var subEmitter = new ParticleEmitter(t.__effect, particle);
 
                 if (!particle.__subEmitters) {
                     ObjectDefineProperty(particle, PDM.__live, {
@@ -1816,13 +1817,14 @@ makeClass(Particle, {
 
 
 
-function ParticleEmitter(parent) {
+function ParticleEmitter(effect, parent) {
     var t = this;
     t.____visible = 1;
     t.g = {};
     t.p = {};
     Object3D.call(t);
     t.__parent = parent;
+    t.__effect = effect;
     t.__particles = [];
     t.__components = [];
     t.__reset();
@@ -2503,12 +2505,11 @@ makeClass(ParticleEffect, {
     },
 
     __push: function (v) {
-        var t = this, emitter = new ParticleEmitter(t);
+        var t = this, emitter = new ParticleEmitter(t, t.__node);
         t.__node.add(emitter);
         t.__emitters.push(emitter);
         emitter.__init(v);
         t.__enabled = 1;
-        emitter.__effect = t;
         return emitter;
     },
 

@@ -7,6 +7,7 @@ function NodeEditWithKitten(layout) {
 
 }
 
+var selectedWireframesCount = 0;
 
 NodeEditWithKitten.prototype = {
 
@@ -85,7 +86,8 @@ NodeEditWithKitten.prototype = {
                     node.__visible = node.__tmpvis;
                 }
 
-
+                selectedWireframesCount++;
+                
                 var helper = node.wireframed = this.view.__addChildBox({
                     //                     update : function(d)
                     //                     {
@@ -94,6 +96,9 @@ NodeEditWithKitten.prototype = {
                     //                         
                     //                     },
                     __updateMatrix: function () { },
+                    __onDestruct: function(){
+                        selectedWireframesCount--;
+                    },
                     __updateMatrixWorld: function () {
                         var t = this;
                         t.__matrixWorldNeedsUpdate = t.__matrixScrollNeedsUpdate = t.__matrixNeedsUpdate = 0;
@@ -225,9 +230,8 @@ NodeEditWithKitten.prototype = {
                         var s = node.__size
                             , sizeSq = clamp(mmin(s.x, s.y), 1.0000001, 300)
                             , csz = clamp(8 / cam.__zoom, 1.0000001, sizeSq);
-
-
-                        if (node.__worldPosition.x != this.wpppp.x || node.__worldPosition.y != this.wpppp.y) {
+ 
+                        if (selectedWireframesCount == 1 || node.__worldPosition.x != this.wpppp.x || node.__worldPosition.y != this.wpppp.y) {
                             this.__needUpdate = 1;
                             this.wpppp.__copy(node.__worldPosition);
                         }

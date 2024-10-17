@@ -1,26 +1,46 @@
-(function () {
-
+var CameraMoveWithKitten = (function () {
 
     var cameras = [];
 
+    function setLayoutCamera(layout, camera)
+    {
 
+        if (layout.camera) {
+            removeFromArray(layout.camera, cameras);
+        }
+
+        layout.camera = camera;
+
+        if (layout.nodeEditWithKitten)
+            layout.nodeEditWithKitten.view.camera = layout.camera;
+
+        layout.layoutView.camera = layout.camera;
+
+        updateCamera(__screenSize.x, __screenSize.y, layout.camera);
+        
+        if (cameras.indexOf(layout.camera) == -1) {
+            cameras.push(layout.camera);
+        }
+
+    }
+ 
     BUS.__addEventListener({
 
         LAYOUT_ACTIVATED: function (t, layout) {
-
+        
             if (!layout.camera) {
 
-                layout.camera = new CameraOrtho();
+                setLayoutCamera(layout, CameraMoveWithKitten.cameraCreator ? CameraMoveWithKitten.cameraCreator(layout) : new CameraOrtho()); 
 
-                if (layout.nodeEditWithKitten)
-                    layout.nodeEditWithKitten.view.camera = layout.camera;
+            } else {
 
-                layout.layoutView.camera = layout.camera;
-
+                updateCamera(__screenSize.x, __screenSize.y, layout.camera);
+                
             }
 
-            updateCamera(__screenSize.x, __screenSize.y, layout.camera);
-            cameras.push(layout.camera);
+            if (cameras.indexOf(layout.camera) == -1) {
+                cameras.push(layout.camera);
+            }
 
         },
 
@@ -48,8 +68,7 @@
 
             function moveCamera(dx, dy) {
                 cameraOperation(function (c) {
-                    c.__x -= (dx || 0) / c.__zoom;
-                    c.__y += (dy || 0) / c.__zoom;
+                    c.__moveBy(- (dx || 0) / c.__zoom, (dy || 0) / c.__zoom);
                 });
             }
 
@@ -74,6 +93,12 @@
 
 
     });
+
+    return {
+        
+        setLayoutCamera: setLayoutCamera
+
+    }
 
 
 })();

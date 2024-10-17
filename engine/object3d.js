@@ -50,7 +50,7 @@ function Object3D() {
         __alphaDeep: 1,
         __opacityDeep: 1,
         __alpha: 1,
-        __cullFace: CullFaceBack
+        __cullFace: CullFaceNone
     });
 }
 

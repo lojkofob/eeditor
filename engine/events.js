@@ -7,6 +7,10 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
     this.__propertyArray = propertyArray;
 },
     {
+        __normalize(v){
+            return new Vector2(v.x / layoutsResolutionMult / __screenCenter.x - 1, 1 - v.y / layoutsResolutionMult / __screenCenter.y)
+        },
+
         __traverseObjects: function (checker, f) {
             if (__needResortEventsObjects) {
                 tappableObjects.__resort();
@@ -68,6 +72,8 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
 
         __traverseHit: function (pos, f) {
             var w = new Vector2(pos.x, pos.y);
+            w.__normalized = this.__normalize(w);
+
             return this.__traverseObjects(function (o) {
                 return o.__hitTest(w);
             }, f);
@@ -719,6 +725,7 @@ function _onDocumentMouseMove(e) {
 
     }
 
+    mouse.__normalized = tappableObjects.__normalize(mouse);
 
     if (!curDraggingObject && gestures.__drag && (isTouchEvent || mouseButtons[0])) {
         if (gestures.__drag(mdx, mdy))
@@ -729,6 +736,7 @@ function _onDocumentMouseMove(e) {
 
     if (!curDraggingObject || e.__skip) {
         var needFilter = 0;
+ 
         for (var i = 0; i < tappableObjects.__b.length; i++) {
             var obj = tappableObjects.__b[i];
             if (obj.__hitTest(mouse)) {

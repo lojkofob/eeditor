@@ -82,13 +82,22 @@ function isVisibleInHierarchy(n) {
         }
     };
 
-    var oldremove = NodePrototype.__removeChild;
+     var oldremovechild = NodePrototype.__removeChild;
     NodePrototype.__removeChild = function (child) {
-        var r = oldremove.call(this, child);
-        if (child.treeEntry) {
-            child.treeEntry.remove();
+        var r = oldremovechild.call(this, child);
+        if (this.treeEntry) {
+            this.treeEntry.removeChild(child.treeEntry);
         }
         return r;
+    }; 
+
+    var oldremove = NodePrototype.__removeFromParent;
+    NodePrototype.__removeFromParent = function () {
+        var r = oldremove.call(this);
+        if (this.treeEntry) {
+            this.treeEntry.remove();
+            this.treeEntry = 0;
+        }
     };
 
     var oldinsert = NodePrototype.__insertChild;

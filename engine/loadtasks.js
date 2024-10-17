@@ -110,6 +110,7 @@ function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
     if (format) {
 
         var arr;
+        
         invertMap(format, format);
         $each(subformats, function (sf) { invertMap(sf, sf); });
 

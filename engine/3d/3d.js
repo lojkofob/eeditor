@@ -6,7 +6,8 @@ var Default3dCullFace = CullFaceFront;
 var _ray;
 var _intersects;
 var _basePosition = new Vector4();
-var _matrix4 = new Matrix4();
+var _matrix4 = new Matrix4(); 
+
 
 // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 const _lut = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a', '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e', '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c', '5d', '5e', '5f', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '6a', '6b', '6c', '6d', '6e', '6f', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '7a', '7b', '7c', '7d', '7e', '7f', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8a', '8b', '8c', '8d', '8e', '8f', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '9a', '9b', '9c', '9d', '9e', '9f', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'da', 'db', 'dc', 'dd', 'de', 'df', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'fa', 'fb', 'fc', 'fd', 'fe', 'ff'];
@@ -388,20 +389,20 @@ makeClass(Node3d, {
 
     __hitTest(ppos) {
         var t = this;
-
-        if (t.____material && t.__geometry) {
-            if (!t.__boundingBox) { t.__computeBoundingBox(); }
-            if (t.__boundingBox) {
-                var cam = t.__getCamera();
-                _ray = CameraCachedRay(cam, {
-                    x: ppos.x / __screenCenter.x - 1,
-                    y: 1 - ppos.y / __screenCenter.y,
-                });
-                _intersects = [];
-                t.__raycast()
-                return _intersects.length
-            }
+        
+        if (!t.__boundingBox) { 
+            t.__computeBoundingBox(); 
         }
+        if (t.__boundingBox) {
+            var cam = t.__getCamera();
+            
+            _ray = CameraCachedRay(cam, ppos.__normalized);
+
+            _intersects = [];
+            t.__raycast()
+            return _intersects.length
+        }
+        
         /*
         const intersections = raycaster.intersectObjects(objects, true);
 
@@ -426,14 +427,24 @@ makeClass(Node3d, {
         }
 
         var _vertex = new Vector3();
-        for (let i = 0; i < positionAttribute.__array.length; i += 3) {
 
-            _vertex.__fromArray(positionAttribute.__array, i);
+        if (positionAttribute.__itemSize == 2){
+            for (let i = 0; i < positionAttribute.__array.length; i += 2) {
+                _vertex.x = positionAttribute.__array[i];
+                _vertex.y = positionAttribute.__array[i+1];                
+                t.__boundingBox.__expandByPoint(_vertex);
+            }
+        } 
+        else {
+            for (let i = 0; i < positionAttribute.__array.length; i += 3) {
 
-            t.__applyBoneTransform(i / 3 * 4, _vertex);
+                _vertex.__fromArray(positionAttribute.__array, i);
 
-            t.__boundingBox.__expandByPoint(_vertex);
+                t.__applyBoneTransform(i / 3 * 4, _vertex);
 
+                t.__boundingBox.__expandByPoint(_vertex);
+
+            }
         }
     },
 
@@ -510,10 +521,14 @@ makeClass(Node3d, {
         */
         // convert ray to local space of skinned mesh
         if (!mw.im) mw.im = mw.__getInverseMatrix();
+
+        consoleLog(_ray.__direction);
+
         var ray = _ray.__clone().__applyMatrix4(mw.im);
 
         // test with bounding box in local space
         var intersect = ray.__intersectsBox(bb);
+        
         if (intersect) {
             _intersects.push(intersect)
         };
@@ -756,7 +771,13 @@ makeClass(Node3d, {
 
 
     __updateUVS() {
-        return this;
+        if (this.__verticesCount){
+            return this;
+        } else {
+            return NodePrototype.__updateUVS.call(this);
+        }
+
+        
         var t = this;
         if (t.__uvsBuffer0 && !t.__uvsBuffer0.__updated && t.____material && t.____material[0].__map) {
             if (t.__groups) {
@@ -866,7 +887,35 @@ makeClass(Node3d, {
         }
         t.__needRenderRecalc = 0;
         return t;
-    }
+    },
+
+    __lookAt( target_vec, up_vec ) {
+        /*
+		const parent = this.parent;
+ 
+
+		if ( this.isCamera || this.isLight ) {
+
+			_m1$3.lookAt( this.__worldPosition$3, target, up_vec );
+
+		} else {
+
+			_m1$3.lookAt( target, _position$3, this.up );
+
+		}
+
+		this.quaternion.setFromRotationMatrix( _m1$3 );
+/*
+		if ( parent ) {
+
+			_m1$3.extractRotation( parent.matrixWorld );
+			_q1.setFromRotationMatrix( _m1$3 );
+			this.quaternion.premultiply( _q1.invert() );
+
+		}*/
+
+	}
+
 
 },
     set({
@@ -965,6 +1014,38 @@ makeClass(Node3d, {
         __rotation3d_z: {
             set(v) { this.____rotation3d.z = v; },
             get() { return this.____rotation3d.z; }
+        },
+
+         
+        __transform: {
+            get() {
+                var t = this;
+                return [
+                    t.__offset.x,
+                    t.__offset.y,
+                    t.__offset.z,
+                    t.____scale.x,
+                    t.____scale.y,
+                    t.____scale.z,
+                    t.____rotation3d._x,
+                    t.____rotation3d._y,
+                    t.____rotation3d._z
+                ]
+            },
+            set(a) {
+                var t = this;
+                t.__offset.x = a[0];
+                t.__offset.y = a[1];
+                t.__offset.z = a[2];
+                t.____scale.x = a[3];
+                t.____scale.y = a[4];
+                t.____scale.z = a[5];
+                t.____rotation3d._x = a[6];
+                t.____rotation3d._y = a[7];
+                t.____rotation3d._z = a[8];
+                t.____rotation3d.__dirty = 1;
+                t.__matrixNeedsUpdate = 1;
+            }
         },
 
         //cheats
@@ -1344,3 +1425,127 @@ makeClass(Skeleton, {
     }
 
 });
+
+
+var CameraPerspective = makeClass(
+        function () {
+            var t = this;
+            t.____zoom = 1;
+            t.__isPerspective = 1;
+            t.__aspect = 1;
+            t.__fov = 0.01;
+            
+			t.__near = -10000;
+			t.__far = 10000;
+
+            Node3d.call(this)
+            
+            t.____projectionMatrix = new Matrix4(0, 1);
+            
+        },
+        {
+
+            __init: defaultMergeInit,
+    
+            __setViewOffset(x, y, zoom) {
+
+                var t = this;
+                t.____zoom = zoom;
+
+                x = x - (t.__right + t.__left) / 2;
+                t.__right += x;
+                t.__left += x;
+
+                y = y - (t.__top + t.__bottom) / 2;
+                t.__top += y;
+                t.__bottom += y;
+
+                return t.__updateProjectionMatrix();
+
+            },
+
+            __updateProjectionMatrix() {
+                var t = this
+                    , fov = t.__fov
+                    , f = tan( fov / 2)
+                    , left = t.__left
+                    , right = t.__right
+                    , top = t.__top
+                    , bottom = t.__bottom
+                    , zoom = t.____zoom
+                    , far = t.__far
+                    , near = t.__near
+                    , pm = t.____projectionMatrix
+                    , te = pm.e
+                    , w = zoom / (right - left)
+                    , h = zoom / (top - bottom)
+                    , p = 1.0 / (far - near)
+                    , o = t.__offset
+                    , x = (o.x + right + left) * w
+                    , y = (o.y + top + bottom) * h
+                    , z = (far + near) * p;
+
+                te[0] = 2 * w;
+                te[5] = 2 * h;
+                te[10] = - 2 * p;
+                te[11] = f;
+                te[12] = - x;
+                te[13] = - y;
+                te[14] = - z;
+                te[15] = 1;
+
+                pm.im = pm.__getInverseMatrix(pm.im);
+
+                return t;
+            } 
+
+            , __makeRay(pos) {
+                var t = this, origin = t.__matrixWorld.__getPosition();
+                return new Ray(
+                    origin,
+                    new Vector3(pos.x, pos.y, pos.z||0.5)
+                        .__unproject(t)
+                        .sub(origin)
+                        .__normalize()
+                )
+            },
+
+            __moveBy(x, y){
+                this.__x += x;
+                this.__y += y;
+            }
+
+        },
+        {
+            __zoom: {
+                set: function (v) {
+                    this.____zoom = v;
+                    this.__dirty = 1;
+                },
+                get: function () {
+                    return this.____zoom
+                }
+            },
+
+            __projectionMatrix: {
+                get: function () { 
+                    if (this.__dirty) {
+                        this.__updateProjectionMatrix();
+                        this.__dirty = 0;
+                    }
+                    return this.____projectionMatrix;
+                }
+            }
+        }, Node3d);
+
+function CameraCachedRay(cam, ppos) {
+    var r = cam._cray;
+    if (!r || r.__currentFrame != __currentFrame || r.x != ppos.x || r.y != ppos.y) {
+        cam._cray = r = cam.__makeRay(ppos);
+        r.__currentFrame = __currentFrame;
+        r.__camera = cam;
+        r.x = ppos.x;
+        r.y = ppos.y;
+    }
+    return r;
+}

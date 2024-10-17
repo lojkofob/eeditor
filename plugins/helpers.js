@@ -7,7 +7,7 @@ function makeParallax2d(coeff, fov) {
                         , x = e[12]
                         , y = e[13]
                         , z = this.__totalZ
-                        , v = __screenCenter.clone()
+                        , v = __screenCenter.__clone()
                             .sub(mouse)
                             .__divide(__screenCenter)
                             .__multiplyScalar(window.parallax_coeff * this.__totalZ);
@@ -52,7 +52,7 @@ function makeParallax3dCam(coeff, fov, cam) {
             , y = (top + bottom) * h
             , z = (far + near) * p;
 
-        var c = __screenCenter.clone().sub(mouse);
+        var c = __screenCenter.__clone().sub(mouse);
 
         te[0] = 2 * w; te[4] = 0; te[8] = 0; te[12] = - x + coeff * c.x;
         te[1] = 0; te[5] = 2 * h; te[9] = 0; te[13] = - y - coeff * c.y;

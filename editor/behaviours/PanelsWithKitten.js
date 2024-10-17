@@ -28,6 +28,7 @@ var PanelsWithKitten = (function () {
 
 
     function hitTestParentAcceptor() {
+        mouse.__normalized = tappableObjects.__normalize(mouse);
         for (var i in panelAcceptors) {
             if (panelAcceptors[i].__hitTest(mouse)) {
                 return panelAcceptors[i];

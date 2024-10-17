@@ -29,13 +29,15 @@ var AnimationsWithKitten = (function () {
 
         splitTransform: function () {
             eachSelected(function (n) {
-                if (((n.__keyframes || 0).__keyframes || 0).__transform) {
-                    var keyframes = n.__keyframes.__keyframes;
-                    var transform = keyframes.__transform;
-                    delete keyframes.__transform;
-                    keyframes.__ofs = $map(transform, function (frame) { return { va: [frame.va[0], frame.va[1]] } });
-                    keyframes.__rotate = $map(transform, function (frame) { return { va: frame.va[4] } });
-                    keyframes.__scale = $map(transform, function (frame) { return { va: [frame.va[2], frame.va[3]] } });
+                if (!n.__is3D) {
+                    if (((n.__keyframes || 0).__keyframes || 0).__transform) {
+                        var keyframes = n.__keyframes.__keyframes;
+                        var transform = keyframes.__transform;
+                        delete keyframes.__transform;
+                        keyframes.__ofs = $map(transform, function (frame) { return { va: [frame.va[0], frame.va[1]] } });
+                        keyframes.__rotate = $map(transform, function (frame) { return { va: frame.va[4] } });
+                        keyframes.__scale = $map(transform, function (frame) { return { va: [frame.va[2], frame.va[3]] } });
+                    }
                 }
             });
             setCurrentKeyFrameForce(animationsWithKitten.currentKeyFrame);
@@ -279,12 +281,12 @@ var AnimationsWithKitten = (function () {
                         animationsWithKitten.propsList.__y = 1;
                         animationsWithKitten.propsList.__scale = 1;
                         animationsWithKitten.propsList.__rotate = 1;
-                    } else
-                        if (property == '__skew') {
-                            animationsWithKitten.propsList.__skewGrad = 1;
-                        } else {
-                            animationsWithKitten.propsList[property] = 1;
-                        }
+                    } else if (property == '__skew') {
+                        animationsWithKitten.propsList.__skewGrad = 1;
+                    } else {
+                        animationsWithKitten.propsList[property] = 1;
+                    }
+
 
                     var p = '+' + property;
                     if (!timeline[p]) {
@@ -594,14 +596,35 @@ var AnimationsWithKitten = (function () {
 
                 if (!keyframes.__transform) {
                     var firstKeyFrame = node.__transform;
-                    switch (prop) {
-                        case '__ofs':
-                            firstKeyFrame[0] = prev.x;
-                            firstKeyFrame[1] = prev.y;
-                            break;
-                        case '__scale.x': case '__scalex': firstKeyFrame[2] = prev; break;
-                        case '__scale.y': case '__scaley': firstKeyFrame[3] = prev; break;
-                        case '__rotate': firstKeyFrame[4] = prev; break;
+
+                    if (node.__is3D){
+                        switch (prop) {
+                            case '__ofs': firstKeyFrame[0] = prev.x; firstKeyFrame[1] = prev.y; firstKeyFrame[2] = prev.z; break;
+
+                            case '__scale.x': case '__scalex': firstKeyFrame[3] = prev; break;
+                            case '__scale.y': case '__scaley': firstKeyFrame[4] = prev; break;
+                            case '__scale.z': case '__scalez': firstKeyFrame[5] = prev; break;
+
+                            case '__rotation3d.x': case '__rotation3d_x': firstKeyFrame[6] = prev; break;
+                            case '__rotation3d.y': case '__rotation3d_y': firstKeyFrame[7] = prev; break;
+                            case '__rotate': 
+                            case '__rotation3d.z': case '__rotation3d_z': firstKeyFrame[8] = prev; break;
+                            
+                            case '__rotation3dDeg.x': firstKeyFrame[6] = prev * DEG2RAD; break;
+                            case '__rotation3dDeg.y': firstKeyFrame[7] = prev * DEG2RAD; break;
+                            case '__rotation3dDeg.z': firstKeyFrame[8] = prev * DEG2RAD; break;
+
+                            
+                        }
+
+                    } else {
+
+                        switch (prop) {
+                            case '__ofs': firstKeyFrame[0] = prev.x; firstKeyFrame[1] = prev.y; break;
+                            case '__scale.x': case '__scalex': firstKeyFrame[2] = prev; break;
+                            case '__scale.y': case '__scaley': firstKeyFrame[3] = prev; break;
+                            case '__rotate': firstKeyFrame[4] = prev; break;
+                        }
                     }
                     keyframes.__transform = { 0: { va: firstKeyFrame } };
 
@@ -612,11 +635,13 @@ var AnimationsWithKitten = (function () {
 
                 keyframes.__transform[animationsWithKitten.currentKeyFrame].va = node.__transform;
 
-                if (prop == '__ofs' && prev.z != node.__z) {
-                    if (!keyframes.__z) keyframes.__z = { 0: { va: prev.z } };
-                    if (!keyframes.__z[animationsWithKitten.currentKeyFrame])
-                        keyframes.__z[animationsWithKitten.currentKeyFrame] = {};
-                    keyframes.__z[animationsWithKitten.currentKeyFrame].va = node.__z;
+                if (!node.__is3D) {
+                    if (prop == '__ofs' && prev.z != node.__z) {
+                        if (!keyframes.__z) keyframes.__z = { 0: { va: prev.z } };
+                        if (!keyframes.__z[animationsWithKitten.currentKeyFrame])
+                            keyframes.__z[animationsWithKitten.currentKeyFrame] = {};
+                        keyframes.__z[animationsWithKitten.currentKeyFrame].va = node.__z;
+                    }
                 }
 
                 changed = 1;
@@ -627,6 +652,7 @@ var AnimationsWithKitten = (function () {
                 return keyframes.__ofs || keyframes.__rotate || keyframes.__scalex || keyframes.__scaley;
             }
 
+            
             switch (prop) {
 
                 case '__ofs':
@@ -638,6 +664,25 @@ var AnimationsWithKitten = (function () {
                         trrransforrrrmmmm();
                     }
                     break;
+
+                case '__rotation3dDeg.x':
+                case '__rotation3dDeg.y':
+                case '__rotation3dDeg.z':
+                    // if (isTransformSplitted()) { // not for 3d now
+                    //    addKFrameSimpleProp('__rotation3d', [prev.x, prev.y, prev.z], [next.x, next.y, next.z]);
+                    //} else {
+                        trrransforrrrmmmm();
+                   // }
+                    break;
+
+                case '__rotation3d':
+                    //if (isTransformSplitted()) { // not for 3d now
+                      //  addKFrameSimpleProp('__rotation3d', [prev.x, prev.y, prev.z], [next.x, next.y, next.z]);
+                    //} else {
+                        trrransforrrrmmmm();
+                    //}
+                    break;
+
 
                 case '__rotate':
                     if (isTransformSplitted()) {

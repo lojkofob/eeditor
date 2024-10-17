@@ -1480,7 +1480,6 @@ mergeObj(NodePrototype, {
         }
 
 
-        //debug
         var f = t.__frame;
 
         if (f && f.of && f.or) {
@@ -1522,7 +1521,7 @@ mergeObj(NodePrototype, {
             }
 
         }
-        //undebug
+        
 
         var scrollVector = t.__scrollVector, child;
 

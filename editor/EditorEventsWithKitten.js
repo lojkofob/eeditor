@@ -1498,7 +1498,7 @@ gestures.tap = function (pos) {
             for (var x = -80 * z; x < 80 * z; x += 10)
                 for (var y = -80 * z; y < 80 * z; y += 10) {
                     var ppos = new Vector2(pos.x + x, pos.y + y)
-
+                        
                         , screenpos = new Vector2(
                             ppos.x / layoutsResolutionMult / __screenCenter.x - 1,
                             ppos.y / layoutsResolutionMult / __screenCenter.y - 1
@@ -1509,6 +1509,7 @@ gestures.tap = function (pos) {
                             __color: 0x111111, __alpha: 0.4
                         }).__removeAfter(5);
 
+                        ppos.__normalized = tappableObjects.__normalize(ppos);
                     $each(n, n => {
                         if (n.__hitTest(ppos)) {
                             ddebug.__color = 0xffffff;
@@ -1519,6 +1520,8 @@ gestures.tap = function (pos) {
                 }
         }
     }
+
+    pos.__normalized = tappableObjects.__normalize(pos);
 
 
     if (isCtrlPressed) {

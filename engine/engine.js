@@ -251,9 +251,7 @@ function updateCamera(w, h, cam, x, y) {
             __left: - w * cp + x,
             __right: w * cp + x,
             __top: h * cp + y,
-            __bottom: - h * cp + y,
-            __near: -50000,
-            __far: 50000
+            __bottom: - h * cp + y
         });
     }
 
