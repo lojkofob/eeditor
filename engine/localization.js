@@ -99,7 +99,7 @@ function setLocalization(l, force) {
 
     if (isArray(localizationDict)) {
         var dict = {};
-        for (i = 0; i < localizationDict.length / 2; i += 2) {
+        for (i = 0; i < localizationDict.length; i += 2) {
             dict[localizationDict[i]] = localizationDict[i + 1]
         }
         localizationDict = dict;

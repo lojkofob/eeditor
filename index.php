@@ -37,6 +37,8 @@ $rand=$disableCache ? '?t='.time() : '';
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">  
 
+<script src='tools/unwind.js'></script>
+
 <?php
 
 $enginepath = function_exists('enginePath') ? enginePath() : 'engine/';
@@ -88,8 +90,9 @@ $enginescripts = array(
 );
 
 
-foreach ($enginescripts as $v)
-echo "<script src='$enginepath$v.js$rand'></script>\n";
+foreach ($enginescripts as $v) {
+    echo "<script src='$enginepath$v.js$rand'></script>\n";
+}
 
 
 $escripts = editorScripts($rand);

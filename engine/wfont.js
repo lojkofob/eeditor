@@ -2,7 +2,7 @@
 
 
 function getFontFaceFromFontFile(file) {
-    return file.replace(/[^\w\d]/g, '_');
+    return file.split('.')[0].replace(/[^\w\d]/g, '_');
 }
 
 var _fontTestString = "AVWBESbswy/*-1";
@@ -43,9 +43,9 @@ function loadNotNative(family, url, success, fail) {
         span.innerHTML = _fontTestString;
 
         function setFF(face, d) {
-            span.style = "display:block;position:absolute;top:-9999px;left:-9999px;\
-                    font-size:300px;width:auto;height:auto;line-height:normal;margin:0;\
-                    padding:0;font-variant:normal;white-space:nowrap;font-style:normal;font-weight:400;font-family:" + face;
+            span.style = "display:block;position:absolute;top:-9999px;left:-9999px;"+
+            "font-size:300px;width:auto;height:auto;line-height:normal;margin:0;"+
+            "padding:0;font-variant:normal;white-space:nowrap;font-style:normal;font-weight:400;font-family:" + face;
             return d;
         }
 

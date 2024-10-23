@@ -64,7 +64,7 @@ TreeEntry.prototype = {
         if (child && child.treeItem && child.treeItem.__parentEntry == entry) {
             if (child.treeItem.__parent) {
                 child.treeItem.__parent.__removeChild(child.treeItem);
-            } else  if (child.treeItem.content.__parent) {
+            } else if (child.treeItem.content.__parent) {
                 child.treeItem.content.__parent.__removeChild(child.treeItem.content);
             }
         }
@@ -99,7 +99,8 @@ TreeEntry.prototype = {
     unfocus: function () {
         if (this.treeItem && this.treeItem.plate) {
             this.treeItem.plate.__drag = undefined;
-            this.treeItem.plate.__alpha = 0.1;
+            // this.treeItem.plate.__alpha = 0.1;
+            this.treeItem.plate.__color = undefined;
         }
         this.focused = 0;
         if (this.onFocusChanged) this.onFocusChanged(this.focused);
@@ -238,6 +239,7 @@ TreeEntry.prototype = {
             if (pl) {
                 pl.__init({
                     __alpha: 0.4,
+                    __color: 0xaaaaaa,
                     __drag: this.onDrag.bind(this),
                     __dragStart: this.onDragStart.bind(this),
                     __dragEnd: this.onDragEnd.bind(this)
@@ -667,7 +669,9 @@ var TreeWithKitten = {
             va: ALIGN_FROM_START_TO_END,
             __childs: {
                 border: {
-                    __size: { x: 1, px: 0, y: 1, py: 1 }, __color: 0xfffff1, __alpha: 0.4, __x: -10, sva: 0, sha: 0
+                    __size: { x: 1, px: 0, y: 1, py: 1 },
+                    __color: 0xfffff1, __alpha: 0.2,
+                    __x: -10, sva: 0, sha: 0
                 }
             }
         },
@@ -688,7 +692,7 @@ var TreeWithKitten = {
                 plate: {
                     __size: { x: 1, px: 1, y: 25 },
                     __z: -2,
-                    __color: 0xaaaaaa,
+                    /* __color: 0xaaaaaa, */
                     __alpha: 0.1,
                     __plate: 1,
                     ha: 0,

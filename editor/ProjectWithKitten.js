@@ -72,7 +72,7 @@ function ProjectWithKitten(name, onLoad) {
             function (r) {
                 try {
 
-                    r = JSON.parse(r);
+                    r = unwind(JSON.parse(r));
 
                     _this.settings = r;
 

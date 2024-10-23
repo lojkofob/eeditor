@@ -67,9 +67,17 @@ function getCachedData(name, obj) {
     var obj = obj || globalConfigsData;
     if (isString(name)) {
         var j = obj[name];
-        if (!j && name.indexOf('?')) {
-            j = obj[name.split('?')[0]];
+        if (!j) {
+            if (name.indexOf('?') >= 0) {
+                name = name.split('?')[0];
+                j = obj[name];
+            }             
+            if (!j && options.__projectServerPath) {
+                name = name.slice(options.__projectServerPath.length);
+                j = obj[name];
+            }
         }
+        
         return j;
     }
     //debug
@@ -110,7 +118,7 @@ function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
     if (format) {
 
         var arr;
-        
+
         invertMap(format, format);
         $each(subformats, function (sf) { invertMap(sf, sf); });
 
@@ -628,7 +636,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                 var name = l[k].indexOf('/') == 0 ? l[k].substring(1) : namefunc(l[k]);
                 if (ext)
                     name = name + '.' + ext;
-
+                
                 var j = getCachedData(name);
                 if (j) {
                     if (ignoreIfFromCache) {
@@ -656,7 +664,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         var t = this;
         t.__subTasks = [];
 
-        $each(list, function (l) {
+        function prepareForLoad(l) {
 
             var type = l[0];
 
@@ -963,7 +971,9 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
             }
 
-        });
+        }
+
+        $each(list, prepareForLoad);
 
         if (t.__subTasks.length) {
 

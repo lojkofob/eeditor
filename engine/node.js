@@ -1,6 +1,6 @@
-//debug
+//multiclass
 var __propertiesAppliedByClass;
-//undebug
+//unmulticlass
 
 var __nodeScrolledByY;
 var __nodeScrolledByX;
@@ -112,21 +112,21 @@ function Node(j) {
     renderInfo.nodes++;
     //endcheats
 
-    //debug
+    //multiclass
     var tmpClass = __propertiesAppliedByClass;
     if (__propertiesAppliedByClass) {
         t.__nestedByClass = __propertiesAppliedByClass;
         __propertiesAppliedByClass = 0;
     }
-    //undebug
+    //unmulticlass
 
     t.__init(j, 0);
 
-    //debug
+    //multiclass
     if (tmpClass) {
         __propertiesAppliedByClass = tmpClass;
     }
-    //undebug
+    //unmulticlass
 
 }
 
@@ -1051,7 +1051,7 @@ mergeObj(NodePrototype, {
 
                     if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * imgSize.y);
                     if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * imgSize.x);
-                    t.__updateVertices(new Vector2(szx, szy), 1);
+                    t.__updateVertices(new Vector2(szx, szy), !t.__useFitGeomSize);
 
                 }
 
@@ -1198,13 +1198,13 @@ mergeObj(NodePrototype, {
         var t = this;
 
         if (t.__parent) { t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; }
-        //debug
+        //multiclass
         if (t.__needClassUpdate) {
             consoleLog('class update');
             t.__classes = t.__classes;
             t.__needClassUpdate = 0;
         }
-        //undebug
+        //unmulticlass
 
         if (t.__checkAppear && (t.__lastRenderTime < TIME_NOW - 0.2)) {
             resortEventsObjects();
@@ -1739,18 +1739,18 @@ mergeObj(NodePrototype, {
 
     __onTextureLoaded(tex) {
         if ((this.__img == tex.__src) || (tex.__src && tex.__src.indexOf('_b64i_') == 0)) {
-            //debug
+            //multiclass
             var tmpClass = __propertiesAppliedByClass;
             if (this.__imgPropertiesAppliedByClass) {
                 __propertiesAppliedByClass = this.__imgPropertiesAppliedByClass;
             }
 
-            //undebug
+            //unmulticlass
             this.__img = tex.__src;
-            //debug
+            //multiclass
             delete this.__imgPropertiesAppliedByClass;
             __propertiesAppliedByClass = tmpClass;
-            //undebug
+            //unmulticlass
         }
     },
 
@@ -2380,6 +2380,8 @@ mergeObj(NodePrototype, {
 
             __uniforms: undefined,
 
+            __useFitGeomSize: undefined,
+
             __spacing: saveBounds,
             __margin: saveBounds,
             __padding: saveBounds,
@@ -2655,7 +2657,11 @@ mergeObj(NodePrototype, {
 
         return function () {
 
-            var t = this, o = {}, selfProperties = t.__selfProperties;
+            var t = this, o = {}, selfProperties = t.__selfProperties, __options;
+            if (t.__userData && isObject(t.__userData.__save_options)) {
+                __options = deepclone(__options);
+                mergeObjectDeep(options, t.__userData.__save_options);
+            }
 
             if (selfProperties.__eWidth || selfProperties.__eHeight) {
                 selfProperties.__size = undefined;
@@ -2928,7 +2934,9 @@ mergeObj(NodePrototype, {
             for (var i in o) if (isFunction(o[i])) toDelete.push(i);
             for (var i in toDelete) delete o[toDelete[i]];
 
-
+            if (__options) {
+                mergeObjectDeep(options, __options);
+            }
 
             return o;
         }
@@ -3060,9 +3068,9 @@ var NodeCloneProperties = {
             get() { return this.____maxImageSize; },
             set(v) {
                 this.____maxImageSize = v; this.__dirty = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__maxImageSize = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3070,9 +3078,9 @@ var NodeCloneProperties = {
             get() { return this.____maxsize; },
             set(v) {
                 this.____maxsize = v; this.__dirty = 2;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__maxsize = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3080,9 +3088,9 @@ var NodeCloneProperties = {
             get() { return this.____minsize; },
             set(v) {
                 this.____minsize = v; this.__dirty = 2;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__minsize = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3317,14 +3325,14 @@ var NodeCloneProperties = {
                 t.__dirty = dirty ? 3 : 1;
 
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__selfProperties.__size = sz ? { x: sz.x, y: sz.y, px: sz.px, py: sz.py } : undefined;
                     if (!this.__selfProperties.__size) {
                         this.__needClassUpdate = t.____classes ? 1 : 0;
                     }
                 }
-                //undebug
+                //unmulticlass
 
             }
         },
@@ -3346,9 +3354,9 @@ var NodeCloneProperties = {
                     this.__offset.x = v;
                     this.__dirty = 3;
                     this.__needUpdateDeep = 0;
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
-                    //undebug
+                    //unmulticlass
                 }
             }
         },
@@ -3358,9 +3366,9 @@ var NodeCloneProperties = {
                     this.__offset.y = v;
                     this.__dirty = 3;
                     this.__needUpdateDeep = 0;
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
-                    //undebug
+                    //unmulticlass
                 }
             }
         },
@@ -3371,9 +3379,9 @@ var NodeCloneProperties = {
                     this.__offset.z = v;
                     this.__matrixNeedsUpdate = this.__matrixWorldNeedsUpdate = 1;
                     resortEventsObjects(this);
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.__ofs = this.__offset.__clone();
-                    //undebug
+                    //unmulticlass
                 }
             }
         },
@@ -3392,11 +3400,11 @@ var NodeCloneProperties = {
                         resortEventsObjects(this);
                     }
 
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) {
                         this.__selfProperties.__ofs = tofs.__clone();
                     }
-                    //undebug
+                    //unmulticlass
 
                     this.__dirty = 3;
                     this.__needUpdateDeep = 0;
@@ -3408,25 +3416,25 @@ var NodeCloneProperties = {
         __scalex: {
             get() { return this.____scale.x; }, set(v) {
                 this.____scale.x = v; this.__matrixNeedsUpdate = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
-                //undebug
+                //unmulticlass
             }
         },
         __scaley: {
             get() { return this.____scale.y; }, set(v) {
                 this.____scale.y = v; this.__matrixNeedsUpdate = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
-                //undebug
+                //unmulticlass
             }
         },
         __scalez: {
             get() { return this.____scale.z; }, set(v) {
                 this.____scale.z = v; this.__matrixNeedsUpdate = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3495,9 +3503,9 @@ var NodeCloneProperties = {
             get() { return this.____scale.x; },
             set(v) {
                 this.____scale.set(v, v, v); this.__matrixNeedsUpdate = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3518,9 +3526,9 @@ var NodeCloneProperties = {
                     }
                 this.__matrixNeedsUpdate = 1;
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__scale = this.____scale.__clone();
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3530,9 +3538,9 @@ var NodeCloneProperties = {
                 this.____rotation = (v || 0) * DEG2RAD;
                 this.__matrixNeedsUpdate = 1;
                 this.__realRotate = this.____rotation;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__rotate = v || 0;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3542,13 +3550,13 @@ var NodeCloneProperties = {
                 var t = this;
                 t.____img = filename;
 
-                //debug
+                //multiclass
                 function applyImgToSelfProperties() {
                     if (!__propertiesAppliedByClass && !t.__imgPropertiesAppliedByClass) {
                         t.__selfProperties.__img = t.____img;
                     }
                 }
-                //undebug
+                //unmulticlass
 
                 if (globalConfigsData.__spriteSheetAnimations) {
 
@@ -3597,11 +3605,10 @@ var NodeCloneProperties = {
 
                                 if (!preparedFames.length) {
                                     consoleError('no frames prepared to sprite sheet anim', filename);
-                                    debugger;
-
-                                    //debug
+                                    
+                                    //multiclass
                                     applyImgToSelfProperties();
-                                    //undebug
+                                    //unmulticlass
                                     return;
                                 }
 
@@ -3661,20 +3668,16 @@ var NodeCloneProperties = {
 
                         }
 
-                        //debug
+                        //multiclass
                         applyImgToSelfProperties();
-                        //undebug
+                        //unmulticlass
                         return;
                     }
 
                 }
 
                 function clearSelfImage() {
-                    //debug
-                    if (t.__spriteSheetAnim) {
-
-                    }
-                    //undebug
+                 
                     if (t.__frame && t.__uvsBuffer == t.__frame.__uvsBuffers[t.____uvsTransform])
                         delete t.__uvsBuffer;
                     delete t.____imgSize;
@@ -3702,9 +3705,9 @@ var NodeCloneProperties = {
 
                         if (frame.__loading) {
 
-                            //debug
+                            //multiclass
                             t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
-                            //undebug
+                            //unmulticlass
 
                             if (map.__nodesWaitingsForThis) {
                                 map.__nodesWaitingsForThis.push(t);
@@ -3715,9 +3718,9 @@ var NodeCloneProperties = {
 
                             t.__notReady = 1;
 
-                            //debug
+                            //multiclass
                             applyImgToSelfProperties();
-                            //undebug
+                            //unmulticlass
 
                             return;
 
@@ -3744,9 +3747,9 @@ var NodeCloneProperties = {
                                 else {
                                     map.__nodesWaitingsForThis = [t];
                                 }
-                                //debug
+                                //multiclass
                                 applyImgToSelfProperties();
-                                //undebug
+                                //unmulticlass
                                 return;
                             }
                         }
@@ -3784,9 +3787,9 @@ var NodeCloneProperties = {
                                 delete t.__notReady;
                                 if (t.__onLoadImageError)
                                     t.__onLoadImageError();
-                                //debug
+                                //multiclass
                                 delete t.__imgPropertiesAppliedByClass;
-                                //undebug
+                                //unmulticlass
 
                             });
                         }
@@ -3798,9 +3801,9 @@ var NodeCloneProperties = {
 
                 }
 
-                //debug
+                //multiclass
                 applyImgToSelfProperties();
-                //undebug
+                //unmulticlass
 
             }
         },
@@ -3810,9 +3813,9 @@ var NodeCloneProperties = {
             set(v) {
                 this.____centerFill = v;
                 this.__dirty = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__centerFill = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3823,9 +3826,9 @@ var NodeCloneProperties = {
             set(v) {
                 this.____corner = v;
                 this.__dirty = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__corner = deepclone(v);
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3893,7 +3896,7 @@ var NodeCloneProperties = {
 
                 }
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     if (t.__textMesh) {
                         if (isObject(v)) {
@@ -3906,7 +3909,7 @@ var NodeCloneProperties = {
                         this.__selfProperties.__text = undefined;
                     }
                 }
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3922,10 +3925,10 @@ var NodeCloneProperties = {
                 this.____sizeMargin = v;
                 this.__dirty = 3;
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass)
                     this.__selfProperties.__margin = deepclone(v);
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3937,10 +3940,10 @@ var NodeCloneProperties = {
                 this.____spacing = v;
                 this.__dirty = 3;
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass)
                     this.__selfProperties.__spacing = deepclone(v);
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -3950,10 +3953,10 @@ var NodeCloneProperties = {
                 v = __getFour__(v);
                 this.____padding = v;
                 this.__dirty = 2;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass)
                     this.__selfProperties.__padding = deepclone(v);
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -4020,9 +4023,9 @@ var NodeCloneProperties = {
 
                 this.__dirty = 1;
 
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__anchor = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -4054,10 +4057,10 @@ var NodeCloneProperties = {
             set(v) {
                 this.____shader = v;
                 this.__program = 0;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass && v != 'c')
                     this.__selfProperties.__shader = v;
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -4084,12 +4087,12 @@ var NodeCloneProperties = {
                     if (!t.map && !t.__shader) t.__shader = 'c';
                 }
                 t.__baseColor = t.__selfColor.__clone();
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = t.____classes ? v == undefined : 0;
                     this.__selfProperties.__color = v == undefined ? undefined : this.__selfColor.__clone();
                 }
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -4097,56 +4100,56 @@ var NodeCloneProperties = {
             get() { return this.__selfColor.r; },
             set(v) {
                 this.__selfColor.__setRGB(v, v, v);
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__color = this.__selfColor.__clone();
-                //undebug
+                //unmulticlass
             }
         },
 
         ha: {
             get() { return this.____ha; }, set(v) {
                 var t = this; t.____ha = v; this.__dirty = 2;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = this.____classes ? v == undefined : 0;
                     this.__selfProperties.ha = v;
                 }
-                //undebug
+                //unmulticlass
             }
         },
 
         va: {
             get() { return this.____va; }, set(v) {
                 this.____va = v; this.__dirty = 2;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = this.____classes ? v == undefined : 0;
                     this.__selfProperties.va = v;
                 }
-                //undebug
+                //unmulticlass
             }
         },
 
         sha: {
             get() { return this.____sha; }, set(v) {
                 this.____sha = v; this.__dirty = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = this.____classes ? v == undefined : 0;
                     this.__selfProperties.sha = v;
                 }
-                //undebug
+                //unmulticlass
             }
         },
         sva: {
             get() { return this.____sva; }, set(v) {
                 this.____sva = v; this.__dirty = 1;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) {
                     this.__needClassUpdate = this.____classes ? v == undefined : 0;
                     this.__selfProperties.sva = v;
                 }
-                //undebug
+                //unmulticlass
             }
         },
 
@@ -4175,9 +4178,9 @@ var NodeCloneProperties = {
                     this.__needScissor = v != undefined;
                     this.__dirty = 1;
 
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.cropx = v;
-                    //undebug
+                    //unmulticlass
 
                 }
             }
@@ -4192,9 +4195,9 @@ var NodeCloneProperties = {
                     this.__needScissor = v != undefined;
                     this.__dirty = 1;
 
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.cropy = v;
-                    //undebug
+                    //unmulticlass
 
                 }
             }
@@ -4211,9 +4214,9 @@ var NodeCloneProperties = {
                 if (this.____visible != v) {
                     this.____visible = v;
                     this.__dirty = 3;
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) this.__selfProperties.__visible = v;
-                    //undebug
+                    //unmulticlass
 
                 }
             }
@@ -4400,7 +4403,7 @@ var NodeCloneProperties = {
         __classModificator: {
             set(v) {
                 var t = this, c = t.____classes;
-
+                
                 if (v) {
                     var changed = 0;
                     if (c) {
@@ -4410,7 +4413,7 @@ var NodeCloneProperties = {
                                 changed = 1;
                             }
                         }
-                    }
+                    } 
                     if (changed) {
                         t.__classes = t.__classes;
                     }
@@ -4427,30 +4430,30 @@ var NodeCloneProperties = {
 
         __classes: {
             set(v) {
-                //debug
+                
+                //multiclass
+                if (!__propertiesAppliedByClass) 
+                {
+                    this.____classes = v;
+                }
 
                 var tmpClass = __propertiesAppliedByClass;
-                if (!__propertiesAppliedByClass) {
-                    this.____classes = v;
-                } else {
-                    //                 debugger;
-                }
 
                 // removeClasses ?
                 this.__removeChildsByFilter(function (n) { return n.__nestedByClass; });
 
-                //undebug
+                //unmulticlass
 
                 if (isArray(v)) {
                     for (var i = 0; i < v.length; i++) {
-                        //debug
+                        //multiclass
                         __propertiesAppliedByClass = v[i];
-                        //undebug
+                        //unmulticlass
                         this.__init(getUIClass(v[i]));
                     }
                 }
 
-                //debug
+                //multiclass
                 __propertiesAppliedByClass = tmpClass;
                 if (v) {
                     for (var i in this.__selfProperties) {
@@ -4461,7 +4464,7 @@ var NodeCloneProperties = {
                 } else {
                     this.__init(this.__selfProperties);
                 }
-                //undebug
+                //unmulticlass
 
             },
             get() { return this.____classes; }
@@ -4538,12 +4541,12 @@ var NodeCloneProperties = {
                 if (this.____fitImgX != v) {
                     this.____fitImgX = v;
                     this.__dirty = 1;
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) {
                         this.__selfProperties.__fitImgX = v;
                         this.__needClassUpdate = this.____classes ? 1 : 0;
                     }
-                    //undebug
+                    //unmulticlass
                 }
             },
             get() {
@@ -4556,12 +4559,12 @@ var NodeCloneProperties = {
                 if (this.____fitImgY != v) {
                     this.____fitImgY = v;
                     this.__dirty = 1;
-                    //debug
+                    //multiclass
                     if (!__propertiesAppliedByClass) {
                         this.__selfProperties.__fitImgY = v;
                         this.__needClassUpdate = this.____classes ? 1 : 0;
                     }
-                    //undebug
+                    //unmulticlass
                 }
             },
             get() {
@@ -5024,9 +5027,9 @@ var NodeCloneProperties = {
                 }
 
                 this.____blending = v;
-                //debug
+                //multiclass
                 if (!__propertiesAppliedByClass) this.__selfProperties.__blending = v;
-                //undebug
+                //unmulticlass
             }
         },
 

@@ -359,7 +359,7 @@ var ColorPickerPanel;
 
             Editor.__afterFrame = function () {
                 var b = new Uint8Array(4);
-                gl.readPixels(mouse.x, __realScreenSize.y - mouse.y, 1, 1, gl.RGB, gl.UNSIGNED_BYTE, b);
+                gl.readPixels(mouse.x, __realScreenSize.y - mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b);
                 looperPost(function () {
                     proxyColorObject.value = new Color(b[0] / 255, b[1] / 255, b[2] / 255);
                 });

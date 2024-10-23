@@ -67,9 +67,13 @@ function base64_decode(base64str, file) {
     fs.writeFileSync(file, new Buffer(base64str, 'base64'));
 }
 
+// console.log("read ", outFile)
 
 fs.readFile(outFile, 'utf8', function (err, data) {
-    if (!err) outFileData = data;
+    
+    if (typeof data === 'string' || data instanceof String) {
+        outFileData = data;
+    }
 
     var oext = path.extname(outFile).replace('.', '');
 
@@ -98,6 +102,11 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                     if (!outFileDataImgs) {
                         outFileDataImgs = '\n\n mergeObj ( globalConfigsData.__images, { \n';
                     }
+                    
+                    if (argv.directory && file.startsWith(argv.directory)) {
+                        file = file.replace(argv.directory, '');
+                    }
+                    
                     outFileDataImgs += zpt1 + '\n"' + file + '":' + '"' + data + '"';
                     zpt1 = '\n\n,';
                 }
@@ -181,6 +190,8 @@ fs.readFile(outFile, 'utf8', function (err, data) {
     if (outFileDataImgs) {
         outFileData += outFileDataImgs + '\n});\n';
     }
+
+    // console.log("write ", outFile)
 
     fs.writeFile(outFile, outFileData, function (err, data) {
         if (err) throw err;

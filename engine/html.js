@@ -177,6 +177,9 @@ var html = (function () {
         },
 
         __redirect(url, donttrack) {
+            if (__mraid) {
+                __mraid.open(url);
+            } else
             if (donttrack) {
                 __window.location.replace(url);
             } else {

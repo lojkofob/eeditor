@@ -94,6 +94,22 @@ function getAppVersion() {
 }
 
 
+function getDeepFieldFromObjectAndSetIfUndefined() {
+    var r = arguments[0];
+    if (r)
+        for (var i = 1; i < arguments.length; i++) {
+            var a = arguments[i];
+            if (r[a] == undefined) {
+                r = r[a] = {};
+            } else {
+                r = r[a];
+            }
+        }
+    return r;
+}
+
+var get = getDeepFieldFromObject;
+
 var consoleError = function () { }, consoleWarn = function () { }, consoleLog = function () { }, consoleDebug = function () { };
 //cheats
 consoleDebug = function () { console.error.apply(console, arguments); debugger; }
@@ -213,7 +229,7 @@ if (_bowser.android || _bowser.mobile || _bowser.ios) {
 
 //endcheats
 
-var M = Math, __document = document, __window = window,
+var M = Math, __document = document, __window = window, __mraid = get(__window, "mraid"),
     sign = M.sign || function (x) { return (x < 0) ? - 1 : (x > 0) ? 1 : + x; },
     acos = M.acos, mmax = M.max, mmin = M.min, floor = M.floor, abs = M.abs, ceil = M.ceil, trunc = M.trunc,
     LN2 = M.LN2, tan = M.tan, atan = M.atan, log = M.log, atan2 = M.atan2, asin = M.asin,
@@ -293,8 +309,12 @@ function parseJson(v, onerror, usePacking) {
 
 function shuffle(a) {
     var j, x, i = a.length - 1;
+
     while (i > 0) {
-        j = randomInt(0, i);
+        do {
+            j = randomInt(0, i);
+        } while (j == i);
+
         x = a[i];
         a[i] = a[j];
         a[j] = x;
@@ -861,10 +881,26 @@ function toFixedDeep(obj, d) {
     return obj;
 }
 
-function explodeString(str, delimeter) {
+function explodeString(str, delimeter, noempty) {
     if (!str) return [];
     str = str.split(delimeter || ',');
-    for (var i in str) str[i] = str[i].trim();
+    if (noempty) {
+        var j = 0;
+        for (var i = 0; i < str.length; i++) {
+            var ss = str[i].trim();
+            if (ss) {
+                str[j++] = ss;
+            }
+        }
+        if (i != j) {
+            str.length = j;
+        }
+    } else {
+
+        for (var i in str) str[i] = str[i].trim();
+    }
+
+
     return str;
 }
 
@@ -1384,22 +1420,6 @@ function getDeepFieldFromObject() {
         }
     return r;
 }
-
-function getDeepFieldFromObjectAndSetIfUndefined() {
-    var r = arguments[0];
-    if (r)
-        for (var i = 1; i < arguments.length; i++) {
-            var a = arguments[i];
-            if (r[a] == undefined) {
-                r = r[a] = {};
-            } else {
-                r = r[a];
-            }
-        }
-    return r;
-}
-
-var get = getDeepFieldFromObject;
 
 function addToScene(node, sc) {
     sc = sc || scene;

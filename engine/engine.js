@@ -467,8 +467,47 @@ var setDefaultRenderLoop = function () {
     }
 };
 
+function wait_mraid_viawable(cb){
+    __mraid.addEventListener("viewableChange", isViewable => {
+        if (isViewable) {
+            __mraid.removeEventListener("viewableChange");
+            cb();
+        }
+    })
+}
+
+function check_mraid(parameters) {
+    if (__mraid) {
+        if (!parameters.__nomraid) {
+            var mraid_state = __mraid.getState()
+                , mraid_ready = mraid_state != 'loading'
+                , mraid_visible = __mraid.getState() != 'hidden' && __mraid.isViewable();
+
+            if (!mraid_ready) {
+                __mraid.addEventListener("ready", function(){ 
+                    __mraid.removeEventListener("ready");
+                    createGame(parameters);
+                 });
+                return 1;
+            } 
+            
+            if (!mraid_visible) {
+                wait_mraid_viawable(a=> {
+                    parameters.__nomraid = 1; 
+                    createGame(parameters);
+                });
+                return 1;
+            }
+        }
+    }
+}
+
 
 function createGame(parameters) {
+
+    if (check_mraid(parameters)) {
+        return;
+    }
 
     //debug
     if (renderer && scene) {
@@ -480,74 +519,89 @@ function createGame(parameters) {
     }
     //undebug
 
-    renderer = new WebGLRenderer(); //WebGLRenderer(1); to enable GlDebug
+    renderer = new WebGLRenderer(); 
+    //WebGLRenderer(1); to enable GlDebug
 
-    camera = new CameraOrtho();
+    renderer.__init(function(){
 
-    var __domElement = renderer.__domElement;
+        camera = new CameraOrtho();
 
-    parameters.element.appendChild(__domElement);
+        var __domElement = renderer.__domElement;
 
-    var originalToDataUrl = __domElement.toDataURL;
-    __domElement.toDataURL = function (a, b) {
-        renderer.__renderLoop();
-        return originalToDataUrl.call(__domElement, a, b);
-    };
+        parameters.element.appendChild(__domElement);
 
-    scene = new Node({
-        __hitTest: function () { }, __size: { x: 1, y: 1, px: 1, py: 1 }, ha: 1, va: 1, __isScene: 1
-    });
+        var originalToDataUrl = __domElement.toDataURL;
+        __domElement.toDataURL = function (a, b) {
+            renderer.__renderLoop();
+            return originalToDataUrl.call(__domElement, a, b);
+        };
 
-    scenes.push(scene);
+        scene = new Node({
+            __hitTest: function () { }, __size: { x: 1, y: 1, px: 1, py: 1 }, ha: 1, va: 1, __isScene: 1
+        });
 
-    defaultIndecesBuffer1 = new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, [0, 2, 1, 2, 3, 1], 1);
-    defaultIndecesBuffer2 = new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, [0, 4, 1, 4, 5, 1, 1, 5, 2, 5, 6, 2, 2, 6, 3, 6, 7, 3, 4, 8, 5, 8, 9, 5, 5, 9, 6, 9, 10, 6, 6, 10, 7, 10, 11, 7, 8, 12, 9, 12, 13, 9, 9, 13, 10, 13, 14, 10, 10, 14, 11, 14, 15, 11], 1);
+        scenes.push(scene);
 
-    defaultUVSBuffer = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, [0, 1, 1, 1, 0, 0, 1, 0], 1);
-    // start rendering
+        defaultIndecesBuffer1 = new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, [0, 2, 1, 2, 3, 1], 1);
+        defaultIndecesBuffer2 = new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, [0, 4, 1, 4, 5, 1, 1, 5, 2, 5, 6, 2, 2, 6, 3, 6, 7, 3, 4, 8, 5, 8, 9, 5, 5, 9, 6, 9, 10, 6, 6, 10, 7, 10, 11, 7, 8, 12, 9, 12, 13, 9, 9, 13, 10, 13, 14, 10, 10, 14, 11, 14, 15, 11], 1);
 
-    if (parameters.__renderLoop) {
-        renderer.__renderLoop = parameters.__renderLoop;
-    }
-    else {
-        setDefaultRenderLoop();
-    }
+        defaultUVSBuffer = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, [0, 1, 1, 1, 0, 0, 1, 0], 1);
+        // start rendering
 
-    var __onFrame =
-        wrapFunctionInTryCatch(
-            parameters.__onFrame || function (t) {
-                if (updateFramesRoutine(t)) {
-                    //cheats
-                    renderInfo.frames++;
-                    //endcheats
-                    if (gl) {
-                        renderer.__renderLoop();
-                    }
-                }
-                requestAnimFrame(__onFrame);
-            }, 1, 1);
-
-
-    addEventListeners(__domElement);
-
-    onWindowResize();
-
-    __onFrame(0);
-
-    //bad?
-    _setInterval(onWindowResize, PI / 10);
-
-    addEventListenersToElement(__window, set({},
-        'resize', onWindowResize,
-        'deviceorientation', function (event) {
-            // TODO: fix fluctuations 
-            var tmp = __deviceOrientation.__clone();
-            __deviceOrientation.set(event.alpha || 0, event.beta || 0, event.gamma || 0);
-            __deviceOrientationSpeed.__multiplyScalar(0.8).add(tmp.sub(__deviceOrientation).__multiplyScalar(0.08));
+        if (parameters.__renderLoop) {
+            renderer.__renderLoop = parameters.__renderLoop;
         }
-    ));
+        else {
+            setDefaultRenderLoop();
+        }
 
-    parameters.onCreate(scene);
+        var __onFrame = wrapFunctionInTryCatch(
+                parameters.__onFrame || function (t) {
+                    if (updateFramesRoutine(t)) {
+                        //cheats
+                        renderInfo.frames++;
+                        //endcheats
+                        if (gl) {
+                            renderer.__renderLoop();
+                        }
+                    }
+                    requestAnimFrame(__onFrame);
+                }, 1, 1);
+            
+        if (__mraid) {
+            var old___onFrame = __onFrame;
+            __onFrame = function(){
+                if (__mraid.isViewable()) {
+                    old___onFrame();
+                } else {
+                    wait_mraid_viawable(a => {
+                        requestAnimFrame(__onFrame);
+                    });
+                }
+            }
+        }
+
+        addEventListeners(__domElement);
+
+        onWindowResize();
+
+        __onFrame(0);
+
+        //bad?
+        _setInterval(onWindowResize, PI / 10);
+
+        addEventListenersToElement(__window, set({},
+            'resize', onWindowResize,
+            'deviceorientation', function (event) {
+                // TODO: fix fluctuations 
+                var tmp = __deviceOrientation.__clone();
+                __deviceOrientation.set(event.alpha || 0, event.beta || 0, event.gamma || 0);
+                __deviceOrientationSpeed.__multiplyScalar(0.8).add(tmp.sub(__deviceOrientation).__multiplyScalar(0.08));
+            }
+        ));
+
+        parameters.onCreate(scene);
+    });
 
 }
 
@@ -585,7 +639,15 @@ function registerClasses(j) {
     else if (isObject(j)) {
         if (j.name) {
             if (j.name == 'classes') {
-                for (var i in j.__childs) registerClasses(j.__childs[i]);
+                if (isObject(j.__childs)){ 
+                    for (var i in j.__childs) {
+                        globalConfigsData.__classes[i] = j.__childs[i].__childs['_0'];
+                    }
+                }
+                else
+                for (var i in j.__childs) {
+                    registerClasses(j.__childs[i]);
+                }
             } else {
                 if (j.__childs && j.__childs.length) {
                     globalConfigsData.__classes[j.name] = j.__childs[0];
@@ -1187,7 +1249,7 @@ function computeAtlasTexture(atlas) {
         data = atlas.__atlasDataConverter(atlas, data);
     }
 
-    var frames = data.frames || data;
+    var frames = data ? data.frames || data : 0;
     if (frames) {
 
         if (isArray(frames) && isArray(frames[0])) {
@@ -1242,7 +1304,7 @@ function computeAtlasTexture(atlas) {
         }
     }
 
-    if (data.SubTexture) {
+    if (data && data.SubTexture) {
         var scale = data.scale || 1;
         for (var i in data.SubTexture) {
             var frameData = data.SubTexture[i];

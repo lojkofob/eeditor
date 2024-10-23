@@ -512,7 +512,7 @@ var gl_alpha = false
     , gl_premultipliedAlpha = true
     , gl_preserveDrawingBuffer = false;
 
-function WebGLRenderer(dbg) {
+function WebGLRenderer(_readyCallback, dbg) {
     // dbg = 1;
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
@@ -522,7 +522,7 @@ function WebGLRenderer(dbg) {
         , _currentRenderTarget
         , _currentFramebuffer = 0
 
-        , _isScissorEmpty
+        // , _isScissorEmpty
 
         , _currentViewport = new Vector4()
         , _usedTextureUnits = 0
@@ -882,7 +882,7 @@ function WebGLRenderer(dbg) {
                 scissor.w = mmin(_currentScissor.y + _currentScissor.w, scissor.y + scissor.w) - scissor.y;
             }
 
-            _isScissorEmpty = scissor.w < 0 || scissor.z < 0;
+            // _isScissorEmpty = scissor.w < 0 || scissor.z < 0;
 
             scissor.w = mmax(scissor.w, 0);
             scissor.z = mmax(scissor.z, 0);
@@ -1410,9 +1410,7 @@ function WebGLRenderer(dbg) {
         _enabledGLFlags = {};
     }
 
-    function __setDefaultGLState() {
-
-        __resetGLState();
+    function __setDefaultGLState(callback) {
 
         gl = __domElement.getContext('webgl2', glAttributes);
 
@@ -1420,7 +1418,7 @@ function WebGLRenderer(dbg) {
             //debug
             debugger;
             //undebug
-            __domElement.getContext('webgl', glAttributes) ||
+            gl = __domElement.getContext('webgl', glAttributes) ||
                 __domElement.getContext('experimental-webgl', glAttributes);
 
             if (gl) {
@@ -1431,12 +1429,18 @@ function WebGLRenderer(dbg) {
 
         if (!gl) {
 
+            if (__mraid && callback) {
+                setTimeout(() => {
+                    __setDefaultGLState(callback)
+                }, options.__glReadyTimeoutMs || 100);
+            }
+
             if (__domElement.getContext('webgl') !== null) {
                 setErrorReportingFlagWEBGL(2);
-                throw 'Error creating WebGL attributes';
+                throw 'Error creating WebGL (2)';
             } else {
                 setErrorReportingFlagWEBGL(1);
-                throw 'Error creating WebGL';
+                throw 'Error creating WebGL (1)';
             }
 
         }
@@ -1493,7 +1497,9 @@ function WebGLRenderer(dbg) {
 
         __glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, _clearAlpha);
 
-
+        if (callback) {
+            callback();
+        }
     }
 
     function __resetGLState() {
@@ -1599,9 +1605,8 @@ function WebGLRenderer(dbg) {
         }
     }
 
-    _currentScissor.set(0, 0, _width * _pixelRatio, _height * _pixelRatio);
-
     var _scissStack = __createScissorsStack();
+
 
     function __render(object, camera) {
 
@@ -1882,16 +1887,6 @@ function WebGLRenderer(dbg) {
         }
     }
 
-    for (var i in _shaderDefines)
-        _shader_defines_str += '\n#define ' + i + ' ' + _shaderDefines[i];
-
-    glAttributes = {
-        alpha: gl_alpha,
-        antialias: gl_antialias,
-        premultipliedAlpha: gl_premultipliedAlpha,
-        preserveDrawingBuffer: gl_preserveDrawingBuffer
-    };
-
 
     //     function __disposeRenderer() {
     //          __domElement.removeEventListener( 'webglcontextlost', __onContextLost, false );
@@ -1914,15 +1909,10 @@ function WebGLRenderer(dbg) {
         throw 'gl restored';
         consoleWarn('gl restored');
         event.preventDefault();
+        __resetGLState();
         __setDefaultGLState();
     }
-
-    addEventListenersToElement(__domElement, set({},
-        'webglcontextlost', onContextLost,
-        'webglcontextrestored', onContextRestored
-    ));
-
-    __setDefaultGLState();
+ 
 
     function __draw(object, count, forceShader, start) {
 
@@ -2036,9 +2026,34 @@ function WebGLRenderer(dbg) {
         }
     }
 
+    function __init(_readyCallback){
+        
+        _currentScissor.set(0, 0, _width * _pixelRatio, _height * _pixelRatio);
+
+        for (var i in _shaderDefines)
+            _shader_defines_str += '\n#define ' + i + ' ' + _shaderDefines[i];
+
+        glAttributes = {
+            alpha: gl_alpha,
+            antialias: gl_antialias,
+            premultipliedAlpha: gl_premultipliedAlpha,
+            preserveDrawingBuffer: gl_preserveDrawingBuffer
+        };
+
+
+        addEventListenersToElement(__domElement, set({},
+            'webglcontextlost', onContextLost,
+            'webglcontextrestored', onContextRestored
+        ));
+    
+        __resetGLState();
+        __setDefaultGLState(_readyCallback);
+        
+    }
 
     return {
         __domElement: __domElement
+        , __init: __init
         , __initAttributes: __initAttributes
         , __enableAttribute: __enableAttribute
         , __disableUnusedAttributes: __disableUnusedAttributes

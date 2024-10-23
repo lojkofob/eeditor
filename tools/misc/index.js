@@ -57,10 +57,24 @@ module.exports = function () {
     this.$find = function (a, f) { return a && isFunction(a.F$) ? a.F$(f) : [] }
     this.$count = function (a, f) { return a && isFunction(a.c$) ? a.c$(f) : 0 }
 
-    this.explodeString = function (str, delimeter) {
+    this.explodeString = function (str, delimeter, noempty) {
         if (!str) return [];
         str = str.split(delimeter || ',');
-        for (var i in str) str[i] = str[i].trim();
+        if (noempty) {
+            var j = 0;
+            for (var i = 0; i < str.length; i++) {
+                var ss = str[i].trim();
+                if (ss) {
+                    str[j++] = ss;
+                }
+            }
+            if (i != j) {
+                str.length = j;
+            }
+        } else {
+            for (var i in str) str[i] = str[i].trim();
+        }
+
         return str;
     }
 

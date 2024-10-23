@@ -25,6 +25,10 @@ function MyBufferAttribute(name, arrayType, itemSize, type, array, notDestruct) 
 
     _buffersCache[currentBufferId] = this;
     currentBufferId++;
+
+    if (type == GL_ELEMENT_ARRAY_BUFFER) {
+        this.__passToGL = this.__bindBuffer;
+    }
 }
 
 makeClass(MyBufferAttribute, {
@@ -130,8 +134,9 @@ makeClass(MyBufferAttribute, {
     __passToGL(programAttributes) {
 
         var t = this;
-        var programAttribute = programAttributes[t.__name];
         t.__bindBuffer();
+       
+        var programAttribute = programAttributes[t.__name];
         if (programAttribute !== undefined) {
 
             //debug
@@ -150,7 +155,7 @@ makeClass(MyBufferAttribute, {
                 consoleDebug('no attribute in program ', t.__name);
             }
             //undebug
-        }
+        } 
     },
 
     __clone() {

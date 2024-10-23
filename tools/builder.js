@@ -13,7 +13,8 @@ var fs = require('fs')
         .options('help', { alias: 'h', describe: 'Show this help message.' })
 
     , argv = optimist.argv
-    , glob = require('./glob');
+    , glob = require('./glob')
+    , unwind = require('./unwind.js').unwind;
 
 winston.setLevels(winston.config.syslog.levels);
 winston.remove(winston.transports.Console);
@@ -96,24 +97,6 @@ function magick_convert() {
 }
 
 
-function getDeepFieldFromObject() {
-    var r = arguments[0];
-    var a = [];
-    for (var i = 1; i < arguments.length; i++) {
-        if (isString(arguments[i]) || isNumber(arguments[i])) {
-            a.push(arguments[i]);
-        } else
-            if (isArray(arguments[i])) {
-                a = a.concat(arguments[i]);
-            }
-    }
-
-    for (var i = 0; i < a.length; i++) {
-        r = r[a[i]];
-        if (r === undefined) return;
-    }
-    return r;
-}
 
 
 var toolsDir = __dirname;
@@ -602,181 +585,14 @@ function buildTarget(target) {
     }
 }
 
-function unwindMagicVariables(data, src, dst) {
-
-    //     console.log('unwindMagicVariables', data, src, dst);
-    if (data) {
-
-        if (!src) {
-
-            if (data.version && (!data.buildFlags || !data.buildFlags.version)) {
-                throw ('version in global data is deprecated. use "buildFlags": { "version": "@/version" }')
-            }
-
-            $each(additionalArguments, function (v, i) {
-                data = unwindMagicVariables(data, i, v);
-            });
-
-            $each(data.buildFlags, function (v, i) {
-                data = unwindMagicVariables(data, i, v);
-            });
-
-
-
-        }
-        else
-            if (isObject(data) || isArray(data)) {
-                $each(data, function (d, i) {
-                    data[i] = unwindMagicVariables(d, src, dst);
-                });
-            } else
-                if (isString(data)) {
-
-                    data = data.replace(new RegExp('\\$' + src + "\\?([^:]*):([^;]*);", 'g'), function (g, a, b) {
-                        return (isNumeric(dst) ? Number(dst) : dst) ? a : b;
-                    });
-
-                    data = data.replace(new RegExp('\\$' + src, 'g'), dst)
-
-                }
-
-    }
-    //     console.log('result', data );
-    return data;
-
-}
-
-function _unwindObject(o) {
-    if (isObject(o)) {
-        //TODO ?
-
-    } else
-        if (isArray(o)) {
-            o = $map(o, _unwindObject);
-        }
-
-    return o;
-
-}
-
-function unwindCommands(data) {
-
-    if (isObject(data) || isArray(data)) {
-        return $map(data, unwindCommands);
-    } else {
-        if (isString(data)) {
-            var dd = data.indexOf('`');
-            if (dd >= 0) {
-                if (data[dd - 1] == '\\') {
-                    return data.replace(/\\`/g, '`');
-                } else {
-                    return data.replace(/`([^`]*)`/g, function (d, command) {
-                        var d = spawn([command], 1)
-                        return d;
-                    });
-                }
-            }
-        }
-    }
-    return data;
-
-}
-
-
-function unwindLinks(data, basedata) {
-    basedata = basedata || data;
-    var changed;
-    if (data) {
-
-        if (isObject(data) || isArray(data)) {
-
-            var subchanged = 0;
-
-            //TODO: may be infinite loop!
-
-            do {
-                subchanged = 0;
-                $each(data, function (d, i) {
-                    var ud = unwindLinks(d, basedata);
-                    if (ud.changed) {
-                        subchanged = 1;
-                        data[i] = ud.data;
-                    }
-
-                    ud = unwindLinks(i, basedata);
-                    if (ud.changed) {
-                        subchanged = 1;
-                        data[ud.data] = data[i];
-                        delete data[i];
-                    }
-
-                });
-                if (subchanged) {
-                    changed = 1;
-                }
-            } while (subchanged);
-
-        } else {
-
-            //now only from root
-            if (isString(data)) {
-
-                var di = data.indexOf('@');
-                if (di >= 0) {
-
-                    var founded = 0;
-                    var foundedObject = 0;
-                    var newdata = data.replace(/@\/([\w\d\/]+)(\\@)?/g, function (d, key) {
-                        //                         console.log(key);
-                        var r = getDeepFieldFromObject(basedata, explodeString(key, '/'));
-                        if (r === undefined) {
-                            throw 'cannot unwind link ' + data;
-                        }
-
-                        //                         r = _unwindObject(r);
-                        founded++;
-
-                        if (isObject(r) || isArray(r)) {
-                            foundedObject = r;
-                        }
-
-                        // Arrays transforms into String ( [1,2].toString() == "1,2"  )
-                        return r;
-                    });
-
-
-                    //only one object founded!
-                    if (founded == 1 && isObject(foundedObject) || isArray(foundedObject)) {
-                        data = foundedObject;
-                        changed = 1;
-                    }
-                    else
-                        if (newdata != data) {
-                            data = newdata;
-                            changed = 1;
-                        }
-
-                }
-
-            }
-
-        }
-    }
-
-    return {
-        changed: changed,
-        data: data
-    }
-
-}
 
 var projectFile = argv.target ? './project.json' : '<input data>';
 
 function build(data, target) {
 
-    data = unwindLinks(isString(data) ? JSON.parse(data) : data).data;
+    data.additionalArguments = additionalArguments;
+    data = unwind(isString(data) ? JSON.parse(data) : data);
 
-    data = unwindCommands(data);
     if (target) {
         if (!data || !data.build_targets) {
             throw ('No build_targets in ' + projectFile);
@@ -785,7 +601,6 @@ function build(data, target) {
             throw ('No target ' + target + ' in ' + projectFile);
         }
         else {
-            data = unwindMagicVariables(data);
             var targetContent = data.build_targets[target]
             winston.info('Target ' + target);
             winston.debug('Target content: ', JSON.stringify(targetContent));
@@ -819,7 +634,7 @@ mergeObj(exports, {
     additionalArguments: additionalArguments,
     activateLog: activateLog,
     spawn: spawn,
-    getDeepFieldFromObject: getDeepFieldFromObject,
+
     tool: tool,
     spawntool: spawntool,
     quotesWrap: quotesWrap,
@@ -831,9 +646,7 @@ mergeObj(exports, {
     renameFile: renameFile,
     rsync: rsync,
     buildTarget: buildTarget,
-    unwindMagicVariables: unwindMagicVariables,
-    unwindCommands: unwindCommands,
-    unwindLinks: unwindLinks,
+    unwind: unwind,
     build: build,
 
     fs: fs,

@@ -279,16 +279,6 @@ function loadResources(res, cb) {
 }
 
 
-function explodeString(str) {
-    if (!str) return [];
-    str = str.split(',');
-    for (var i in str) str[i] = str[i].trim();
-    return str;
-}
-
-
-
-
 function showSomeHtml(html) {
     var div_showSomeHtml = window.div_showSomeHtml;
     if (!div_showSomeHtml) {
