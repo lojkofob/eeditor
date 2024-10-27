@@ -1,9 +1,11 @@
 <?php
 
+error_reporting(E_ALL);
+
+// error_reporting(0);
+
 if (file_exists('../local.php'))
 	require_once('../local.php');
-
-	
  
 function forceFilePutContents ($filepath, $data){
     try {

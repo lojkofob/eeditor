@@ -8,7 +8,7 @@ var fs = require('fs')
     , winston = require('./winston')
     , beautifier = require('./beautify')
     , optimist = require('./optimist')
-        .options('log', { alias: 'l', 'default': 'info', describe: 'Log level (debug, info, notice, warning, error).' })
+        .options('log', { alias: 'l', 'default': 'debug', describe: 'Log level (debug, info, notice, warning, error).' })
         .options('target', { alias: 't', 'default': '', describe: 'build target' })
         .options('help', { alias: 'h', describe: 'Show this help message.' })
 
@@ -193,7 +193,8 @@ var subtargetsBuilders = {
     // making sound files for howler
     sounds(d) {
         mkdir(d.dst);
-        spawntool('soundsprite', ['-e mp3 -o sounds -d', d.dst, d.src])
+        mkdir('./tmp/tmp')
+        spawntool('soundsprite', ['-e mp3 -o sounds --array -d', d.dst].concat(collectSources(d.src)))
     },
 
     //simple resizing images for icons, previews, thumbnails etc
@@ -277,6 +278,35 @@ var subtargetsBuilders = {
         }
     },
 
+    ftp_upload(d){
+        var pass = d.password
+            , user = d.user
+            , server = d.server
+            , url = d.url || `https://${server}/`
+            , _path = d.path || ''
+            , src = collectSources(d.src);
+
+        if (!src) throw 'ftp_upload: need src'
+        if (!server) throw 'ftp_upload: need server'
+        
+        if (src){
+            var num = src.length;
+            if (user && pass){
+                server = `${user}:${pass}@${server}`;
+            } else if (user){
+                server = `${user}@${server}`;
+            }
+
+            $each(src, s => {
+                var filename = path.basename(s)
+                spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${_path}/${filename}`])
+            });
+
+            winston.info(`${num} files uploaded, check it at:\n   ${url}/${_path}`)
+        }
+
+    },
+    
     minify(d) {
 
         var compressor = d.compressor || 'gcc';
@@ -360,6 +390,9 @@ var subtargetsBuilders = {
 
         var src = collectSources(d.src);
         var dir = mkdir(d.dst);
+        if (d.name) {
+            dir = makePath([mkdir(d.dst), d.name]);
+        }
         $each(src, function (s) {
             spawn(["cp -rfv", s, dir]);
         });

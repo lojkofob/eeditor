@@ -112,15 +112,15 @@ var gl
     , GL_TRIANGLE_FAN
     , GL_TRIANGLES
 
-    , NeverDepth = 0
-    , AlwaysDepth = 1
-    , LessDepth = 2
-    , LessEqualDepth = 3
-    , EqualDepth = 4
-    , GreaterEqualDepth = 5
-    , GreaterDepth = 6
-    , NotEqualDepth = 7
-
+    , GL_NEVER
+    , GL_ALWAYS
+    , GL_LESS
+    , GL_LEQUAL
+    , GL_EQUAL
+    , GL_GEQUAL
+    , GL_GREATER
+    , GL_NOTEQUAL 
+ 
     , blendingsList
     , glAttributes
     , textureRepeatsList
@@ -180,6 +180,15 @@ function __setGLGlobals(gl) {
     GL_TRIANGLE_STRIP = gl.TRIANGLE_STRIP;
     GL_TRIANGLE_FAN = gl.TRIANGLE_FAN;
     GL_TRIANGLES = gl.TRIANGLES;
+
+    GL_NEVER = gl.NEVER;
+    GL_ALWAYS = gl.ALWAYS;
+    GL_LESS = gl.LESS;
+    GL_LEQUAL = gl.LEQUAL;
+    GL_EQUAL = gl.EQUAL;
+    GL_GEQUAL = gl.GEQUAL;
+    GL_GREATER = gl.GREATER;
+    GL_NOTEQUAL = gl.NOTEQUAL;
 
     blendingsList = [
         []// NoBlending
@@ -509,6 +518,7 @@ function ColorBuffer() {
 
 var gl_alpha = false
     , gl_antialias = false
+    , gl_depth = false
     , gl_premultipliedAlpha = true
     , gl_preserveDrawingBuffer = false;
 
@@ -699,17 +709,7 @@ function WebGLRenderer(_readyCallback, dbg) {
             },
             __setFunc: function (depthFunc) {
                 if (currentDepthFunc !== depthFunc) {
-                    switch (depthFunc) {
-                        case NeverDepth: gl.depthFunc(gl.NEVER); break;
-                        case AlwaysDepth: gl.depthFunc(gl.ALWAYS); break;
-                        case LessDepth: gl.depthFunc(gl.LESS); break;
-                        case LessEqualDepth: gl.depthFunc(gl.LEQUAL); break;
-                        case EqualDepth: gl.depthFunc(gl.EQUAL); break;
-                        case GreaterEqualDepth: gl.depthFunc(gl.GEQUAL); break;
-                        case GreaterDepth: gl.depthFunc(gl.GREATER); break;
-                        case NotEqualDepth: gl.depthFunc(gl.NOTEQUAL); break;
-                        default: gl.depthFunc(gl.LEQUAL);
-                    }
+                    gl.depthFunc(depthFunc);
                     currentDepthFunc = depthFunc;
                 }
             },
@@ -943,13 +943,19 @@ function WebGLRenderer(_readyCallback, dbg) {
         };
     }
 
+    /// \todo: bad bad bad!!!
+    function __shader_needs_uv(file, data) {
+        return file != 'c.v';
+    }
+
     function __getWebGLVertexShader(file, raw) {
         var s = _shadersCache.v[file];
         if (!s) {
             if (options.__useRawShaders || raw) {
                 s = _shadersCache.v[file] = __createWebGLShader(file, gl.VERTEX_SHADER, getVertexShaderData(file));
             }
-            else
+            else {
+                var data = getVertexShaderData(file);
                 s = _shadersCache.v[file] = __createWebGLShader(file, gl.VERTEX_SHADER, [
                     _shader_defines_str,
                     'precision ' + _shader_precision + ' float;',
@@ -957,9 +963,10 @@ function WebGLRenderer(_readyCallback, dbg) {
                     'uniform mat4 matrixWorld;',
                     'uniform mat4 projectionMatrix;',
                     'attribute vec2 position;',
-                    'attribute vec2 uv;',
-                    getVertexShaderData(file)
+                    __shader_needs_uv(file, data) ? 'attribute vec2 uv;' : '',
+                    data
                 ].join('\n'));
+            }
         }
         return s;
     }
@@ -1490,7 +1497,7 @@ function WebGLRenderer(_readyCallback, dbg) {
         __scissor(_scissor);
         __viewport(_viewport);
 
-        depthBuffer.__setFunc(GreaterEqualDepth);
+        depthBuffer.__setFunc(GL_GEQUAL);
         depthBuffer.__setMask(1);
         depthBuffer.__setTest(0);
         depthBuffer.__setClear(0);
@@ -2003,7 +2010,11 @@ function WebGLRenderer(_readyCallback, dbg) {
         }
 
         //debug
-        if (gl.getError()) debugger;
+        var err = gl.getError();
+        if (err) {
+            debugger;
+            // alert(err);
+        }
         //undebug
 
         return r;
@@ -2036,6 +2047,7 @@ function WebGLRenderer(_readyCallback, dbg) {
         glAttributes = {
             alpha: gl_alpha,
             antialias: gl_antialias,
+            depth: gl_depth,
             premultipliedAlpha: gl_premultipliedAlpha,
             preserveDrawingBuffer: gl_preserveDrawingBuffer
         };

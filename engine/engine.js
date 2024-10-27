@@ -467,47 +467,7 @@ var setDefaultRenderLoop = function () {
     }
 };
 
-function wait_mraid_viawable(cb){
-    __mraid.addEventListener("viewableChange", isViewable => {
-        if (isViewable) {
-            __mraid.removeEventListener("viewableChange");
-            cb();
-        }
-    })
-}
-
-function check_mraid(parameters) {
-    if (__mraid) {
-        if (!parameters.__nomraid) {
-            var mraid_state = __mraid.getState()
-                , mraid_ready = mraid_state != 'loading'
-                , mraid_visible = __mraid.getState() != 'hidden' && __mraid.isViewable();
-
-            if (!mraid_ready) {
-                __mraid.addEventListener("ready", function(){ 
-                    __mraid.removeEventListener("ready");
-                    createGame(parameters);
-                 });
-                return 1;
-            } 
-            
-            if (!mraid_visible) {
-                wait_mraid_viawable(a=> {
-                    parameters.__nomraid = 1; 
-                    createGame(parameters);
-                });
-                return 1;
-            }
-        }
-    }
-}
-
-
-function createGame(parameters) {
-
-    if (check_mraid(parameters)) {
-        return;
-    }
+function _createGame(parameters) {
 
     //debug
     if (renderer && scene) {
@@ -570,11 +530,11 @@ function createGame(parameters) {
             
         if (__mraid) {
             var old___onFrame = __onFrame;
-            __onFrame = function(){
-                if (__mraid.isViewable()) {
-                    old___onFrame();
+            __onFrame = function(t){
+                if (__mraid.__isReady()) {
+                    old___onFrame(t);
                 } else {
-                    wait_mraid_viawable(a => {
+                    __mraid.__waitForReady(a => {
                         requestAnimFrame(__onFrame);
                     });
                 }
@@ -603,6 +563,16 @@ function createGame(parameters) {
         parameters.onCreate(scene);
     });
 
+}
+
+function createGame(parameters) {
+    if (__mraid) {
+        __mraid.__waitForReady( a => {
+            _createGame(parameters);
+        });
+    } else {
+        _createGame(parameters)
+    }
 }
 
 

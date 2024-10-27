@@ -178,14 +178,89 @@ var html = (function () {
 
         __redirect(url, donttrack) {
             if (__mraid) {
-                __mraid.open(url);
+                __mraid.__open(url);
             } else
             if (donttrack) {
                 __window.location.replace(url);
             } else {
                 __window.location.href = url;
             }
+        },
+        __openAppStore(url){
+            var a = get(__window, "openAppStore");
+            if (isFunction(a)) return a();
+
+            var FbPlayableAd = get(__window, "FbPlayableAd");
+            if (FbPlayableAd) {
+                a = get(FbPlayableAd, "onCTAClick")
+                if (a)
+                {
+                    return a.call(FbPlayableAd)
+                }
+            }
+
+            var url = url || options.__appStoreUrl;
+            if (isObject(url)){
+                url = _bowser && _bowser.ios ? url.ios : (url.android || url.ios);
+            }                
+            if (isString(url)) {
+                return this.__redirect(url)
+            }
+
+            //cheats
+            consoleDebug("__openAppStore failed");
+            //nocheats
         }
     });
 
 })();
+
+
+// playable ads functions
+
+__mraid = (function() {
+    var mraid = get(__window, "mraid");
+    // do not remove. this string is needed by unity ads app tester
+    console.log("mraid.open(url)", mraid ? 1 : 0);
+    if (mraid){
+        var loading = 'loading', hidden = 'hidden', viewableChange = 'viewableChange', ready = 'ready'
+
+        mraid.__isViewable = get(mraid, 'isViewable');
+        mraid.__open = get(mraid, 'open');
+        mraid.__getState = get(mraid, 'getState');
+        mraid.__addEventListener = get(mraid, 'addEventListener');
+        mraid.__removeEventListener = get(mraid, 'removeEventListener');
+
+        mergeObj(mraid, {
+            __isReady(){
+                var mraid_state = mraid.__getState()
+                return mraid_state != loading && mraid_state != hidden && __mraid.__isViewable();
+            },
+            __waitForReady(callback){
+
+                var mraid_state = __mraid.__getState()
+                if (mraid_state == loading) {
+                    __mraid.__addEventListener(ready, function(){ 
+                        __mraid.__removeEventListener(ready);
+                        callback();
+                    });
+                } else
+                if (mraid_state == hidden || !__mraid.__isViewable()) {
+                    __mraid.__addEventListener(viewableChange, isViewable => {
+                        if (isViewable) {
+                            __mraid.__removeEventListener(viewableChange);
+                            callback();
+                        }
+                    })
+                } else {
+                    callback();
+                }
+
+            }
+        });
+
+        return mraid;
+    }
+})();
+
+  

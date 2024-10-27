@@ -853,28 +853,27 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     break;
 
                 case TASKS_ATLAS:
-                    (function () {
-                        var atlas = {
-                            __atlasImageFile: l[1],
-                            __atlasDataFile: l[2],
-                            __atlasAlphaImageFile: l[3],
-                            __atlasFramePrefix: l[4],
-                            __tryToUseLSCache: l[5]
-                        };
+                    
+                    var atlas = {
+                        __atlasImageFile: l[1],
+                        __atlasDataFile: l[2],
+                        __atlasAlphaImageFile: l[3],
+                        __atlasFramePrefix: l[4],
+                        __tryToUseLSCache: l[5]
+                    };
+                    
+                    if (!globalConfigsData.__frames[atlas.__atlasImageFile]) {
 
-                        if (!globalConfigsData.__frames[atlas.__atlasImageFile]) {
+                        t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasImageFile });
+                        t.__loadTaskOne(TASKS_CONFIG, atlas.__atlasDataFile);
+                        if (atlas.__atlasAlphaImageFile)
+                            t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasAlphaImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasAlphaImageFile });
 
-                            t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasImageFile });
-                            t.__loadTaskOne(TASKS_CONFIG, atlas.__atlasDataFile);
-                            if (atlas.__atlasAlphaImageFile)
-                                t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasAlphaImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasAlphaImageFile });
+                        t.__addOnCompleted(function () {
+                            computeAtlasTexture(atlas);
+                        }, 1);
+                    }
 
-                            t.__addOnCompleted(function () {
-                                computeAtlasTexture(atlas);
-                            }, 1);
-
-                        }
-                    })();
                     break;
 
                 case TASKS_CONFIG: t.__loadSome(l, options.__baseConfigsFolder); break;
@@ -938,13 +937,14 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                             var t = this;
 
                             json.src = $map(json.src, function (a) {
-                                var url = modUrl(t.__dir + a + '?');
+                                var url = modUrl(t.__dir + a);
                                 return getCachedData(url) || url;
                             });
 
                             json.onload = t.__onLoad;
                             json.onend = __onSoundEnd;
 
+                            $each(json.arr, s => json.sprite[s[0]] = s.slice(1) );
                             var howl = new __window.Howl(json);
                             for (var i in json.sprite) {
                                 sounds[i] = { howl: howl, __name: i };

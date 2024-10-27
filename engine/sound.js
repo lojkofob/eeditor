@@ -57,8 +57,9 @@ function canPlaySound(s, loop, delay){
 function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
 //     console.log('===================================== playSound', s, loop, delay, smartUniqueTime);
  
-    if (!canPlaySound(s, loop, delay))
+    if (!canPlaySound(s, loop, delay)) {
         return;
+    }
     
     if (delay) {
         //TODO: stopSound must catch timeout
@@ -70,17 +71,19 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
         var sound = getSound(s);
         if (sound) { 
             
+            var soundGroup = sound.__group || sound;
+
             if (smartUniqueTime){
-                if (sound.__lastPlayed > TIME_NOW - smartUniqueTime ){
+                if (soundGroup.__lastPlayed > TIME_NOW - smartUniqueTime ){
                     return;
                 }
             }
             
-            sound.__lastPlayed = TIME_NOW;
+            soundGroup.__lastPlayed = TIME_NOW;
             
             var i = sound.howl.play( sound.__name );
             
-            sound.__lastPlayedId = i;
+            soundGroup.__lastPlayedId = i;
             
             if (fadeInTime) {
                 sound.howl.fade(0, 1, fadeInTime * ONE_SECOND, i);
@@ -89,7 +92,7 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
             if (loop) {
                 soundsLooper[i] = s;
             }
-            
+
             if (!sounsEventListenersAdded) {
                 
                 BUS.__addEventListener({
@@ -107,15 +110,17 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
 
 function stopSound(sid, fadeOutTime){ 
 //         console.log('===================================== stopSound', s);
-    s = getSound(sid);
-    if (s) { 
+    var sound = getSound(sid);
+    if (sound) { 
+        var soundGroup = sound.__group || sound;
+
         if (fadeOutTime){
             delete soundsLooper[sid];
-            s.howl.fade(1, 0, fadeOutTime * ONE_SECOND, s.__lastPlayedId );
+            sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId );
            _setTimeout(function(){ stopSound(s); }, fadeOutTime);
         }
         else {
-            s.howl.stop( s.__lastPlayedId );
+            sound.howl.stop( soundGroup.__lastPlayedId );
         }
     }
 }

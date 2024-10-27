@@ -1,7 +1,5 @@
 <?php
 
-// error_reporting(E_ALL);
- error_reporting(0);
 global $answ;
 global $pfolder;
 $answ = array();

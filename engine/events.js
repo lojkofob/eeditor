@@ -704,7 +704,7 @@ function _onDocumentMouseMove(e) {
         //         consoleError( 'mouseMove', curDraggingObject.__lastMousePosition, 'mouse:', mouse.__clone() );
 
         if (dx * dx + dy * dy > (curDraggingObject.__dragDist || 100)) {
-            if (!curDraggingObject.__isDragging)
+            if (!curDraggingObject.__isDragging) {
                 if (curDraggingObject.__dragStart) {
                     //cheats
                     if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragStart');
@@ -712,7 +712,8 @@ function _onDocumentMouseMove(e) {
                     curDraggingObject.__dragStart(curDraggingObject.__lastPosition.x, curDraggingObject.__lastPosition.y);
                 }
 
-            curDraggingObject.__isDragging = true;
+                curDraggingObject.__isDragging = true;
+            }
         }
 
         if (curDraggingObject.__isDragging) {

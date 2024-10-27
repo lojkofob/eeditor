@@ -1,3 +1,5 @@
+// win: choco install ffmpeg-full
+
 var fs = require('fs')
 var path = require('path')
 var async = require('../async')
@@ -9,6 +11,10 @@ var optimist = require('../optimist')
     alias: 'o'
   , 'default': 'output'
   , describe: 'Name for the output file.'
+  })
+  .options('array', {
+   'default': 0
+  , describe: 'Save json as array'
   })
   .options('outdir', {
     alias: 'd'
@@ -99,6 +105,10 @@ var json = {
 , sprite: {}
 }
 
+if (argv.array){
+  json.arr = [];
+}
+
 spawn('ffmpeg',['-version']).on('exit', function(code) {
   if (code) {
     winston.error('ffmpeg was not found on your path')
@@ -121,8 +131,7 @@ spawn('ffmpeg',['-version']).on('exit', function(code) {
 
 
 function mktemp(prefix) {
-  var tmpdir = require('os').tmpDir() || '.'
-  return path.join(tmpdir, prefix + '.' + Math.random().toString().substr(2))
+  return path.join('./tmp', prefix + '.' + Math.random().toString().substr(2))
 }
 
 function spawn(name, opt) {
@@ -181,7 +190,12 @@ function appendFile(originalPath, name, src, dest, cb) {
     reader.on("end", function() {
         var duration = size / SAMPLE_RATE / NUM_CHANNELS / 2
         winston.info('File added OK', { path: originalPath, name:name, file: src, duration: duration })
-        json.sprite[name] = [ offsetCursor * 1000, duration * 1000/*, name === argv.autoplay*/ ]
+
+        if (json.arr){
+          json.arr.push([name, offsetCursor * 1000, duration * 1000/*, name === argv.autoplay*/ ])
+        } else {
+          json.sprite[name] = [ offsetCursor * 1000, duration * 1000/*, name === argv.autoplay*/ ]
+        }
         offsetCursor += duration
         appendSilence(0.25, dest, cb)
     });

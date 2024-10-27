@@ -122,7 +122,6 @@ makeClass(MyBufferAttribute, {
         } else {
             gl.bindBuffer(t.__type, t.__webglBuffer);
             if (t.__changed) {
-                //gl.bufferData(t.__type, t.__itemSize, t.__dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
                 gl.bufferSubData(t.__type, 0, t.__array, 0, t.__realsize);
                 t.__changed = 0;
             }

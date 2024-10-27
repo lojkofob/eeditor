@@ -23,6 +23,8 @@ function genMap(w, h) {
 
 function getFrameName(filename) {
     if (filename != undefined) {
+        if (filename.trim)
+            filename = filename.trim();
         if (filename.replace) {
             if (filename.indexOf && (filename.indexOf('?') > 0)) { return filename; }
             var fn1 = filename.replace(/\.\w+$/, '');
@@ -2314,6 +2316,13 @@ mergeObj(NodePrototype, {
 
     }
 
+    , __addBusObservers(){
+        var o = {};
+        for (var i = 0; i < arguments.length; i += 2) { o[arguments[i]] = arguments[i + 1]; }
+        this.__busObservers = o;
+        return this;
+    }
+
     //debug     
     , __selectable: 1,
 
@@ -3689,14 +3698,15 @@ var NodeCloneProperties = {
                 if (!t.__keepImage)
                     clearSelfImage();
 
+                if (filename == ' '){
+                    t.____img = filename;
+                } else
                 if (filename != undefined) {
 
                     //                 __window.__loadImageStack = 'i ' + filename;
 
                     filename = getFrameName(filename);
-
-                    t.____img = filename;
-
+                    
                     if (globalConfigsData.__frames.hasOwnProperty(filename)) // загружено из атласа или просто кэш картинок
                     {
                         var frame = globalConfigsData.__frames[filename]

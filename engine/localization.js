@@ -71,14 +71,24 @@ function getUserBrowserLanguage() {
 }
 
 var localizationLang;
+var __loc_cache = {};
 function getUserLanguage() {
     var l = ((PlayerState || 0).lang || LocalGetKey('lang') || js_GetLanguage() || getUserBrowserLanguage() || 'en_US')
-        .split('-')[0]
-        .split('_')[0].toLowerCase();
-    if (options.__supportedLangs.indexOf(l) < 0) {
-        l = 'en';
+        .toLowerCase();
+        
+    function check_lang(locale){
+        if (inArray(locale, options.__supportedLangs)) {
+            __loc_cache[l] = locale;
+            return locale;
+        }
     }
-    return l;
+    return __loc_cache[l] ||
+        check_lang(l) ||
+        check_lang(l.replace('-', '_')) ||
+        check_lang(l.replace('_', '-')) ||
+        check_lang(l.split('-')[0]) ||
+        check_lang(l.split('_')[0]) ||
+        check_lang('en') || 'en';
 }
 
 function setLocalization(l, force) {

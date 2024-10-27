@@ -25,8 +25,15 @@ var undefinedType = typeof undefined;
 
 var _bowser = typeof bowser == undefinedType ? 0 : bowser;
 
-var _localStorage = typeof localStorage != undefinedType ? localStorage : 0;
+var _localStorage
 
+try {
+    _localStorage = typeof localStorage != undefinedType ? localStorage : 0;
+} catch(err) {
+    //cheats
+    consoleError('Local storage error', err);
+    //endcheats
+}
 
 function ifdef(a, b) {
     return a === undefined ? b : a;
@@ -229,7 +236,7 @@ if (_bowser.android || _bowser.mobile || _bowser.ios) {
 
 //endcheats
 
-var M = Math, __document = document, __window = window, __mraid = get(__window, "mraid"),
+var M = Math, __document = document, __window = window, __mraid,
     sign = M.sign || function (x) { return (x < 0) ? - 1 : (x > 0) ? 1 : + x; },
     acos = M.acos, mmax = M.max, mmin = M.min, floor = M.floor, abs = M.abs, ceil = M.ceil, trunc = M.trunc,
     LN2 = M.LN2, tan = M.tan, atan = M.atan, log = M.log, atan2 = M.atan2, asin = M.asin,

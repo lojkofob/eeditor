@@ -417,9 +417,10 @@ mergeObj(Object3DPrototype, {
 
         var childs = this.__childs;
 
-        for (var i = 0, l = childs.length; i < l; i++) {
-
-            r = childs[i].__traverseVisible(callback);
+        for (var i = 0; i < childs.length; i++) {
+            var child = childs[i];
+            r = child.__traverseVisible(callback);
+            if (!child.__destructed) i++;
             if (r !== undefined) return r;
         }
 
@@ -427,20 +428,24 @@ mergeObj(Object3DPrototype, {
 
     __traverseChildsFilter(callback, filter) {
         var childs = this.__childs, r;
-        for (var i = 0, l = childs.length; i < l; i++) {
-            r = childs[i].__traverseFilter(callback, filter);
+        for (var i = 0; i < childs.length;) {
+            var child = childs[i];
+            r = child.__traverseFilter(callback, filter);
+            if (!child.__destructed) i++;
             if (r !== undefined) return r;
         }
     },
 
     __traverseChilds(callback) {
         var childs = this.__childs, r;
-        for (var i = 0, l = childs.length; i < l; i++) {
+        for (var i = 0; i < childs.length;) {
+            var child = childs[i];
             //debug
-            if (!childs[i].__traverse)
+            if (!child || !child.__traverse)
                 debugger;
             //undebug
-            r = childs[i].__traverse(callback);
+            r = child.__traverse(callback);
+            if (!child.__destructed) i++;
             if (r !== undefined) return r;
         }
     },
