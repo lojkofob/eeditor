@@ -1,6 +1,7 @@
 /*
  some html DOM routines
- */
+ also ad platforms support
+*/
 
 var html = (function () {
 
@@ -114,6 +115,18 @@ var html = (function () {
         return e;
     }
 
+    //mintegral
+    var gameReady = get(__window, 'gameReady');
+    if (gameReady) { BUS.__addEventListener(__ON_GAME_LOADED, a => { gameReady.call(__window); return 1; }); }
+    var gameEnd = get(__window, 'gameEnd');
+    if (gameEnd) { BUS.__addEventListener(__ON_GAME_END, a => { gameEnd.call(__window); return 1; }); }
+    if (gameReady && gameEnd) {
+        set(__window, 'gameStart', a => { BUS.__post(__ON_GAME_START); });
+        set(__window, 'gameClose', a => { BUS.__post(__ON_GAME_CLOSE); });
+    } else {
+        BUS.__addEventListener(__ON_GAME_LOADED, a => { BUS.__post(__ON_GAME_START); return 1; })
+    }
+    //nomintegral
 
     return makeSingleton({
 
@@ -177,9 +190,6 @@ var html = (function () {
         },
 
         __redirect(url, donttrack) {
-            if (__mraid) {
-                __mraid.__open(url);
-            } else
             if (donttrack) {
                 __window.location.replace(url);
             } else {
@@ -187,29 +197,36 @@ var html = (function () {
             }
         },
         __openAppStore(url){
+            // tiktok
             var a = get(__window, "openAppStore");
-            if (isFunction(a)) return a();
+            if (isFunction(a)) return a.call(__window);
 
+            // facebook
             var FbPlayableAd = get(__window, "FbPlayableAd");
             if (FbPlayableAd) {
                 a = get(FbPlayableAd, "onCTAClick")
-                if (a)
-                {
-                    return a.call(FbPlayableAd)
-                }
+                if (a) return a.call(FbPlayableAd)
             }
+
+            // mintegral
+            a = get(__window, "install");
+            if (isFunction(a)) return a.call(__window);
 
             var url = url || options.__appStoreUrl;
             if (isObject(url)){
                 url = _bowser && _bowser.ios ? url.ios : (url.android || url.ios);
-            }                
-            if (isString(url)) {
-                return this.__redirect(url)
             }
 
-            //cheats
-            consoleDebug("__openAppStore failed");
-            //nocheats
+            if (isString(url)) {
+                // mraid (Unity, AppLovin)
+                if (__mraid) {
+                    return __mraid.__open(url);
+                } else {
+                    return this.__redirect(url)
+                }
+            }
+            
+            consoleDebug("openAppStore failed");
         }
     });
 

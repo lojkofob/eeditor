@@ -368,7 +368,9 @@ NodeEditWithKitten.prototype = {
                 }
 
                 function nodeshader(node) {
-                    return node.__is3D ? 'base' : canShade(node) ? { v: node.__program.v, f: 'base' } : 'base';
+                    return node.__is3D ? 'base' : canShade(node) ? { v: 
+                        node.__program.v.id == 'c' ? 'base' : node.__program.v, 
+                        f: 'base' } : 'base';
                 }
 
 

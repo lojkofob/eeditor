@@ -1,6 +1,9 @@
 // busEvents
 
 var __ON_GAME_LOADED = '__ON_GAME_LOADED'
+  , __ON_GAME_END = '__ON_GAME_END'
+  , __ON_GAME_START = '__ON_GAME_START'
+  , __ON_GAME_CLOSE = '__ON_GAME_CLOSE'
   , __ON_RESIZE = '__ON_RESIZE'
   , __ON_RESTART = '__ON_RESTART'
   , __ON_TAP = '__ON_TAP'
