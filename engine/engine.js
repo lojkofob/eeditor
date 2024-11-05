@@ -376,18 +376,29 @@ function updateTimeNow() {
 
 var PerformanceProfiler = (function () {
 
-    var __lastCurrentFrame = 0, __active = 0, t = {
+    var __lastCurrentFrame = 0, __active = 0, lt = 0, t = {
         __on: function (t, visible) {
             if (!visible) __active = 0;
         },
         __interval: setInterval(function () {
+            var now = Date.now() / 1000;
 
             if (__active > 2 && (__currentFrame > __lastCurrentFrame + 1)) {
                 currentFPS = __currentFrame - __lastCurrentFrame;
                 // первые 1000 кадров идет более быстрая подстройка, т.к. данных до этого у нас нет
                 // потом averageFPS показывает среднее фпс за 50 сек
                 averageFPS = lerp(averageFPS, currentFPS, __currentFrame < 1000 ? 1 / lerp(1, 50, pow(__currentFrame / 1000, 3)) : 0.1);
+
+                renderInfo.averageFrameTime = (now - lt) / currentFPS;
+                renderInfo.averageRenderTime = renderInfo.renderTime / currentFPS;
+                renderInfo.averageDrawTime = renderInfo.drawTime / currentFPS;
+                renderInfo.renderTime = 0;
+                renderInfo.drawTime = 0;
+
+                console.log(renderInfo.averageRenderTime.toFixed(2));
             }
+
+            lt = now;
 
             if (__currentFrame > __lastCurrentFrame + 1) {
                 __active = mmin(3, __active + 1);
@@ -449,6 +460,9 @@ function updateFramesRoutine(t) {
 var setDefaultRenderLoop = function () {
     renderer.__renderLoop = function () {
         var c;
+        //cheats
+        var tm = Date.now();
+        //endcheats
         $each(scenes, function (s) {
             if (s.__childs.length) {
                 renderer.__setRenderTarget(0);
@@ -461,9 +475,14 @@ var setDefaultRenderLoop = function () {
                 }
             }
         });
+
         if (c) {
             renderer.__finishRender();
         }
+    
+        //cheats
+        renderInfo.renderTime += (Date.now() - tm) / ONE_SECOND;
+        //endcheats
     }
 };
 
@@ -480,7 +499,10 @@ function _createGame(parameters) {
     //undebug
 
     renderer = new WebGLRenderer(); 
-    //WebGLRenderer(1); to enable GlDebug
+    
+    //cheats
+    renderer.__handleGLErrors(!_bowser.mobile);
+    //endcheats
 
     renderer.__init(function(){
 
@@ -1322,14 +1344,81 @@ function destroyImage(img) {
     }
 }
 
+function findperbr(elem, n1, n2) {
+    return elem[n1] || elem['ms' + n2 ] || elem['moz' + n2] || elem['webkit' + n2]
+}
+
+function isFullScreen(elem) {
+    var st=screen.top || screen.availTop || __window.screenTop;
+    if(st!=__window.screenY) return false;
+    return __window.fullScreen==true || (screen.height-__document.documentElement.clientHeight<=30);
+}
 
 function enterFullScreen(elem, opts) {
-    opts = opts || { navigationUI: 'hide' };
+    opts = opts || set({}, 'navigationUI', 'hide');
     elem = elem || renderer.__domElement;
-    $find(['requestFullscreen', 'msRequestFullscreen', 'mozRequestFullScreen', 'webkitRequestFullscreen'],
-        v => elem[v] ? elem[v](opts) || 1 : 0);
-
+    var f = findperbr(elem, 'requestFullscreen', 'RequestFullscreen');
+    if (f) { f.call(elem, opts); return 1; }
+    else if (elem != __document) enterFullScreen(__document, opts)
 }
+
+function exitFullScreen(elem) {
+    elem = elem || renderer.__domElement;
+    var f = findperbr(elem, 'exitFullscreen', 'ExitFullscreen');
+    if (f) { f.call(elem); return 1; }
+    else if (elem != __document) exitFullScreen(__document)
+}
+
+function getSafeAreaPaddings() {
+
+    if (options.__safePaddings){
+        return options.__safePaddings;
+    }
+
+    //iphone X 1.11
+    var dd = __document.documentElement;
+    /*
+    if (dd.clientHeight == 812 && dd.clientHeight == 375 && 
+        !!__window.matchMedia && 
+        __window.matchMedia("only screen and (-webkit-device-pixel-ratio: 3)").matches && _bowser.version && 
+        _bowser.version.startsWith("11")) {
+        return true;
+    }*/
+
+
+    var e = html.__addCSSStyle(":root {-t:env(safe-area-inset-top); -r:env(safe-area-inset-right); -b:env(safe-area-inset-bottom); -l:env(safe-area-inset-left); }");
+    
+    var cstyle = getComputedStyle(dd);
+
+    var safePaddings = [
+        toNumber(cstyle.getPropertyValue("-t")),
+        toNumber(cstyle.getPropertyValue("-l")),
+        toNumber(cstyle.getPropertyValue("-b")),
+        toNumber(cstyle.getPropertyValue("-r"))
+    ];
+
+    html.__removeElement(e);
+
+    if (safePaddings[0] || safePaddings[1] || safePaddings[2] || safePaddings[3]) {
+        options.__safePaddings = safePaddings;
+        return safePaddings;
+    }
+
+    e = html.__addCSSStyle(":root {-t:constant(safe-area-inset-top); -r:constant(safe-area-inset-right); -b:constant(safe-area-inset-bottom); -l:constant(safe-area-inset-left); }");
+    
+    cstyle = getComputedStyle(dd);
+
+    safePaddings = [
+        toNumber(cstyle.getPropertyValue("-t")),
+        toNumber(cstyle.getPropertyValue("-l")),
+        toNumber(cstyle.getPropertyValue("-b")),
+        toNumber(cstyle.getPropertyValue("-r"))
+    ];
+
+    html.__removeElement(e);
+    options.__safePaddings = safePaddings;
+    return safePaddings;
+};
 
 //debug
 

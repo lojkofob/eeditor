@@ -302,9 +302,13 @@ var subtargetsBuilders = {
                 spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${_path}/${filename}`])
             });
 
-            winston.info(`${num} files uploaded, check it at:\n   ${url}/${_path}`)
+            winston.info(`${num} files uploaded, check it at:`)
+            
+            $each(src, s => {
+                var filename = path.basename(s)
+                winston.info(`${url}/${_path}/${filename}`)
+            })
         }
-
     },
     
     minify(d) {

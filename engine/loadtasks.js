@@ -518,24 +518,26 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
                     } else {
                         setCachedData(data, 1);
 
-                        loadFont(data, function (family) {
-                            _setTimeout(function () {
+                        loadFont(data, (family, shouldUseNativeLoader, timeout) => {
+                            var tmd = (shouldUseNativeLoader && timeout == 0) ? 100 : 1;
+                            _setTimeout(a => {
                                 setCachedData(family, family);
                                 updateAllTextsThenFontLoaded(family);
 
                                 if (_bowser.ios) {
-                                    looperPost(function () {
-                                        _setTimeout(function () {
-                                            looperPost(function () {
+                                    looperPost(a => {
+                                        _setTimeout(a => {
+                                            looperPost(a => {
                                                 updateAllTextsThenFontLoaded(family);
                                             });
-                                        }, 0.1);
+                                        }, 0.1 / tmd);
                                     });
                                 }
 
-                            }, (_bowser.ios ? 1 : 0.1));
-
+                            }, (_bowser.ios ? 1 : 0.1) / tmd);
+                            
                             onLoad();
+                            
                         });
 
                     }
@@ -945,6 +947,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                             json.onend = __onSoundEnd;
 
                             $each(json.arr, s => json.sprite[s[0]] = s.slice(1) );
+                            
                             var howl = new __window.Howl(json);
                             for (var i in json.sprite) {
                                 sounds[i] = { howl: howl, __name: i };

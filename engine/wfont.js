@@ -99,9 +99,9 @@ function loadFont(fontName, cb, timeout) {
     var tmout;
     var family = getFontFaceFromFontFile(fontName);
 
-    var callback = wrapFunctionInTryCatch(function () {
+    var callback = wrapFunctionInTryCatch((a, b) => {
         _clearTimeout(tmout);
-        cb(family);
+        cb(family, shouldUseNativeLoader, timeout);
     });
 
     timeout = timeout || 2;
@@ -113,13 +113,13 @@ function loadFont(fontName, cb, timeout) {
     // consoleLog('loadFont', fontName, shouldUseNativeLoader);
 
     if (data_base64) {
-
         url = data_base64;
+        timeout = 0;
     }
 
     html.__addCSSStyle("@font-face{font-family:'" + family + "';src:url('" + url + "');} ." + family + "{font:24px " + family + ";}");
     tmout = _setTimeout(
-        (shouldUseNativeLoader ? loadNative : loadNotNative)(family, url, callback, callback), timeout
+        (shouldUseNativeLoader ? loadNative : loadNotNative)(family, url, callback, callback), timeout || 0.01
     );
 
 

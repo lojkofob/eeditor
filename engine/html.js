@@ -43,9 +43,9 @@ var html = (function () {
         return elem;
     }
 
-    function html_addHtmlToHead(e) { return html_addHtml(html_getHead(), e); }
+    function html_addHtmlToHead(e) { html_addHtml(html_getHead(), e); return e; }
 
-    function html_addHtmlToBody(e) { return html_addHtml(html_getBody(), e); }
+    function html_addHtmlToBody(e) { html_addHtml(html_getBody(), e); return e; }
 
     function html_createElement(d, j, f) {
         var e = mergeObj(__document.createElement(d), j);
@@ -54,7 +54,7 @@ var html = (function () {
     }
 
     function html_addCSSStyle(css) {
-        html_addHtmlToHead(
+        return html_addHtmlToHead(
             html_createElement('style', { type: 'text/css' }, function (e) {
                 if (e.styleSheet) {
                     e.styleSheet.cssText = css;
@@ -225,7 +225,7 @@ var html = (function () {
                     return this.__redirect(url)
                 }
             }
-            
+
             consoleDebug("openAppStore failed");
         }
     });

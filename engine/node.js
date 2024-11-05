@@ -5304,6 +5304,10 @@ var NodeCloneProperties = {
                 if (!v) {
                     BUS.__removeEventListener(t);
                 } else {
+                    if (t.__on) {
+                        BUS.__removeEventListener(objectKeys(t.____busObservers), t);
+                    }
+
                     if (!t.____busObservers) {
                         t.____busObservers = v;
                     } else {
@@ -5315,9 +5319,11 @@ var NodeCloneProperties = {
                             var bo = (t.____busObservers || 0)[type];
                             return bo ? bo.apply(t, arguments) : 1;
                         };
-                        BUS.__addEventListener(objectKeys(t.____busObservers), t);
                         t.__addOnDestruct(BUS.__removeEventListener.bind(BUS, t));
                     }
+
+                    BUS.__addEventListener(objectKeys(t.____busObservers), t);
+                    
                 }
             }
         ),

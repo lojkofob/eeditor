@@ -437,8 +437,9 @@ function _onDocumentMouseUp(e, isout) {
         } // else consoleError( 'no tap because Date.now() - downTime > 500', Date.now(), downTime, isout );
     }
 
-    if (!isout && gestures.__onPointerUp)
-        gestures.__onPointerUp();
+    if (isout){
+        if (gestures.__onPointerOut) gestures.__onPointerOut();
+    } else if (gestures.__onPointerUp) gestures.__onPointerUp();
 
     if (pinchInProcess) {
         var touches = getTouches(e);

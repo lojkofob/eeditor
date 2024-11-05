@@ -27,7 +27,10 @@ var renderInfo = {
 
     nodesUpdated: 0,
     nodesRealUpdated: 0,
-    nodesUpdatedDeep: 0
+    nodesUpdatedDeep: 0,
+
+    renderTime: 0,
+    drawTime: 0
 
 };
 //endcheats
@@ -211,14 +214,9 @@ function __setGLGlobals(gl) {
 
 
 
-//debug
-function debugOnGLError() {
-    var e = gl.getError();
-    if (e) {
-        console.assert(e);
-    }
-}
-//undebug
+//cheats
+function debugOnGLError() { }
+//endcheats
 
 var __onLowGlMemCallback;
 function __checkGLErrors(createdElement) {
@@ -522,8 +520,8 @@ var gl_alpha = false
     , gl_premultipliedAlpha = true
     , gl_preserveDrawingBuffer = false;
 
-function WebGLRenderer(_readyCallback, dbg) {
-    // dbg = 1;
+function WebGLRenderer() {
+    
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
 
@@ -1451,11 +1449,6 @@ function WebGLRenderer(_readyCallback, dbg) {
             }
 
         }
-        //cheats
-        if (dbg) {
-            __enableGLDebug();
-        }
-        //endcheats
 
         __setGLGlobals(gl);
 
@@ -1479,9 +1472,9 @@ function WebGLRenderer(_readyCallback, dbg) {
         gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         __texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, new Uint8Array(4));
 
-        // _shader_precision = _shader_precision || __getMaxPrecision('highp');
+        _shader_precision = _shader_precision || __getMaxPrecision('highp');
 
-        _shader_precision = _shader_precision || __getMaxPrecision('mediump');
+        // _shader_precision = _shader_precision || __getMaxPrecision('mediump');
 
         _shader_defines_str += '\nprecision ' + _shader_precision + ' float;\n';
         _shader_defines_str += 'precision ' + _shader_precision + ' int;\n'
@@ -1968,23 +1961,29 @@ function WebGLRenderer(_readyCallback, dbg) {
                     p_uniforms[uname].set(object[uname]);
             }
 
-        //cheats
-        renderInfo.calls++;
-        renderInfo.vertices += count;
-        //endcheats
-
         renderer.__initAttributes();
 
         var r = object.__setupVertexAttributes(program);
 
         renderer.__disableUnusedAttributes();
 
+        //cheats
+        renderInfo.calls++;
+        renderInfo.vertices += count;
+        //endcheats
+                
+        //3d
         __setFaceCulling(object.__cullFace, object.__frontFaceDirection || 1);
-
         depthBuffer.__setTest(object.__useDepth || 0);
+        //no3d
 
         if (r) {
-            var icount = round(object.__instancesCount), dmode = object.__drawMode || gl.TRIANGLES;
+
+            //cheats
+            var tm = Date.now();
+            //endcheats
+
+            var icount = object.__instancesCount, dmode = object.__drawMode || gl.TRIANGLES;
             if (object.__indecesBuffer) {
                 if (icount) {
                     gl.drawElementsInstanced(dmode, count, gl.UNSIGNED_SHORT, 0, icount);
@@ -2004,18 +2003,16 @@ function WebGLRenderer(_readyCallback, dbg) {
                 }
             }
 
-
-        } else {
-
+            //cheats
+            renderInfo.drawTime += ( Date.now() - tm ) / ONE_SECOND;
+            //endcheats
+ 
         }
 
-        //debug
-        var err = gl.getError();
-        if (err) {
-            debugger;
-            // alert(err);
-        }
-        //undebug
+
+        //cheats
+        debugOnGLError();
+        //endcheats
 
         return r;
     }
@@ -2063,6 +2060,18 @@ function WebGLRenderer(_readyCallback, dbg) {
         
     }
 
+    //cheats
+    function __handleGLErrors(val) {
+        debugOnGLError = val ? function(){
+            var e = gl.getError();
+            if (e) {
+                debugger;
+                // alert(err);
+            }
+        } : function(){}
+    }
+    //endcheats
+
     return {
         __domElement: __domElement
         , __init: __init
@@ -2089,11 +2098,10 @@ function WebGLRenderer(_readyCallback, dbg) {
         , __setTexture2D: __setTexture2D
         , __invalidateState: __invalidateState
         , __setBlending: __setBlending
-
         //cheats
+        , __handleGLErrors: __handleGLErrors
         , __disableGLDebug: __disableGLDebug
         , __enableGLDebug: __enableGLDebug
-
         //endcheats
     }
 

@@ -573,6 +573,7 @@ function createDeobfuscatingMap(basemap) {
 var requestAnimFrame = (function () { return __window.requestAnimationFrame || __window.webkitRequestAnimationFrame || __window.mozRequestAnimationFrame || __window.oRequestAnimationFrame || __window.msRequestAnimationFrame })();
 
 function isNumeric(n) { return !isNaN(parseFloat(n)) && isFinite(n) && !isArray(n); }
+function toNumber(n) { var kk = parseFloat(n); return (!isNaN(kk) && isFinite(n) && !isArray(n)) ? kk : 0; }
 
 function numeric(n) {
     n = parseFloat(n);
