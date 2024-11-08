@@ -14,7 +14,8 @@ var fs = require('fs')
 
     , argv = optimist.argv
     , glob = require('./glob')
-    , unwind = require('./unwind.js').unwind;
+    , unwind = require('./unwind.js').unwind
+    , env = {};
 
 winston.setLevels(winston.config.syslog.levels);
 winston.remove(winston.transports.Console);
@@ -49,13 +50,21 @@ if (isArray(argv._)) {
 
 //TODO: asyncing?
 var spawnLog = 0;
+var spawnCwd;
+
 function activateLog(logfile) {
     spawnLog = logfile;
 }
 
 var echo = 0;
-function spawn(a, returnOutput) {
+function spawn(a, opts) {
     // console.log(a[0]);
+
+    opts = opts || {};
+
+    if (spawnCwd && !opts.cwd) {
+        opts.cwd = spawnCwd;
+    }
 
     var cmd = $map(a, function (p) {
         if (isArray(p))
@@ -76,16 +85,17 @@ function spawn(a, returnOutput) {
     winston.debug('execSync: ' + cmd);
 
     var result = '';
-    if (returnOutput) {
-        result = execSync(cmd);
+    if (opts.returnOutput) {
+        result = execSync(cmd, opts);
     } else
         if (spawnLog) {
-            result = execSync(cmd);
+            result = execSync(cmd, opts);
             fs.appendFileSync(spawnLog, "\n# " + cmd + "\n" + result, 'utf8');
             winston.debug(result);
         }
         else {
-            result = execSync(cmd, { stdio: [0, 1, 2] });
+            opts.stdio = [0, 1, 2];
+            result = execSync(cmd, opts);
         }
     return result
 
@@ -119,7 +129,7 @@ function collectSourcesStr(src, basedir, sep) {
 
 function collectSources(src, basedir) {
     var files = [];
-    basedir = basedir || "";
+    basedir = basedir || '';
     if (isObject(src)) {
         for (var i in src) {
             files = files.concat(collectSources(src[i], basedir + i));
@@ -130,11 +140,9 @@ function collectSources(src, basedir) {
         }
     } else {
         if (src) {
-            files = glob.sync(basedir + src);
+            files = glob.sync(path.join(basedir, src));
         }
     }
-
-
     return files;
 };
 
@@ -310,6 +318,37 @@ var subtargetsBuilders = {
             })
         }
     },
+
+    zip(d){
+        var src = d.src;
+        var zipname = d.dst;
+
+        if (isObject(src)) {
+            $each(src, (filename, zipfilename) => {
+                if (filename == zipfilename) {
+                    spawn(['zip', '-r', '-9', zipname, filename])
+                } else {
+                    var tmp_path = 'zip_tmp/'
+                    mkdir(tmp_path);
+                    fs.copyFileSync( 
+                        makePath([spawnCwd||'', zipfilename]),
+                        makePath([spawnCwd||'', tmp_path, filename])
+                    );
+                    
+                    spawn(['zip', '-r', '-9', '-m', '../' + zipname, filename], {
+                        cwd: path.join(spawnCwd||'', tmp_path)
+                    });
+                    
+                    fs.rmdirSync(  makePath([spawnCwd||'', tmp_path]) );
+                }
+            })                
+        } else {
+            src = $map(collectSources(src, spawnCwd), f => f.replace(spawnCwd, ''));
+            $each(src, filename => {
+                spawn(['zip', '-r', '-9', zipname, filename])
+            });
+        }
+    },
     
     minify(d) {
 
@@ -325,6 +364,7 @@ var subtargetsBuilders = {
                 d.myminify ? '--myminify' : '',
                 d.pretty ? '--PRETTY' : '',
                 d.rmdebug ? '--rmdebug ' + d.rmdebug : '',
+                env.CHEATS ? '' : '--rmcheats',
                 '-o', dst,
                 src || collectSourcesStr(d.src, d.srcdir)
             ]);
@@ -586,6 +626,7 @@ function buildTarget(target) {
             var subtarget = target[i];
             if (isFunction(subtarget)) {
                 activateLog(subtarget.log);
+
                 echo = subtarget.echo;
                 winston.debug('Build subtarget ' + i + ' type: function');
                 subtarget();
@@ -594,6 +635,8 @@ function buildTarget(target) {
             else if (isObject(subtarget)) {
                 activateLog(subtarget.log);
 
+                spawnCwd = subtarget.cwd;
+                
                 echo = subtarget.echo;
 
                 var stype = String(subtarget.type).toLowerCase();
@@ -629,6 +672,7 @@ function build(data, target) {
 
     data.additionalArguments = additionalArguments;
     data = unwind(isString(data) ? JSON.parse(data) : data);
+    env = mergeObj(env, data.buildFlags);
 
     if (target) {
         if (!data || !data.build_targets) {

@@ -3,7 +3,6 @@
 
 var sounds = { };
 var soundsLooper = { };
-var sounsEventListenersAdded;
 
 function getSound(s){
     return s && s.howl ? s : sounds[s];
@@ -80,28 +79,26 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
             }
             
             soundGroup.__lastPlayed = TIME_NOW;
-            
-            var i = sound.howl.play( sound.__name );
+            var howl = sound.howl;
+            if (!howl) return;
+
+            var i = howl.play( sound.__name );
             
             soundGroup.__lastPlayedId = i;
             
             if (fadeInTime) {
-                sound.howl.fade(0, 1, fadeInTime * ONE_SECOND, i);
+                howl.fade(0, 1, fadeInTime * ONE_SECOND, i);
             }
             
             if (loop) {
                 soundsLooper[i] = s;
             }
 
-            if (!sounsEventListenersAdded) {
-                
-                BUS.__addEventListener({
-                    __ON_VISIBILITY_CHANGED: function(t, visible) {
-                        Howler.mute(!visible);
-                    }
+            if (!howl.soundsEventListenersAdded) {
+                BUS.__addEventListener(__ON_VISIBILITY_CHANGED, (t, visible) => {
+                    howl.mute(!visible);
                 });
-                
-                sounsEventListenersAdded = 1;
+                howl.soundsEventListenersAdded = 1;
             }
         }
     }

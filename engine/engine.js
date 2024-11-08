@@ -373,7 +373,7 @@ function updateTimeNow() {
 
 }
 
-
+//cheats
 var PerformanceProfiler = (function () {
 
     var __lastCurrentFrame = 0, __active = 0, lt = 0, t = {
@@ -394,8 +394,7 @@ var PerformanceProfiler = (function () {
                 renderInfo.averageDrawTime = renderInfo.drawTime / currentFPS;
                 renderInfo.renderTime = 0;
                 renderInfo.drawTime = 0;
-
-                console.log(renderInfo.averageRenderTime.toFixed(2));
+                
             }
 
             lt = now;
@@ -418,7 +417,7 @@ var PerformanceProfiler = (function () {
     );
 
 })();
-
+//endcheats
 
 function updateFramesRoutine(t) {
 

@@ -75,6 +75,9 @@ makeClass(MyBufferAttribute, {
     },
 
     __destruct() {
+        if (this.__notDestruct){
+            return;
+        }
         delete _buffersCache[this.id];
         if (this.__webglBuffer) {
             //cheats
@@ -93,6 +96,7 @@ makeClass(MyBufferAttribute, {
             //endcheats
             if (gl) gl.deleteBuffer(this.__webglBuffer);
             this.__webglBuffer = 0;
+            this.__needNewBuffer = 1;
         }
     },
 

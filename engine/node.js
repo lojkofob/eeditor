@@ -775,20 +775,24 @@ mergeObj(NodePrototype, {
         if (t.__buffers) {
             var b = t.__buffers[name];
             if (b) {
-                if (!b.__notDestruct)
-                    b.__destruct();
+                b.__destruct();
                 delete t.__buffers[name];
             }
         }
         return t;
     },
 
+    ____addAttributeBuffer(name, buf) {
+        if (!this.__buffers) this.__buffers = {};
+        this.__buffers[name] = buf;
+        return buf;
+    },
+
     __addAttributeBuffer(name, itemSize, data) {
-        var t = this;
-        if (!t.__buffers) t.__buffers = {};
-        var b = new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data);
-        t.__buffers[name] = b;
-        return b;
+        return this.____addAttributeBuffer( 
+            name,
+            new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data)
+        );
     },
 
     __updateVertices(forcesz, dontTouchGeomSz) {
@@ -1009,7 +1013,7 @@ mergeObj(NodePrototype, {
                     if (!hasFit && !type && frame.__uvsBuffers[t.____uvsTransform]) {
                         if (t.__uvsBuffer != frame.__uvsBuffers[t.____uvsTransform]) {
                             t.__removeAttributeBuffer('uv');
-                            t.__uvsBuffer = frame.__uvsBuffers[t.____uvsTransform];
+                            t.__uvsBuffer = t.____addAttributeBuffer('uv', frame.__uvsBuffers[t.____uvsTransform]);
                         }
                         return this;
                     }
@@ -1170,7 +1174,7 @@ mergeObj(NodePrototype, {
                             if (!framebuf) {
                                 framebuf = frame.__uvsBuffers[t.____uvsTransform] = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, getVertsArray(), 1);
                             }
-                            t.__uvsBuffer = framebuf;
+                            t.__uvsBuffer = t.____addAttributeBuffer('uv', framebuf);
                         }
 
                     } else {
@@ -1181,7 +1185,7 @@ mergeObj(NodePrototype, {
                         } else if (t.____uvsTransform) {
                             t.__uvsBuffer = t.__addAttributeBuffer('uv', 2, getVertsArray());
                         } else {
-                            t.__uvsBuffer = defaultUVSBuffer; // TODO: ____uvsTransform ?
+                            t.__uvsBuffer = t.____addAttributeBuffer('uv', defaultUVSBuffer); // TODO: ____uvsTransform ?
                         }
                     }
                 }
@@ -1189,7 +1193,7 @@ mergeObj(NodePrototype, {
             }
 
         } else {
-            t.__uvsBuffer = defaultUVSBuffer;
+            t.__uvsBuffer = t.____addAttributeBuffer('uv', defaultUVSBuffer);            
         }
 
         return this;

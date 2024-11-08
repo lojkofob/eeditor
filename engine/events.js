@@ -881,7 +881,12 @@ function addEventListeners(elem) {
 
     var hiddenNow = false;
     function checkVisibilityChanged() {
-        var hn = !!(__document.hidden || __document.msHidden || __document.webkitHidden);
+        var hn = !!(
+            get(__document, 'hidden') || 
+            get(__document, 'msHidden') || 
+            get(__document, 'webkitHidden')
+        );
+        
         if (hiddenNow != hn) {
             hiddenNow = hn;
             BUS.__post(__ON_VISIBILITY_CHANGED, !hiddenNow);

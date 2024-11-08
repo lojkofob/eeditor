@@ -15,12 +15,16 @@ function unwindMagicVariables(data, src, dst, tmp) {
             });
 
         }
-        else if (isObject(data) || isArray(data)) {
-            $each(data, function (d, i) {
-                data[i] = unwindMagicVariables(d, src, dst, tmp);
-            });
+        else if(isArray(data)) {
+            data = $map(data, d => unwindMagicVariables(d, src, dst, tmp));
+        }
+        else if (isObject(data)) {
+            var o = {};
+            for (var i in data) {
+                o[ unwindMagicVariables(i, src, dst, tmp) ] = unwindMagicVariables(data[i], src, dst, tmp);
+            }
+            data = o;
         } else if (isString(data)) {
-
 
             data = data.replace(new RegExp('\\$' + src + "\\?([^:]*):([^;]*);", 'g'), function (g, a, b) {
                 tmp.changed++;

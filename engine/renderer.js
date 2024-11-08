@@ -1691,7 +1691,7 @@ function WebGLRenderer() {
                 _currentProjectionMatrix.__isScrollMatrix = 1;
             }
 
-        var childs = object.__childs;
+        var childs = object.__childsForRender || object.__childs;
 
         for (var i = 0, l = childs.length; i < l; i++) {
             __projectObject(childs[i], toList, scissorsStack, baseList);

@@ -563,6 +563,7 @@ mergeObj(Object3DPrototype, {
         }
     },
 
+    /*
     __setupVertexAttributes(program) {
         var t = this, r = 0;
         //debug
@@ -582,6 +583,21 @@ mergeObj(Object3DPrototype, {
         if (t.__colorsBuffer)
             r |= t.__colorsBuffer.__passToGL(programAttributes);
 
+        if (t.__indecesBuffer)
+            r |= t.__indecesBuffer.__passToGL(programAttributes);
+
+        return r;
+    }, */
+
+    __setupVertexAttributes(program) {
+        var t = this, r = 0;
+        var programAttributes = program.attributes;
+        for (var i in t.__buffers) {
+            //debug
+            t.__buffers[i].__debugDrawing = t.__debugDrawing;
+            //undebug
+            r |= t.__buffers[i].__passToGL(programAttributes);
+        }
         if (t.__indecesBuffer)
             r |= t.__indecesBuffer.__passToGL(programAttributes);
 

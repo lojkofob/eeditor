@@ -42,6 +42,9 @@ var optimist = require('../optimist')
   .options('rmdebug', {
     describe: ' '
   })
+  .options('rmcheats', {
+    describe: ' '
+  });
 
 var argv = optimist.argv
 
@@ -75,6 +78,7 @@ try {
     if (argv.rmdebug){
         
         var arr = argv.rmdebug.split(',');
+        if (argv.rmcheats) arr.push('cheats/endcheats');
         
         for (var i in files){
             var file = files[i]; 
