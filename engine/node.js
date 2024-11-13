@@ -770,31 +770,6 @@ mergeObj(NodePrototype, {
         return this.__updateVertices(forcesz).__updateUVS();
     },
 
-    __removeAttributeBuffer(name) {
-        var t = this;
-        if (t.__buffers) {
-            var b = t.__buffers[name];
-            if (b) {
-                b.__destruct();
-                delete t.__buffers[name];
-            }
-        }
-        return t;
-    },
-
-    ____addAttributeBuffer(name, buf) {
-        if (!this.__buffers) this.__buffers = {};
-        this.__buffers[name] = buf;
-        return buf;
-    },
-
-    __addAttributeBuffer(name, itemSize, data) {
-        return this.____addAttributeBuffer( 
-            name,
-            new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data)
-        );
-    },
-
     __updateVertices(forcesz, dontTouchGeomSz) {
 
         // TODO: flags to need verts update
@@ -3851,6 +3826,7 @@ var NodeCloneProperties = {
                 return this.__particleEffect;
             },
             set(v) {
+                
                 var t = this;
 
                 if (t.__particleEffect == v)

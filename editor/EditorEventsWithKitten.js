@@ -320,6 +320,9 @@ var EditorEventsWithKitten = {
             }
         });
         __clipboard += ']';
+
+        copyTextToClipboard(__clipboard);
+
         // todo: return focus back ?
         //         var t = $('#clipboardTextarea');
         //         t.val( __clipboard );
@@ -333,68 +336,81 @@ var EditorEventsWithKitten = {
     },
 
     'Edit.paste': function (d) {
-        //          $('#clipboardTextarea').focus();
-        //         var lc = $('#clipboardTextarea').val();
+       
         if (!Editor.currentLayout) return;
+       
+        function process(clipboardData) {
+            var layout = Editor.currentLayout.layoutView;
+            activateProjectOptions();
 
-        var layout = Editor.currentLayout.layoutView;
-        activateProjectOptions();
-        //         setTimeout( function() {
-        var cj;
-        try {
-            //                     __clipboard = $('#clipboardTextarea').val();
-            cj = parseJson(__clipboard);
-        } catch (e) {
-            //                     __clipboard = lc;
-            //                     cj = parseJson( __clipboard );
-        }
+            var cj;
 
-        consoleLog(__clipboard);
+            __clipboard = clipboardData;
 
-        if (__clipboard.length > 0 && cj) {
+            if (isString(__clipboard)) {
 
-            let andSelect = d != 'noselect';
-            if (andSelect) {
-                layout.__traverse(c => { c.nnnnflag = 1; }, 1);
-            }
+                cj = parseJson(__clipboard, err => {});
 
-            var nodes = [];
-            var addedNodes = [];
-
-            eachSelected(selectedNode => {
-
-                nodes.push(selectedNode);
-
-                for (var i in cj) {
-                    addedNodes.push(selectedNode.__addChildBox(cj[i]));
+            } else if (isObject(__clipboard)) {
+                
+                switch(__clipboard.type){
+                    case "image": {
+                        var name = __clipboard.full_name + '?';
+                        cj = [{ __img: name, nnnnflag: 12 }];
+                    }
                 }
+
+            } 
+            
+            if (isArray(cj) && isObject(cj[0])) { 
+
+                let andSelect = d != 'noselect';
+                if (andSelect) {
+                    layout.__traverse(c => { c.nnnnflag = 1; }, 1);
+                }
+
+                var nodes = [];
+                var addedNodes = [];
+
+                eachSelected(selectedNode => {
+
+                    nodes.push(selectedNode);
+
+                    for (var i in cj) {
+                        addedNodes.push(selectedNode.__addChildBox(cj[i]));
+                    }
+
+                    if (andSelect) {
+                        selectedNode.__unselect();
+                    }
+
+                }, 1);
 
                 if (andSelect) {
-                    selectedNode.__unselect();
+                    layout.__traverse(c => {
+                        if (c.selected) c.__unselect();
+                        if (c.nnnnflag == 12) { c.__select(); }
+                        delete c.nnnnflag;
+                    }, 1);
                 }
 
-            }, 1);
+                var changes = [{ type: 'paste', clipboard: __clipboard, nodes: nodes, addedNodes: addedNodes }];
 
-            if (andSelect) {
-                layout.__traverse(c => {
+                Editor.currentLayout.layoutView.update(1);
+                Editor.currentLayout.layoutView.__dirty = 3;
 
-                    if (c.selected) c.__unselect();
-                    if (c.nnnnflag == 12) {
-                        c.__select();
-                    }
-                    delete c.nnnnflag;
-                }, 1);
+                deactivateProjectOptions();
+                return changes;
+
             }
-
-            var changes = [{ type: 'paste', clipboard: __clipboard, nodes: nodes, addedNodes: addedNodes }];
-
-            Editor.currentLayout.layoutView.update(1);
-            Editor.currentLayout.layoutView.__dirty = 3;
-
-            deactivateProjectOptions();
-            return changes;
-
         }
+        
+        readDataFromClipboard( clipboardData => {
+            process(clipboardData || __clipboard)
+        }, e => {
+            console.debug("Clipboard error while paste ", e)
+            process(__clipboard)
+        });
 
 
         //             $('#clipboardTextarea').blur();
@@ -488,16 +504,16 @@ var EditorEventsWithKitten = {
 
 
     'Edit.moveNodeUp': function () {
-        invokeEventWithKitten('set', offsetChanger(0, -1 * (isShiftPressed ? 10 : 1), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
+        invokeEventWithKitten('set', offsetChanger(0, -numericInputStepMult(), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
     },
     'Edit.moveNodeDown': function () {
-        invokeEventWithKitten('set', offsetChanger(0, 1 * (isShiftPressed ? 10 : 1), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
+        invokeEventWithKitten('set', offsetChanger(0, numericInputStepMult(), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
     },
     'Edit.moveNodeLeft': function () {
-        invokeEventWithKitten('set', offsetChanger(-1 * (isShiftPressed ? 10 : 1), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
+        invokeEventWithKitten('set', offsetChanger(-numericInputStepMult(), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
     },
     'Edit.moveNodeRight': function () {
-        invokeEventWithKitten('set', offsetChanger(1 * (isShiftPressed ? 10 : 1), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
+        invokeEventWithKitten('set', offsetChanger(numericInputStepMult(), 0), { withHistoryStack: 1, eachSelectedParent: 1 });
     },
 
     'Edit.undo': function () {

@@ -12,8 +12,10 @@ function EditorWithKitten(opts) {
     this.options = this.opts.options || {};
     this.opts.options = this.options;
 
-    if (!this.opts.options.__allServerPath)
+    if (!this.opts.options.__allServerPath) {
         this.opts.options.__allServerPath = '';
+    }
+
 }
 
 EditorWithKitten.prototype = {
@@ -139,6 +141,9 @@ EditorWithKitten.prototype = {
                 _this.activateOptions();
                 _this.initPlugins(plugins, cb);
                 _this.deactivateOptions();
+
+
+                renderer.__handleGLErrors(0);
             }
         });
 

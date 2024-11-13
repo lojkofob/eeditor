@@ -169,7 +169,7 @@ var GraphWithKitten = (function () {
 
                     // TODO: shift and ctrl mod?
                     dx = dx / s.x;
-                    dy = dy * (isShiftPressed ? 10 : 1) / s.y;
+                    dy = dy * numericInputStepMult() / s.y;
 
                     p.graphProxyObject.translatePoints(dx, dy, t.__parent);
 

@@ -23,6 +23,10 @@ const CONSTANTS = {
     }
 };
 
+function numericInputStepMult() {
+    return isShiftPressed ? 10 : isCtrlPressed ? 0.1 : 1
+}
+
 function reorderPadding(p) {
     var tmp = p[1];
     p[1] = p[3];
@@ -524,7 +528,7 @@ var EditFieldsWithKitten = {
                 if (this.__numericInputStep) {
 
                     var v = this.inputValue
-                        , s = Number(this.__numericInputStep) * (isShiftPressed ? 10 : 1)
+                        , s = Number(this.__numericInputStep) * numericInputStepMult()
                         , change = clamp(d * s, -s, s);
 
                     v = round((v + change) / s) * s;

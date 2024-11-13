@@ -69,12 +69,13 @@ function getCachedData(name, obj) {
         var j = obj[name];
         if (!j) {
             if (name.indexOf('?') >= 0) {
-                name = name.split('?')[0];
-                j = obj[name];
-            }             
-            if (!j && options.__projectServerPath) {
-                name = name.slice(options.__projectServerPath.length);
-                j = obj[name];
+                name = name.split('?')[0]; j = obj[name];
+            }
+            if (!j && options.__allServerPath && name.startsWith(options.__allServerPath)) {
+                name = name.slice(options.__allServerPath.length); j = obj[name];
+            }
+            if (!j && options.__projectServerPath && name.startsWith(options.__projectServerPath)) {
+                name = name.slice(options.__projectServerPath.length); j = obj[name];
             }
         }
         

@@ -110,14 +110,15 @@ function stopSound(sid, fadeOutTime){
     var sound = getSound(sid);
     if (sound) { 
         var soundGroup = sound.__group || sound;
-
-        if (fadeOutTime){
-            delete soundsLooper[sid];
-            sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId );
-           _setTimeout(function(){ stopSound(s); }, fadeOutTime);
-        }
-        else {
-            sound.howl.stop( soundGroup.__lastPlayedId );
+        if (soundGroup.__lastPlayedId >= 0) {
+            if (fadeOutTime){
+                delete soundsLooper[sid];
+                sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId );
+            _setTimeout(function(){ stopSound(s); }, fadeOutTime);
+            }
+            else {
+                sound.howl.stop( soundGroup.__lastPlayedId );
+            }
         }
     }
 }

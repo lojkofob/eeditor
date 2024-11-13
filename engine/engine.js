@@ -90,6 +90,7 @@ var options = {
 
 
 };
+ 
 
 var defaultUVSBuffer;
 var defaultIndecesBuffer1;
@@ -1387,7 +1388,13 @@ function getSafeAreaPaddings() {
 
     var e = html.__addCSSStyle(":root {-t:env(safe-area-inset-top); -r:env(safe-area-inset-right); -b:env(safe-area-inset-bottom); -l:env(safe-area-inset-left); }");
     
-    var cstyle = getComputedStyle(dd);
+    var cstyle = getComputedStyle(document.documentElement);
+
+    console.log(cstyle);
+    console.log(cstyle.getPropertyValue("-t"));
+    console.log(cstyle.getPropertyValue("-l"));
+    console.log(cstyle.getPropertyValue("-b"));
+    console.log(cstyle.getPropertyValue("-r"));
 
     var safePaddings = [
         toNumber(cstyle.getPropertyValue("-t")),

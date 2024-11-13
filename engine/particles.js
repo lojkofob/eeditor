@@ -478,15 +478,16 @@ function updateColorsBuffer1(emitter, sz) {
 
         for (var i = 0; i < sz; i++) {
 
-            var p = emitter.__particles[i];
-            var color_factor = emitter.__colorEmitterComponent.g.color_factor(p.__part);
-            var cofs = i * 16;
-            var color = p.__start_color;
+            var p = emitter.__particles[i]
+                , color_factor = emitter.__colorEmitterComponent.g.color_factor(p.__part)
+                , cofs = i * 16
+                , color = p.__start_color
+                , current_color = p.__current_color
 
-            colors[cofs] = colors[cofs + 4] = colors[cofs + 8] = colors[cofs + 12] = color.x * color_factor.x;
-            colors[cofs + 1] = colors[cofs + 5] = colors[cofs + 9] = colors[cofs + 13] = color.y * color_factor.y;
-            colors[cofs + 2] = colors[cofs + 6] = colors[cofs + 10] = colors[cofs + 14] = color.z * color_factor.z;
-            colors[cofs + 3] = colors[cofs + 7] = colors[cofs + 11] = colors[cofs + 15] = color.w * color_factor.w;
+            colors[cofs] = colors[cofs + 4] = colors[cofs + 8] = colors[cofs + 12] = current_color.x = color.x * color_factor.x;
+            colors[cofs + 1] = colors[cofs + 5] = colors[cofs + 9] = colors[cofs + 13] = current_color.y = color.y * color_factor.y;
+            colors[cofs + 2] = colors[cofs + 6] = colors[cofs + 10] = colors[cofs + 14] = current_color.z = color.z * color_factor.z;
+            colors[cofs + 3] = colors[cofs + 7] = colors[cofs + 11] = colors[cofs + 15] = current_color.w = color.w * color_factor.w;
 
         }
     }
@@ -501,16 +502,16 @@ function updateColorsBuffer2(emitter, sz) {
 
         for (var i = 0; i < sz; i++) {
 
-            var p = emitter.__particles[sz - i - 1];
-            var color_factor = emitter.__colorEmitterComponent.g.color_factor(p.__part);
+            var p = emitter.__particles[sz - i - 1]
+                , color_factor = emitter.__colorEmitterComponent.g.color_factor(p.__part)
+                , cofs = i * 8
+                , color = p.__start_color 
+                , current_color = p.__current_color
 
-            var cofs = i * 8;
-            var color = p.__start_color;
-
-            colors[cofs] = colors[cofs + 4] = color.x * color_factor.x;
-            colors[cofs + 1] = colors[cofs + 5] = color.y * color_factor.y;
-            colors[cofs + 2] = colors[cofs + 6] = color.z * color_factor.z;
-            colors[cofs + 3] = colors[cofs + 7] = color.w * color_factor.w;
+            colors[cofs] = colors[cofs + 4] = current_color.x = color.x * color_factor.x;
+            colors[cofs + 1] = colors[cofs + 5] = current_color.y = color.y * color_factor.y;
+            colors[cofs + 2] = colors[cofs + 6] = current_color.z = color.z * color_factor.z;
+            colors[cofs + 3] = colors[cofs + 7] = current_color.w = color.w * color_factor.w;
 
         }
 
@@ -548,8 +549,7 @@ var NormalUVSBuilder = {
         emitter.__uvs = new Float32Array(getFrameUVS(frame));
 
         if (emitter.__uvsBuffer) {
-            emitter.__uvsBuffer.__destruct();
-            emitter.__uvsBuffer = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER);
+            emitter.__uvsBuffer = emitter.__addAttributeBuffer('uv', 2);            
         }
 
     }
@@ -784,14 +784,17 @@ EffectComponentsFactory.__registerComponent('d',
 
         __initEmitter: function (emitter) {
 
-            if (!emitter.__verticesBuffer)
-                emitter.__verticesBuffer = new MyBufferAttribute('position', Float32Array, 2, GL_ARRAY_BUFFER);
+            if (!emitter.__verticesBuffer){
+                emitter.__verticesBuffer = emitter.__addAttributeBuffer('position', 2);
+            }
 
-            if (!emitter.__indecesBuffer)
+            if (!emitter.__indecesBuffer) {
                 emitter.__indecesBuffer = globalIndecesBuffer;
+            }
 
-            if (!emitter.__uvsBuffer)
-                emitter.__uvsBuffer = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER);
+            if (!emitter.__uvsBuffer) {
+                emitter.__uvsBuffer = emitter.__addAttributeBuffer('uv', 2);
+            }
 
         },
 
@@ -910,17 +913,17 @@ EffectComponentsFactory.__registerComponent('c',
     {
         __initEmitter: function (emitter) {
             emitter.__shader = 'part';
-            emitter.__colorsBuffer = new MyBufferAttribute('c', Float32Array, 4, GL_ARRAY_BUFFER);
+            emitter.__colorsBuffer = emitter.__addAttributeBuffer('c', 4);
             emitter.__colorEmitterComponent = this;
         },
 
         __destruct: function (emitter) {
-            emitter.__shader = 'partnc';
-            emitter.__colorsBuffer.__destruct();
-            if (emitter.__colorEmitterComponent == this)
+            if (emitter.__colorEmitterComponent == this) {
+                emitter.__shader = 'partnc';
+                emitter.__colorsBuffer.__destruct();
                 delete emitter.__colorEmitterComponent;
-
-            delete emitter.__colorsBuffer;
+                delete emitter.__colorsBuffer;
+            }
         },
 
         __initParticle: function (particle) {
@@ -932,6 +935,57 @@ EffectComponentsFactory.__registerComponent('c',
     makeComponentProps(0, {
         color: [_rgba_hz_, 255],
         color_factor: [_rgba_hz_, 1],
+    })
+
+);
+
+
+
+EffectComponentsFactory.__registerComponent('pc',
+    function () {
+
+        var t = this;
+        t.p = { color_factor: 1 };
+        t.g = { color_factor: function () { return defaultOneVector4 } }
+
+    },
+
+    {
+        __initEmitter: function (emitter) {
+            emitter.__shader = 'part';
+            emitter.__colorsBuffer = emitter.__addAttributeBuffer('c', 4);
+            emitter.__colorEmitterComponent = this;
+
+            var parent = emitter.__parent;
+            if (parent.__current_color) {
+                this.__colorf = a => parent.__current_color
+            } else {
+                var this_color = new Vector4();
+                this.__update = function (emitter, dt) {
+                    var cc = parent.__color;
+                    this_color.set(cc.r, cc.g, cc.b, cc.a || parent.__alpha);
+                }
+                this.__colorf = a => this_color
+            }
+        },
+
+        __destruct(emitter) {
+            if (emitter.__colorEmitterComponent == this) {
+                emitter.__shader = 'partnc';
+                emitter.__colorsBuffer.__destruct();
+                delete emitter.__colorEmitterComponent;
+                delete emitter.__colorsBuffer;
+            }
+        },
+
+        __updateParticle(particle) {
+            particle.__start_color = this.__colorf();
+        }
+
+    },
+
+    makeComponentProps(0, {
+        color_factor: [_rgba_hz_, 1]
     })
 
 );
@@ -1062,9 +1116,7 @@ EffectComponentsFactory.__registerComponent('sub',
                 effect = effect.__emitter ? effect.__emitter.__effect : effect.__effect;
             }
 
-            var subEmitter = (effect.__emitters).F$(function (n) {
-                return n.__name == t.__subEmitter;
-            });
+            var subEmitter = $find(effect.__emitters, n => n.__name == t.__subEmitter);
 
             if (subEmitter) {
                 subEmitter.__update = subEmitter.__render = function () { return 0 };
@@ -1172,11 +1224,7 @@ EffectComponentsFactory.__registerComponent('tgt',
                 if (isString(tgt)) {
                     var node = emitter.__effect.__node;
                     if (node) {
-                        tgt = (node.__root || node.__getRoot()).$(tgt).m$(function (n) {
-                            return n.__worldPosition
-                        }).f$(function (wp) {
-                            return wp
-                        });
+                        tgt = $filter($map((node.__root || node.__getRoot()).$(tgt), n => n.__worldPosition), wp => wp);
                     }
                 }
             if (tgt.length) {
@@ -1639,8 +1687,7 @@ EffectComponentsFactory.__registerComponent('uv',
         }
 
         if (emitter.__uvsBuffer) {
-            emitter.__uvsBuffer.__destruct();
-            emitter.__uvsBuffer = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER);
+            emitter.__uvsBuffer = emitter.__addAttributeBuffer('uv', 2);
         }
 
         emitter.__updateGeometryBuilder();
@@ -1698,6 +1745,8 @@ function Particle(emitter, part, matrixOrParticle, dtMult) {
     t.__current_lifespan = t.__start_lifespan = emitter.g.lifespan(part);
 
     t.__current_velocity = new Vector2(1, 0);
+
+    t.__current_color = new Vector4(1, 1, 1, 1);
 
     var pos = t.__current_position = emitter.g.origin(part).__clone();
 
@@ -1766,7 +1815,7 @@ makeClass(Particle, {
             return v;
         }
     },
-
+ 
     __node: {
         get: function () {
             return this.__emitter.__parent.__node;
@@ -2745,6 +2794,23 @@ var particlesPropertiesDescriptions = {
 
     },
 
+    ParentColorEmitterComponent: {
+
+        color_factor: {
+            type: '[]',
+            components: {
+                r: { type: 'hz', step: 0.1, standartRange: [0, 1] },
+                g: { type: 'hz', step: 0.1, standartRange: [0, 1] },
+                b: { type: 'hz', step: 0.1, standartRange: [0, 1] },
+                a: { type: 'hz', step: 0.1, standartRange: [0, 1] }
+            },
+            subtype: 'color',
+            step: 0.1,
+            standartRange: [0, 1]
+        }
+
+    },
+
     SubEmitterEmitterComponent: {
         __subEmitter: { type: 's', label: 'sub emitter name' }
     },
@@ -2828,6 +2894,7 @@ var particlesPropertiesDescriptions = {
 
 var ParticlesComponentsTypesMap = {
     c: 'ColorEmitterComponent',
+    pc: 'ParentColorEmitterComponent',
     d: 'DefaultEmitterComponent',
     rta: 'RadTransAccelEmitterComponent',
     sub: 'SubEmitterEmitterComponent',

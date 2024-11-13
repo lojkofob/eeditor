@@ -420,7 +420,7 @@ mergeObj(Object3DPrototype, {
         for (var i = 0; i < childs.length; i++) {
             var child = childs[i];
             r = child.__traverseVisible(callback);
-            if (!child.__destructed) i++;
+            if (childs[i] == child) i++;
             if (r !== undefined) return r;
         }
 
@@ -431,7 +431,7 @@ mergeObj(Object3DPrototype, {
         for (var i = 0; i < childs.length;) {
             var child = childs[i];
             r = child.__traverseFilter(callback, filter);
-            if (!child.__destructed) i++;
+            if (childs[i] == child) i++;
             if (r !== undefined) return r;
         }
     },
@@ -445,7 +445,7 @@ mergeObj(Object3DPrototype, {
                 debugger;
             //undebug
             r = child.__traverse(callback);
-            if (!child.__destructed) i++;
+            if (childs[i] == child) i++;
             if (r !== undefined) return r;
         }
     },
@@ -602,6 +602,33 @@ mergeObj(Object3DPrototype, {
             r |= t.__indecesBuffer.__passToGL(programAttributes);
 
         return r;
+    },
+ 
+    __removeAttributeBuffer(name) {
+        var t = this;
+        if (t.__buffers) {
+            var b = t.__buffers[name];
+            if (b) {
+                b.__destruct();
+                delete t.__buffers[name];
+            }
+        }
+        return t;
+    },
+
+    ____addAttributeBuffer(name, buf) {
+        if (!this.__buffers) this.__buffers = {};
+        var old = this.__buffers[name];
+        if (old) old.__destruct();
+        this.__buffers[name] = buf;
+        return buf;
+    },
+
+    __addAttributeBuffer(name, itemSize, data) {
+        return this.____addAttributeBuffer( 
+            name,
+            new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data)
+        );
     }
 
 });

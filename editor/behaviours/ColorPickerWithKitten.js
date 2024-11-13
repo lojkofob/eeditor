@@ -171,7 +171,7 @@ var ColorPickerPanel;
 
                         var val = proxyColorObject[this.__parent.name],
                             v = val.__isColor ? (val.r + val.g + val.b) / 3 : val;
-                        proxyColorObject[this.__parent.name] = (v - d * (isShiftPressed ? 0.1 : 0.01));
+                        proxyColorObject[this.__parent.name] = (v - d * numericInputStepMult() / 10);
 
                         return 1;
                     };
@@ -235,7 +235,7 @@ var ColorPickerPanel;
 
                     slider.__wheel = function (d) {
                         var v = proxyColorObject[property];
-                        var next = v + sign * d * (isShiftPressed ? 0.1 : 0.01);
+                        var next = v + sign * d * numericInputStepMult() / 10;
                         if (hasOverrun) {
                             if (next < 0) next = 1 + next;
                             if (next > 1) next = next - 1;
