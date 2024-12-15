@@ -231,6 +231,9 @@ var ComputeShaderFor = (function () {
                 line('vec4 rc=' + result_color, 'rc.rgb*=rc.a');
                 result_color = 'rc';
             }
+
+            // result_color = 'vec4(0.0,0.0,1.0,1.0)'; // test blue color
+
             line('gl_FragColor=' + result_color);
             return code;
         }

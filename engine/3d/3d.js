@@ -263,7 +263,8 @@ makeClass(Node3d, {
             t.____geometry.__destruct();
             t.____geometry = null;
         }
-        NodePrototype.__destruct.call(this)*/
+        */
+        NodePrototype.__destruct.call(this)
     },
 
     __clearGroups() {
@@ -715,21 +716,11 @@ makeClass(Node3d, {
             return NodePrototype.__setupVertexAttributes.call(t, program);
         }
 
-        //debug
-        (t.__verticesBuffer || t).__debugDrawing =
-            (t.__uvsBuffer || t).__debugDrawing =
-            (t.__colorsBuffer || t).__debugDrawing =
-            (t.__indecesBuffer || t).__debugDrawing =
-            (t.__skinIndexBuffer || t).__debugDrawing =
-            (t.__skinWeightBuffer || t).__debugDrawing =
-            (t.__normalBuffer || t).__debugDrawing =
-            (t.__uvsBuffer0 || t).__debugDrawing =
-            (t.__uvsBuffer1 || t).__debugDrawing =
-            (t.__uvsBuffer2 || t).__debugDrawing =
-            (t.__uvsBuffer3 || t).__debugDrawing = t.__debugDrawing;
-        //undebug
         var programAttributes = program.attributes;
         for (var i in t.__buffers) {
+            //debug
+            t.__buffers[i].__debugDrawing = t.__debugDrawing;
+            //undebug            
             t.__buffers[i].__passToGL(programAttributes);
         }
         /*

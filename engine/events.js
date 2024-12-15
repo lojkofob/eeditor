@@ -11,7 +11,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
             return new Vector2(v.x / layoutsResolutionMult / __screenCenter.x - 1, 1 - v.y / layoutsResolutionMult / __screenCenter.y)
         },
 
-        __traverseObjects: function (checker, f) {
+        __traverseObjects: function (checker, f, w) {
             if (__needResortEventsObjects) {
                 tappableObjects.__resort();
                 draggableObjects.__resort();
@@ -46,7 +46,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
                         var o = a[j];
                         o.__checkedHitTest = checker(o);
                         if (o.__checkedHitTest) {
-                            if (f(o)) {
+                            if (f(o, w)) {
                                 return o;
                             }
                         }
@@ -76,7 +76,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
 
             return this.__traverseObjects(function (o) {
                 return o.__hitTest(w);
-            }, f);
+            }, f, w);
         },
 
         __resort: function () {
@@ -406,10 +406,11 @@ function _onDocumentMouseUp(e, isout) {
                         __window.contextMenuFired = 0;
                         catched = 1;
                     } else {
-                        var tapEvent = mouse.__clone();
-                        catched = tappableObjects.__traverseHit(mouse, function (obj) {
+                        var tapEvent = mouse.__clone();                        
+                        catched = tappableObjects.__traverseHit(tapEvent, function (obj, w) {
                             if (isFunction(obj.____onTapFunc)) {
                                 //                                 consoleLog("obj.____onTapFunc", obj);
+                                tapEvent.w = w;
                                 obj.____onTapFunc(tapEvent);
                                 if (!tapEvent.__skip) {
                                     return 1;
@@ -688,8 +689,7 @@ function _onDocumentMouseMove(e) {
     mouse.__normalized = tappableObjects.__normalize(mouse);
 
     if (curDraggingObject) {
-
-
+ 
         var z = 1;
         //debug
         var c = curDraggingObject.__camera || (curDraggingObject.__root || 0).camera;
@@ -729,8 +729,8 @@ function _onDocumentMouseMove(e) {
 
     }
 
-
     if (!curDraggingObject && gestures.__drag && (isTouchEvent || mouseButtons[0])) {
+            
         if (gestures.__drag(mdx, mdy))
             return;
     }
@@ -766,7 +766,7 @@ function _onDocumentMouseMove(e) {
                         obj.__mouseIn = 1;
                         if (obj.____cursor) {
                             cursor = obj.____cursor;
-                        }
+                        }                        
                         tappableObjects.__b.push(obj);
                         if (obj.__highlight) {
                             obj.__highlight(0.5);

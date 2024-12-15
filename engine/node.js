@@ -1197,6 +1197,8 @@ mergeObj(NodePrototype, {
 
         t.__lastRenderTime = TIME_NOW;
 
+        // if (window.__chhhhh  && window.__chhhhh != this) return;
+
         if (t.__drawMe()) {
             //cheats
             renderInfo.nodesRendered++;
@@ -1612,7 +1614,11 @@ mergeObj(NodePrototype, {
         }
         else {
             if (!htc.p) {
-                htc.p = new Vector3(pos.x / layoutsResolutionMult / __screenCenter.x - 1, pos.y / layoutsResolutionMult / __screenCenter.y - 1, 0).__applyMatrix4(ipm);
+                htc.p = new Vector3(
+                    pos.x / layoutsResolutionMult / __screenCenter.x - 1,
+                    pos.y / layoutsResolutionMult / __screenCenter.y - 1, 0
+                ).__applyMatrix4(ipm);
+
                 htc.p.x += pe.x;
                 htc.p.y += pe.y;
                 // consoleLog(floor(htc.p.x), floor(htc.p.y));
@@ -1637,7 +1643,7 @@ mergeObj(NodePrototype, {
                 dx += o.x * te[0];
                 dy -= o.y * te[5];
             }
-            var mta = mmax(mmin(dsx, dsy), (t.__minimalTapArea || options.__minimalTapArea) * layoutsResolutionMult);
+            var mta = mmax(mmin(dsx * te[0], dsy * te[5]), (t.__minimalTapArea || options.__minimalTapArea) * layoutsResolutionMult);
             intersect = dx * dx + dy * dy < mta * mta;
         }
 
@@ -1651,19 +1657,20 @@ mergeObj(NodePrototype, {
                 var pwp = poswp.__clone();
                 pwp.y *= -1;
                 pwp.__applyMatrix4(im);
+                
                 intersect = o ? pwp.x > -dsx + o.x && pwp.x < dsx + o.x && pwp.y > -dsy + o.y && pwp.y < dsy + o.y
                     : pwp.x > -dsx && pwp.x < dsx && pwp.y > -dsy && pwp.y < dsy;
             }
             else {
                 // no transforms, simple quad test
-                intersect = abs(dx) < dsx && abs(dy) < dsy;
-
+                intersect = abs(dx) < dsx && abs(dy) < dsy;                
             }
 
         }
 
         if (intersect) {
-            // parent scissor test
+            // parent scissor test            
+            pos.wp = poswp;
             return t.__isInParentScissor(poswp.x, poswp.y);
         }
 
@@ -1841,15 +1848,18 @@ mergeObj(NodePrototype, {
             t.____animTextAction = anim(t, { __animatedText: [from, to] }, time, 0, easing, delay);
 
             if (withscaling) {
-                tween.__push(mergeObj(new TweenAction(t, {}, time, 0, easing, delay), {
-                    __update(tm, dt) {
+                mergeObj( tween.to(t, {}, time, 0, easing, delay), {
+                    __update(tm) {
+                        if (!this.s) this.s = tm;
                         tm -= this.s + this.d;
                         if (tm > 0) {
-                            var k = 2.0 * tm * (1 - tm) * sin(tm * PI2 * (2 + mul * 3));
-                            t.____animatedTextBlocked = floor(11 * tm * (mul + 1)) % 2;
+                            var tsec = tm / 1000;
+                            var k = 2.0 * tsec * (1 - tsec) * sin(tsec * PI2 * (2 + mul * 3));
+                            t.____animatedTextBlocked = floor(11 * tsec * (mul + 1)) % 2;
                             txt.__scaleF = 1 + k * k;
                             if (withcolor) {
-                                txt.__selfColor.__multiplyScalar(1 + 10 * k * k);
+                                var rgb = 1 + 1 * k * k;
+                                txt.__selfColor.__setRGB(rgb, rgb, rgb);
                             }
                             if (tm > this.t) {
                                 t.____animatedTextBlocked = 0;
@@ -1859,7 +1869,7 @@ mergeObj(NodePrototype, {
                             }
                         }
                     }
-                }));
+                });
             }
         } else {
             t.__animatedText = to;

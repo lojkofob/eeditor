@@ -516,9 +516,10 @@ function ColorBuffer() {
 
 var gl_alpha = false
     , gl_antialias = false
-    , gl_depth = false
+    , gl_depth = true
     , gl_premultipliedAlpha = true
-    , gl_preserveDrawingBuffer = false;
+    , gl_preserveDrawingBuffer = false
+    , gl_attributesCount = 4;
 
 function WebGLRenderer() {
     
@@ -552,7 +553,7 @@ function WebGLRenderer() {
         , _colorBuffer = new ColorBuffer()
 
         , _newAttributes
-        , _maxVertexAttributes = 4
+        , _maxVertexAttributes = gl_attributesCount
         , _enabledAttributes
         , _enabledInstancingdAttributes
         , _maxTextures
@@ -1408,10 +1409,6 @@ function WebGLRenderer() {
             _currentScissorTest =
             _currentCullFace = null;
 
-        _enabledAttributes = new Uint8Array(_maxVertexAttributes);
-
-        _enabledInstancingdAttributes = new Uint8Array(_maxVertexAttributes);
-
         _enabledGLFlags = {};
     }
 
@@ -1460,9 +1457,15 @@ function WebGLRenderer() {
 
         }
 
-        _maxVertexAttributes = mmin(getGLParameter(gl.MAX_VERTEX_ATTRIBS), 4);
+        _maxVertexAttributes = mmin(getGLParameter(gl.MAX_VERTEX_ATTRIBS), gl_attributesCount);
+        //debug
+        if (_maxVertexAttributes < gl_attributesCount) {
+            throw "Not enought gl attributes";
+        }
+        //undebug
         _newAttributes = new Uint8Array(_maxVertexAttributes);
         _enabledAttributes = new Uint8Array(_maxVertexAttributes);
+        _enabledInstancingdAttributes = new Uint8Array(_maxVertexAttributes);
         _maxTextures = getGLParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
         _maxTextureSize = getGLParameter(gl.MAX_TEXTURE_SIZE);
 
@@ -2095,6 +2098,7 @@ function WebGLRenderer() {
             return _programsCache;
         }
         , __getVideoInfo: __getVideoInfo
+        , __getCurrentProgram() { return _currentProgram }
         , __setTexture2D: __setTexture2D
         , __invalidateState: __invalidateState
         , __setBlending: __setBlending

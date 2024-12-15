@@ -2,11 +2,13 @@
 
 var _buffersCache = {}, currentBufferId = 0;
 
-function MyBufferAttribute(name, arrayType, itemSize, type, array, notDestruct) {
+function MyBufferAttribute(name, arrayType, itemSize, type, array, notDestruct, instansingDivisor, stride) {
 
     var sz = array ? array.length : 0;
 
     mergeObj(this, {
+        __stride: stride || 0,
+        __instansingDivisor: instansingDivisor || 0,
         __notDestruct: notDestruct,
         __arrayType: arrayType,
         __array: new arrayType(sz),
@@ -148,9 +150,10 @@ makeClass(MyBufferAttribute, {
             }
             //undebug
 
-            renderer.__enableAttribute(programAttribute, t.__instansingDivisor || 0);
+            renderer.__enableAttribute(programAttribute, t.__instansingDivisor);
 
-            gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, t.__stride, 0);
+            
             return t.__webglBuffer !== undefined
         } else {
             //debug
@@ -166,7 +169,9 @@ makeClass(MyBufferAttribute, {
         return new MyBufferAttribute(
             t.__name, t.__arrayType,
             t.__itemSize, t.__type,
-            t.__array, t.__notDestruct);
+            t.__array, t.__notDestruct,
+            t.__instansingDivisor, t.__stride
+        );
     }
 
 });

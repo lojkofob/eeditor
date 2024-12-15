@@ -11,7 +11,7 @@ var fs = require('fs')
         .options('log', { alias: 'l', 'default': 'debug', describe: 'Log level (debug, info, notice, warning, error).' })
         .options('target', { alias: 't', 'default': '', describe: 'build target' })
         .options('help', { alias: 'h', describe: 'Show this help message.' })
-
+        .options('colorize', { 'default': '', describe: 'set to 1 of need colors' })
     , argv = optimist.argv
     , glob = require('./glob')
     , unwind = require('./unwind.js').unwind
@@ -19,7 +19,8 @@ var fs = require('fs')
 
 winston.setLevels(winston.config.syslog.levels);
 winston.remove(winston.transports.Console);
-winston.add(winston.transports.Console, { colorize: process.stdout && process.stdout.isTTY, level: argv.log, handleExceptions: false });
+var colorize = argv.colorize || (process.stdout && process.stdout.isTTY);
+winston.add(winston.transports.Console, { colorize: colorize, level: argv.log, handleExceptions: false });
 
 winston.debug('Parsed arguments', argv);
 
@@ -112,7 +113,7 @@ function magick_convert() {
 var toolsDir = __dirname;
 
 function tool(t, opts) {
-    return ['node', makePath([toolsDir, t])].concat(opts);
+    return ['node', makePath([toolsDir, t]), colorize ? '--colorize': ''].concat(opts);
 }
 
 function spawntool(t, opts) {
@@ -202,7 +203,7 @@ var subtargetsBuilders = {
     sounds(d) {
         mkdir(d.dst);
         mkdir('./tmp/tmp')
-        spawntool('soundsprite', ['-e mp3 -o sounds --array -d', d.dst].concat(collectSources(d.src)))
+        spawntool('soundsprite', ['-e mp3 -o sounds --array --samplerate '+ (d.samplerate||44100) +' -d', d.dst].concat(collectSources(d.src)))
     },
 
     //simple resizing images for icons, previews, thumbnails etc

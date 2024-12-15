@@ -4,9 +4,9 @@
 function bounceOut(x) { var n1 = 7.5625, d1 = 2.75; if (x < 1 / d1) return n1 * x * x; else if (x < 2 / d1) return n1 * (x -= (1.5 / d1)) * x + .75; else if (x < 2.5 / d1) return n1 * (x -= (2.25 / d1)) * x + .9375; else return n1 * (x -= (2.625 / d1)) * x + .984375; }
 function createPowEasing(p) {
     return {
-        i: function (x) { return pow(x, p) },
-        o: function (x) { return 1 - pow(1 - x, p); },
-        io: function (x) { return x < 0.5 ? pow(x * 2, p) / 2 : (1 - pow(-2 * x + 2, p) / 2); }
+        i (x) { return pow(x, p) },
+        o (x) { return 1 - pow(1 - x, p); },
+        io (x) { return x < 0.5 ? pow(x * 2, p) / 2 : (1 - pow(-2 * x + 2, p) / 2); }
     }
 }
 
@@ -20,17 +20,17 @@ var easeQuad = createPowEasing(2),
     easeQuartI = easeQuart.i, easeQuartO = easeQuart.o, easeQuartIO = easeQuart.io,
     easeQuint = createPowEasing(5),
     easeQuintI = easeQuint.i, easeQuintO = easeQuint.o, easeQuintIO = easeQuint.io,
-    easeSine = { i: function (x) { return 1 - cos(x * PI2); }, o: function (x) { return sin(x * PI2); }, io: function (x) { return (1 - cos(PI * x)) / 2; } },
+    easeSine = { i (x) { return 1 - cos(x * PI2); }, o (x) { return sin(x * PI2); }, io (x) { return (1 - cos(PI * x)) / 2; } },
     easeSineI = easeSine.i, easeSineO = easeSine.o, easeSineIO = easeSine.io,
-    easeExpo = { i: function (x) { return x === 0 ? 0 : pow(2, 10 * x - 10); }, o: function (x) { return x === 1 ? 1 : 1 - pow(2, -10 * x); }, io: function (x) { return x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? pow(2, 20 * x - 10) / 2 : (2 - pow(2, -20 * x + 10)) / 2; } },
+    easeExpo = { i (x) { return x === 0 ? 0 : pow(2, 10 * x - 10); }, o (x) { return x === 1 ? 1 : 1 - pow(2, -10 * x); }, io (x) { return x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? pow(2, 20 * x - 10) / 2 : (2 - pow(2, -20 * x + 10)) / 2; } },
     easeExpoI = easeExpo.i, easeExpoO = easeExpo.o, easeExpoIO = easeExpo.io,
-    easeCirc = { i: function (x) { return 1 - sqrt(1 - x * x); }, o: function (x) { return sqrt(1 - pow(x - 1, 2)); }, io: function (x) { return x < 0.5 ? (1 - sqrt(1 - 4 * x * x)) / 2 : (sqrt(1 - pow(2 - 2 * x, 2)) + 1) / 2; } },
+    easeCirc = { i (x) { return 1 - sqrt(1 - x * x); }, o (x) { return sqrt(1 - pow(x - 1, 2)); }, io (x) { return x < 0.5 ? (1 - sqrt(1 - 4 * x * x)) / 2 : (sqrt(1 - pow(2 - 2 * x, 2)) + 1) / 2; } },
     easeCircI = easeCirc.i, easeCircO = easeCirc.o, easeCircIO = easeCirc.io,
-    easeElastic = { i: function (x) { return x === 0 ? 0 : x === 1 ? 1 : -pow(2, 10 * x - 10) * sin((x * 10 - 10.75) * c4); }, o: function (x) { return x === 0 ? 0 : x === 1 ? 1 : pow(2, -10 * x) * sin((x * 10 - 0.75) * c4) + 1; }, io: function (x) { return x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(pow(2, 20 * x - 10) * sin((20 * x - 11.125) * c5)) / 2 : pow(2, -20 * x + 10) * sin((20 * x - 11.125) * c5) / 2 + 1; } },
+    easeElastic = { i (x) { return x === 0 ? 0 : x === 1 ? 1 : -pow(2, 10 * x - 10) * sin((x * 10 - 10.75) * c4); }, o (x) { return x === 0 ? 0 : x === 1 ? 1 : pow(2, -10 * x) * sin((x * 10 - 0.75) * c4) + 1; }, io (x) { return x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(pow(2, 20 * x - 10) * sin((20 * x - 11.125) * c5)) / 2 : pow(2, -20 * x + 10) * sin((20 * x - 11.125) * c5) / 2 + 1; } },
     easeElasticI = easeElastic.i, easeElasticO = easeElastic.o, easeElasticIO = easeElastic.io,
-    easeBack = { i: function (x) { return c3 * x * x * x - c1 * x * x; }, o: function (x) { return 1 + c3 * pow(x - 1, 3) + c1 * pow(x - 1, 2); }, io: function (x) { return x < 0.5 ? (pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2 : (pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2; } },
+    easeBack = { i (x) { return c3 * x * x * x - c1 * x * x; }, o (x) { return 1 + c3 * pow(x - 1, 3) + c1 * pow(x - 1, 2); }, io (x) { return x < 0.5 ? (pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2 : (pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2; } },
     easeBackI = easeBack.i, easeBackO = easeBack.o, easeBackIO = easeBack.io,
-    easeBounce = { i: function (x) { return 1 - bounceOut(1 - x); }, o: bounceOut, io: function (x) { return x < 0.5 ? (1 - bounceOut(1 - 2 * x)) / 2 : (1 + bounceOut(2 * x - 1)) / 2; } },
+    easeBounce = { i (x) { return 1 - bounceOut(1 - x); }, o: bounceOut, io (x) { return x < 0.5 ? (1 - bounceOut(1 - 2 * x)) / 2 : (1 + bounceOut(2 * x - 1)) / 2; } },
     easeBounceI = easeBounce.i, easeBounceO = easeBounce.o, easeBounceIO = easeBounce.io;
 
 var easeArrayForEasingConversionFromDigit = [
@@ -169,7 +169,7 @@ function TweenCallback(cb) { this.cb = cb; }
 
 makeClass(TweenCallback, {
     __killOf: 0,
-    __update: function (t, dt) { var r = this.cb(dt); return r == undefined ? 1 : r }
+    __update (t, dt) { var r = this.cb(dt); return r == undefined ? 1 : r }
 }, {}, Tween);
 
 function getEasingFunc(e) {
@@ -187,19 +187,19 @@ function CustomTweenAction(object, params) { // ActionChanger3 js impl
 }
 makeClass(CustomTweenAction, {
 
-    __shiftBy: function (time) {
+    __shiftBy (time) {
         var t = this;
         time *= ONE_SECOND;
         if (t.s) t.s -= time;
         else t.d -= time;
     },
 
-    __finish: function () {
+    __finish () {
         //TODO: check it. it's not real finish! it's update in feature!
         this.__update((t.s || 1) + t.d + t.t + 1, 1);
     },
 
-    __speedup: function (mult) {
+    __speedup (mult) {
         var t = this, tt = t.t, dd = t.d;
         t.t /= mult;
         t.d /= mult;
@@ -208,11 +208,11 @@ makeClass(CustomTweenAction, {
         }
     },
 
-    __getElapsedTime: function () {
+    __getElapsedTime () {
         return (__lastOnFrameTime - this.s - this.d) / ONE_SECOND;
     },
 
-    __update: function (time, dt) {
+    __update (time, dt) {
         var t = this;
 
         //debug
@@ -226,9 +226,9 @@ makeClass(CustomTweenAction, {
                 t.__onStart();
             }
         }
-        var elapsed = time - t.s - t.d;
-        if (elapsed >= 0) {
-            var linearPart = elapsed / t.t;
+        t.__elapsed = time - t.s - t.d;
+        if (t.__elapsed >= 0) {
+            var linearPart = t.__elapsed / t.t;
             if (t.__onUpdate && t.__onUpdate(linearPart)) {
                 return 1;
             }
@@ -285,7 +285,7 @@ makeClass(TweenAction, {
 
     __killOf: 0,
 
-    __shiftBy: function (time) {
+    __shiftBy (time) {
         var t = this;
         time *= ONE_SECOND;
         if (t.s) {
@@ -295,7 +295,7 @@ makeClass(TweenAction, {
         }
     },
 
-    __speedup: function (mult) {
+    __speedup (mult) {
         var t = this, tt = t.t, dd = t.d;
         if (abs(t.r) != 1) {  //can't speedup infinity animation ??
             t.t /= mult;
@@ -306,18 +306,18 @@ makeClass(TweenAction, {
         }
     },
 
-    __finish: function () {
+    __finish () {
         // it's not real finish! it's update in feature!
         if (!t.r) { // TODO: how to finish such anims?
             this.__update((t.s || 1) + t.d + t.t + 1, 1);
         }
     },
 
-    __getElapsedTime: function () {
+    __getElapsedTime () {
         return (__lastOnFrameTime - this.s - this.d) / ONE_SECOND;
     },
 
-    __initA: function () {
+    __initA () {
         var t = this;
         t.A = {};
         for (var i in t.p) {
@@ -337,7 +337,7 @@ makeClass(TweenAction, {
         }
     },
 
-    __zeroUpdate: function () {
+    __zeroUpdate () {
         var t = this;
         if (!t.g && !t.d) {
             for (var i in t.p) {
@@ -349,8 +349,14 @@ makeClass(TweenAction, {
         }
         return t;
     },
-
-    __update: function (time, dt) {
+    __lerp(){
+        var part = this.__part, part1 = this.__part1;
+        for (var i in this.A) {
+            var a = this.A[i];
+            this.o[i] = a.s * part1 + a.d * part;
+        }
+    },
+    __update (time, dt) {
         var t = this;
         if (!t.s) {
             t.s = time;
@@ -364,23 +370,19 @@ makeClass(TweenAction, {
         //         }
         //undebug
 
-        var elapsed = time - t.s - t.d;
-        if (elapsed >= 0) {
+        t.__elapsed = time - t.s - t.d;
+        if (t.__elapsed >= 0) {
 
             if (!t.A) {
                 t.__initA();
             }
 
-            var linearPart = clamp(elapsed / t.t, 0, 1),
-                part = t.e(linearPart),
-                part1 = 1 - part;
+            t.__linearPart = clamp(t.__elapsed / t.t, 0, 1);
+            t.__part = t.e(t.__linearPart),
+            t.__part1 = 1 - t.__part;
+            t.__lerp();
 
-            for (var i in t.A) {
-                var a = t.A[i];
-                t.o[i] = a.s * part1 + a.d * part;
-            }
-
-            if (linearPart == 1) {  // completed
+            if (t.__linearPart == 1) {  // completed
 
                 if (!t.r) {
                     if (t.__onCompleted) t.__onCompleted();
@@ -460,7 +462,7 @@ makeClass(KeyframesAnimation, {
 
     __killOf: 0,
 
-    __setFrames: function (frames) {
+    __setFrames (frames) {
         var t = this;
         //debug
         t.frames = frames;
@@ -499,30 +501,30 @@ makeClass(KeyframesAnimation, {
 
     __setters: {
         v: {
-            a: function (part) {
+            a (part) {
                 var t = this, s = t.c.s.v, d = t.c.d.v, part1 = 1 - part;
                 for (var i in d) t.v[i] = s[i] * part1 + d[i] * part;
                 t.o[t.p] = t.v;
             },
-            f: function (part) {
+            f (part) {
                 var t = this;
                 t.o[t.p] = t.c.s.v * (1 - part) + t.c.d.v * part;
             }
         },
         va: {
-            a: function (part) {
+            a (part) {
                 var t = this, s = t.c.s.va, d = t.c.d.va, part1 = 1 - part;
                 for (var i in d) t.v[i] = s[i] * part1 + d[i] * part;
                 t.o[t.p] = t.v;
             },
-            f: function (part) {
+            f (part) {
                 var t = this;
                 t.o[t.p] = t.c.s.va * (1 - part) + t.c.d.va * part;
             }
         },
 
         lp: {
-            a: function (part) {
+            a (part) {
                 var t = this, tc = t.c, p0 = tc.s.va, p1 = tc.d1, p2 = tc.d2, p3 = tc.d.va, part1 = 1 - part, sqrp1 = part1 * part1 * part1, sqrp = part * part * part, sqpp1 = 3 * part1 * part;
                 for (var i in p0) {
                     t.v[i] = p0[i] * sqrp1 + sqpp1 * (part1 * p1[i] + part * p2[i]) + sqrp * p3[i];
@@ -530,7 +532,7 @@ makeClass(KeyframesAnimation, {
                 t.o[t.p] = t.v;
             },
 
-            f: function (part) {
+            f (part) {
                 var t = this, tc = t.c, p0 = tc.s.va, p1 = tc.d1, p2 = tc.d2, p3 = tc.d.va, part1 = 1 - part, sqrp1 = part1 * part1 * part1, sqrp = part * part * part, sqpp1 = 3 * part1 * part;
                 t.o[t.p] = p0 * sqrp1 + sqpp1 * (part1 * p1 + part * p2) + sqrp * p3;
             }
@@ -539,7 +541,7 @@ makeClass(KeyframesAnimation, {
     },
 
     //debug
-    editorSupportedUpdate: function (needReset) {
+    editorSupportedUpdate (needReset) {
         if (needReset) {
             this.s = 0;
             this.__setFrames(this.frames);
@@ -549,7 +551,7 @@ makeClass(KeyframesAnimation, {
     },
     //undebug
 
-    __finish: function () {
+    __finish () {
         var t = this;
         if (!t.L && t.set) { // how to finish loops?
 
@@ -570,7 +572,7 @@ makeClass(KeyframesAnimation, {
         }
     },
 
-    __update: function (time, dt) {
+    __update (time, dt) {
         var t = this;
         //debug
         if (!__forceAnimDt) return;

@@ -330,10 +330,22 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
 
     srcurl = srcurl || url;
     var opts = nodeWaitingsForThis ? nodeWaitingsForThis.__loadImageOptions || 0 : 0;
+
+    var cache = getCachedData(srcurl, globalConfigsData.__images);
+    if (cache && cache.tex){
+        if (cache.__isLoading) {
+            cache.__onload.push(onload);
+        } else {
+            onload(tex);
+        }
+        return cache.tex;
+    }
+
     var tex = (
         url.indexOf('.mp4') > 0 || url.indexOf('.webm') > 0 ?
-            loadVideoTexture : loadTexture)(srcurl, function (tex) {
+            loadVideoTexture : loadTexture)(srcurl, tex => {
                 var frame = globalConfigsData.__frames[tex.__src];
+
                 if (frame) {
                     var w = tex.__image.width, h = tex.__image.height;
                     frame.v = [0, 1, 1, 0];
@@ -342,10 +354,17 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                     frame.c = defaultHalfVector2;
                     delete frame.__loading;
                 }
-                if (onload) onload(tex);
+                
+                var cache = getCachedData(srcurl, globalConfigsData.__images);
+                if (cache && cache.__isLoading) {
+                    cache.__isLoading = 0;
+                    $each(cache.__onload, a => a(tex));
+                    cache.__onload = 0;
+                };
                 onTextureLoaded(tex);
             }, onProgress, onError, urlGotModUrl, opts);
 
+    globalConfigsData.__images[srcurl] = { tex: tex, __isLoading: 1, __onload: [onload] };
     tex.__src = filename;
 
     if (nodeWaitingsForThis) {

@@ -752,7 +752,8 @@ var FBXLoader = function () { };
                             break;
                         case 'LimbNode':
                         case 'Root':
-                            model = new Bone();
+                            /// \todo:
+                            // model = new Bone();
                             break;
                         case 'Null':
                         default:
@@ -1475,7 +1476,7 @@ var FBXLoader = function () { };
                 });
 
                 // the loop above doesn't add the last group, do that here.
-                if (geo.__groups.length > 0) {
+                if (geo.__groups && geo.__groups.length > 0) {
 
                     const lastGroup = geo.__groups[geo.__groups.length - 1];
                     const lastIndex = lastGroup[0] + lastGroup[1];

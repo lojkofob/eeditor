@@ -127,7 +127,7 @@ consoleLog = console.log.bind(console);
 
 var __cachedReadableDumps = [];
 var ddeepper = 0;
-function readableStringify(d, nodeeper) {
+function readableStringify(d, nodeeper, pretty) {
     if (!nodeeper) ddeepper += 1;
     var r;
     try {
@@ -169,11 +169,13 @@ function readableStringify(d, nodeeper) {
             else
                 if (m) {
                     r = obj ? '{ ' : '[ ';
+                    if (pretty) r += '\n';
                     var zpt = '';
                     for (var i in d) {
-                        r += zpt + (obj ? (readableStringify(i) + ':') : '') + readableStringify(d[i]);
-                        zpt = ', ';
+                        r += zpt + (obj ? (readableStringify(i, 0, pretty) + ':') : '') + readableStringify(d[i], 0, pretty);
+                        zpt = pretty ? ', \n' : ', ';
                     }
+                    if (pretty) r += '\n';
                     r += obj ? ' }' : ' ]';
                 }
                 else {
@@ -573,7 +575,7 @@ function createDeobfuscatingMap(basemap) {
 var requestAnimFrame = (function () { return __window.requestAnimationFrame || __window.webkitRequestAnimationFrame || __window.mozRequestAnimationFrame || __window.oRequestAnimationFrame || __window.msRequestAnimationFrame })();
 
 function isNumeric(n) { return !isNaN(parseFloat(n)) && isFinite(n) && !isArray(n); }
-function toNumber(n) { var kk = parseFloat(n); return (!isNaN(kk) && isFinite(n) && !isArray(n)) ? kk : 0; }
+function toNumber(n) { var kk = parseFloat(n); return (!isNaN(kk) && isFinite(kk) && !isArray(n)) ? kk : 0; }
 
 function numeric(n) {
     n = parseFloat(n);

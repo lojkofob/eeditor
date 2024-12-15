@@ -3,6 +3,7 @@
  also ad platforms support
 */
 
+
 var html = (function () {
 
     function html_getDocumentElement(s) { if (s) return __document[s] || __document.getElementsByTagName(s)[0]; }
@@ -114,19 +115,42 @@ var html = (function () {
 
         return e;
     }
-
+ 
+    var __mintegral;
     //mintegral
-    var gameReady = get(__window, 'gameReady');
-    if (gameReady) { BUS.__addEventListener(__ON_GAME_LOADED, a => { gameReady.call(__window); return 1; }); }
-    var gameEnd = get(__window, 'gameEnd');
-    if (gameEnd) { BUS.__addEventListener(__ON_GAME_END, a => { gameEnd.call(__window); return 1; }); }
-    if (gameReady && gameEnd) {
-        set(__window, 'gameStart', a => { BUS.__post(__ON_GAME_START); });
-        set(__window, 'gameClose', a => { BUS.__post(__ON_GAME_CLOSE); });
-    } else {
-        BUS.__addEventListener(__ON_GAME_LOADED, a => { BUS.__post(__ON_GAME_START); return 1; })
-    }
+    __mintegral = (a => {
+        var gameReady = get(__window, 'gameReady')
+            , gameEnd = get(__window, 'gameEnd');
+        if (gameReady && gameEnd) {
+            BUS.__addEventListener(__ON_GAME_LOADED, a => { gameReady.call(__window); return 1; });
+            BUS.__addEventListener(__ON_GAME_END, a => { gameEnd.call(__window); return 1; });
+            set(__window, 'gameStart', a => { BUS.__post(__ON_GAME_START); });
+            set(__window, 'gameClose', a => { BUS.__post(__ON_GAME_CLOSE); });
+            return 1;
+        }
+    })();
     //nomintegral
+
+    var __bgy;
+
+    if (!__mintegral) {
+        BUS.__addEventListener(__ON_GAME_LOADED, a => { 
+            //bgy
+            __bgy = get(__window, 'BGY_MRAID');
+            if (__bgy) {
+                // do not remove. this string is needed by bgy ads app tester
+                console.log("window.BGY_MRAID.open()");
+                get(__bgy, 'gameReady').call(__bgy);
+                BUS.__addEventListener(__ON_GAME_END, a => { get(__bgy, 'gameEnd').call(__bgy); return 1; });                
+            }
+            //nobgy
+
+            BUS.__post(__ON_GAME_START); 
+            return 1; 
+        });
+    }
+
+    
 
     return makeSingleton({
 
@@ -196,37 +220,48 @@ var html = (function () {
                 __window.location.href = url;
             }
         },
-        __openAppStore(url){
-            // tiktok
-            var a = get(__window, "openAppStore");
-            if (isFunction(a)) return a.call(__window);
+        __openAppStore(_url){
 
-            // facebook
-            var FbPlayableAd = get(__window, "FbPlayableAd");
-            if (FbPlayableAd) {
-                a = get(FbPlayableAd, "onCTAClick")
-                if (a) return a.call(FbPlayableAd)
-            }
-
-            // mintegral
-            a = get(__window, "install");
-            if (isFunction(a)) return a.call(__window);
-
-            var url = url || options.__appStoreUrl;
-            if (isObject(url)){
-                url = _bowser && _bowser.ios ? url.ios : (url.android || url.ios);
-            }
-
-            if (isString(url)) {
-                // mraid (Unity, AppLovin)
-                if (__mraid) {
-                    return __mraid.__open(url);
-                } else {
-                    return this.__redirect(url)
+            function opensdk() {
+                var a = get.apply(__window, arguments);
+                if (isFunction(a)) { 
+                    a.call(arguments[0]);
+                    return 1;
                 }
             }
 
-            consoleDebug("openAppStore failed");
+            function openurl(){
+                var url = _url || options.__appStoreUrl;
+                if (isObject(url)){
+                    //detect platfrom url
+                    url = _bowser.ios && url.ios ? url.ios : 
+                          _bowser.mac && url.mac ? url.mac : 
+                          _bowser.ios && url.mac ? url.mac : 
+                          _bowser.mac && url.ios ? url.ios : (url.android || url.ios);
+                }
+                if (isString(url)) {
+                    // mraid (Unity, AppLovin)
+                    if (__mraid) {
+                        __mraid.__open(url);
+                    } else {
+                        html.__redirect(url);
+                    }
+                    return 1;
+                }
+            }
+            
+            // tiktok
+            return opensdk(__window, "openAppStore") ||
+                // facebook
+                opensdk(__window, "FbPlayableAd", "onCTAClick") ||
+                // mintegral
+                opensdk(__window, "install") ||
+                // bgy
+                opensdk(__bgy, "open") ||
+                // mraid or raw redirect
+                openurl() ||
+                // nothing to open
+                consoleDebug("openAppStore failed");
         }
     });
 

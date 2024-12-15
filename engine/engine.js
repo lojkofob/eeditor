@@ -102,7 +102,6 @@ options.__reset();
 var scaleFactor = 1;
 
 var layoutsResolutionMult = 1
-    , predefinedLayoutsResolutionMult
     , TIME_NOW = Date.now() / ONE_SECOND;
 
 function getTime() { return TIME_NOW; }
@@ -261,6 +260,7 @@ function updateCamera(w, h, cam, x, y) {
 
 var _cszw, _cszh;
 
+function setupWindowOptions(force, w, h, pixelRatio) { }
 
 function onWindowResize(force) {
 
@@ -271,31 +271,40 @@ function onWindowResize(force) {
     if (!force && (w == _cszw && h == _cszh))
         return;
 
+    var scaleFactorMult = options.__isDeviceQualityLow ? 0.5 : 1;
+
+    var pixelRatio = options.__scaleFactor ? scaleFactorMult * options.__scaleFactor : clamp(scaleFactorMult * (__window.devicePixelRatio || 1), 1, 2);
+
+    setupWindowOptions(force, w, h, pixelRatio);
+
     _cszw = w;
     _cszh = h;
+ 
+    if (options.__layoutsResolutionMult) {
 
-    if (predefinedLayoutsResolutionMult) {
-        layoutsResolutionMult = predefinedLayoutsResolutionMult;
+        layoutsResolutionMult = options.__layoutsResolutionMult;
+
     } else if (options.__upscaleResolution) {
+
         layoutsResolutionMult = mmin(w / options.__upscaleResolution.x, h / options.__upscaleResolution.y);
+
     } else if (options.__goodResolution) {
+
         layoutsResolutionMult = mmin(mmin(1.0, w / options.__goodResolution.x), mmin(1.0, h / options.__goodResolution.y));
+        
     }
 
-    var scaleFactorMult = 1;
-    if (options.__isDeviceQualityLow) {
-        scaleFactorMult = 0.5;
-    }
-
-    scaleFactor = options.__scaleFactor ? scaleFactorMult * options.__scaleFactor : clamp(scaleFactorMult * (__window.devicePixelRatio || 1), 1, 2);
-
+    scaleFactor = pixelRatio;
+ 
     //cheats
     if (_bowser.android || _bowser.mobile || _bowser.ios) {
-        consoleLog("resize", w, h, scaleFactor.toFixed(5));
-    }
+        // var r = options.__upscaleResolution || options.__goodResolution;
+        // showMessage("resize\n", w, h, " / ", r.x, r.y, "\nl =", layoutsResolutionMult.toFixed(2), "s =",pixelRatio.toFixed(2))
+        consoleLog("resize", w, h, layoutsResolutionMult.toFixed(2), pixelRatio.toFixed(2));
+    }    
     //endcheats
 
-    renderer.__setPixelRatio(scaleFactor);
+    renderer.__setPixelRatio(pixelRatio);
 
     renderer.__setSize(w, h, 1);
 
@@ -588,6 +597,7 @@ function _createGame(parameters) {
 }
 
 function createGame(parameters) {
+
     if (__mraid) {
         __mraid.__waitForReady( a => {
             _createGame(parameters);
@@ -1369,62 +1379,35 @@ function exitFullScreen(elem) {
     else if (elem != __document) exitFullScreen(__document)
 }
 
+//cheats
+// function now works well for all devices and web-views, need detection by window/screen size
 function getSafeAreaPaddings() {
+    if (options.__safeArea == undefined){
+        options.__safeArea = 0;
+        try {
+            if (_bowser.mobile) {
+                var body = html.__getBody();
+                var safePaddings;
+                function test(prefix, func){
+                    var aa = ["top", "left", "bottom", "right"]
+                        , e = html.__addCSSStyle("body { "+ $map(aa, s => prefix + "-" + s + ":" + func + "(safe-area-inset-" + s + ");") + "; }")
+                        , cstyle = getComputedStyle(body);
+                    safePaddings = $map(aa, a => toNumber(cstyle.getPropertyValue(prefix + "-" + a)));
+                    html.__removeElement(e);                
+                }
 
-    if (options.__safePaddings){
-        return options.__safePaddings;
+                if ($find(['env', 'constant'], func => $find(['margin', 'padding', 'sa'], prefix => {
+                    test(prefix, func);
+                    return safePaddings[0] || safePaddings[1] || safePaddings[2] || safePaddings[3]
+                }))){
+                    options.__safeArea = safePaddings;
+                } 
+            }
+        } catch(e){ }
     }
-
-    //iphone X 1.11
-    var dd = __document.documentElement;
-    /*
-    if (dd.clientHeight == 812 && dd.clientHeight == 375 && 
-        !!__window.matchMedia && 
-        __window.matchMedia("only screen and (-webkit-device-pixel-ratio: 3)").matches && _bowser.version && 
-        _bowser.version.startsWith("11")) {
-        return true;
-    }*/
-
-
-    var e = html.__addCSSStyle(":root {-t:env(safe-area-inset-top); -r:env(safe-area-inset-right); -b:env(safe-area-inset-bottom); -l:env(safe-area-inset-left); }");
-    
-    var cstyle = getComputedStyle(document.documentElement);
-
-    console.log(cstyle);
-    console.log(cstyle.getPropertyValue("-t"));
-    console.log(cstyle.getPropertyValue("-l"));
-    console.log(cstyle.getPropertyValue("-b"));
-    console.log(cstyle.getPropertyValue("-r"));
-
-    var safePaddings = [
-        toNumber(cstyle.getPropertyValue("-t")),
-        toNumber(cstyle.getPropertyValue("-l")),
-        toNumber(cstyle.getPropertyValue("-b")),
-        toNumber(cstyle.getPropertyValue("-r"))
-    ];
-
-    html.__removeElement(e);
-
-    if (safePaddings[0] || safePaddings[1] || safePaddings[2] || safePaddings[3]) {
-        options.__safePaddings = safePaddings;
-        return safePaddings;
-    }
-
-    e = html.__addCSSStyle(":root {-t:constant(safe-area-inset-top); -r:constant(safe-area-inset-right); -b:constant(safe-area-inset-bottom); -l:constant(safe-area-inset-left); }");
-    
-    cstyle = getComputedStyle(dd);
-
-    safePaddings = [
-        toNumber(cstyle.getPropertyValue("-t")),
-        toNumber(cstyle.getPropertyValue("-l")),
-        toNumber(cstyle.getPropertyValue("-b")),
-        toNumber(cstyle.getPropertyValue("-r"))
-    ];
-
-    html.__removeElement(e);
-    options.__safePaddings = safePaddings;
-    return safePaddings;
-};
+    return options.__safeArea;
+}
+//endcheats
 
 //debug
 
