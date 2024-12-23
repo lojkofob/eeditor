@@ -547,11 +547,12 @@ function mergeObjectDeep(data, merged) {
 
 
 function set() {
-
-    for (var i = 1; i < arguments.length; i += 2) {
-        arguments[0][arguments[i]] = arguments[i + 1];
+    if (arguments[0]) {
+        for (var i = 1; i < arguments.length; i += 2) {
+            arguments[0][arguments[i]] = arguments[i + 1];
+        }
+        return arguments[0];
     }
-    return arguments[0];
 }
 
 function d2h(d) {

@@ -656,7 +656,9 @@ function onDocumentMouseMove(e) {
 }
 
 function setCursor(cursor) {
-    (getDeepFieldFromObject(renderer, '__domElement', 'style') || 0).cursor = cursor;
+    if (renderer) {
+        set(get(renderer.__domElement, 'style'), 'cursor', cursor);
+    }
     ev_cursor = cursor;
 }
 
