@@ -1245,6 +1245,9 @@ mergeObj(NodePrototype, {
 
         //         if (t.__inUpdate) return t;
         //         t.__inUpdate = 1; 
+
+        var offsetByParent = t.__offsetByParent;
+
         if (t.__disableAlign) {
             t.__updateGeometry()
         } else {
@@ -1267,7 +1270,6 @@ mergeObj(NodePrototype, {
                 , va = sva == undefined ? parent ? parent.____va : ALIGN_CENTER : sva
                 , ha = sha == undefined ? parent ? parent.____ha : ALIGN_CENTER : sha
                 , margin = t.____sizeMargin || [0, 0, 0, 0]
-                , offsetByParent = t.__offsetByParent
                 , spacing = t.____spacing || [0, 0, 0, 0]
                 , updatusObjectTable = updatusObject.__table || 0;
 
@@ -4665,18 +4667,18 @@ var NodeCloneProperties = {
                         slider.__visible = 1;
 
                         if (slider.__visibilityChecked) {
-                            slider.__traverseVisible(function (n) { n.__anim({ __alpha: 1 }, 0.3); })
+                            slider.__tween({__alphaDeep: 1}, 0.3);
                         } else {
-                            slider.__traverseVisible(function (n) { n.__alpha = 1; })
+                            slider.__alphaDeep = 1;
                         }
 
                     } else {
 
                         if (slider.__visibilityChecked) {
-                            slider.__a = _setTimeout(function () { slider.__a = slider.__visible = 0 }, 0.3);
-                            slider.__traverseVisible(function (n) { n.__anim({ __alpha: 0 }, 0.3); })
+                            slider.__a = _setTimeout(a => { slider.__a = slider.__visible = 0 }, 0.3);
+                            slider.__tween({__alphaDeep: 0}, 0.3);
                         } else {
-                            slider.__traverseVisible(function (n) { n.__alpha = 0; });
+                            slider.__alphaDeep = 0;
                             slider.__visible = 0;
                         }
 
@@ -4703,7 +4705,7 @@ var NodeCloneProperties = {
                     var thumb = slider.__thumb;
                     if (thumb) {
                         var thumbSize = thumb.__size.y;
-                        var sliderSize = slider.__size.y - thumbSize;
+                        var sliderSize = slider.__contentSize.y - thumbSize;
                         var y = sliderSize * (mmin(1, mmax(0, percent)) - 0.5);
                         if (thumb.__a) {
                             killAnim(thumb.__a);
@@ -4729,7 +4731,7 @@ var NodeCloneProperties = {
                     var thumb = slider.__thumb;
                     if (thumb) {
                         var thumbSize = thumb.__size.x;
-                        var sliderSize = slider.__size.x - thumbSize;
+                        var sliderSize = slider.__contentSize.x - thumbSize;
                         var x = sliderSize * (mmin(1, mmax(0, percent)) - 0.5);
                         if (thumb.__a) {
                             killAnim(thumb.__a);
@@ -4779,7 +4781,7 @@ var NodeCloneProperties = {
                                 if (!t.__scrollMin)
                                     t.__dragStart();
 
-                                var sliderSize = slider.__size.y - thumb.__size.y;
+                                var sliderSize = slider.__contentSize.y - thumb.__size.y;
 
                                 if (thumb.__a) {
                                     killAnim(thumb.__a);
@@ -4834,7 +4836,7 @@ var NodeCloneProperties = {
                                 if (!t.__scrollMin)
                                     t.__dragStart();
 
-                                var sliderSize = slider.__size.x - thumb.__size.x;
+                                var sliderSize = slider.__contentSize.x - thumb.__size.x;
 
                                 if (thumb.__a) {
                                     killAnim(thumb.__a);
