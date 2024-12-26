@@ -10,6 +10,7 @@ module.exports = function () {
     this.isObject = function (a) { return Object.prototype.toString.call(a) == "[object Object]"; }
     this.isString = function (a) { return typeof a === 'string' || a instanceof String; }
     this.isNumber = function (a) { return (typeof a === 'number') && isFinite(a); }
+    this.isArrayOrObject  = function (a) { return this.isArray(a) || this.isObject(a); }
 
     this.overrideNotEnumerableProperty = function (f) { return { enumerable: false, value: f } }
 
@@ -81,7 +82,7 @@ module.exports = function () {
 
 
     this.deepclone = function (a) {
-        if (isArrayOrObject(a)) {
+        if (this.isArrayOrObject(a)) {
             if (a.__clone) return a.__clone();
             //debug
             if (a.constructor !== Object && a.constructor !== Array) {
@@ -89,7 +90,9 @@ module.exports = function () {
                 return a;
             }
             //undebug
-            return $map(a, deepclone);
+            return $map(a, a => {
+                return this.deepclone(a);
+            });
         }
         return a;
     }

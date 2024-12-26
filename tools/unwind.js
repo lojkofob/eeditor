@@ -1,27 +1,23 @@
 
-function unwindMagicVariables(data, src, dst, tmp) {
+function unwindMagicVariables(env, data, src, dst, tmp) {
 
     //     console.log('unwindMagicVariables', data, src, dst);
     if (data) {
 
         if (!src) {
-
-            $each(data.additionalArguments, function (v, i) {
-                data = unwindMagicVariables(data, i, v, tmp);
-            });
-
-            $each(data.buildFlags, function (v, i) {
-                data = unwindMagicVariables(data, i, v, tmp);
+ 
+            $each(env, function (v, i) {
+                data = unwindMagicVariables(env, data, i, v, tmp);
             });
 
         }
         else if(isArray(data)) {
-            data = $map(data, d => unwindMagicVariables(d, src, dst, tmp));
+            data = $map(data, d => unwindMagicVariables(env, d, src, dst, tmp));
         }
         else if (isObject(data)) {
             var o = {};
             for (var i in data) {
-                o[ unwindMagicVariables(i, src, dst, tmp) ] = unwindMagicVariables(data[i], src, dst, tmp);
+                o[ unwindMagicVariables(env, i, src, dst, tmp) ] = unwindMagicVariables(env, data[i], src, dst, tmp);
             }
             data = o;
         } else if (isString(data)) {
@@ -223,7 +219,7 @@ function unwindLinks(data, basedata) {
 }
 
 
-function unwind(data) {
+function unwind(data, env) {
     var changed = 0;
     //  var founded = 0;
 
@@ -233,7 +229,8 @@ function unwind(data) {
         lch = changed
 
         var tmp = { changed: 0 };
-        data = unwindMagicVariables(data, undefined, undefined, tmp);
+        env = env || data.buildFlags;
+        data = unwindMagicVariables(env, data, undefined, undefined, tmp);
         changed += tmp.changed;
         //  founded += ud.founded;
 

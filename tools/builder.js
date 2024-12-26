@@ -600,17 +600,33 @@ var subtargetsBuilders = {
 
     downscalex2(d) {
         if (isObject(d.src)) {
-            $each(d.src, function (k, v) {
+            $each(d.src, (k, v) => {
                 downscalex2(k, v);
             });
         } else if (d.src && d.dst) {
             downscalex2(d.src, d.dst);
         } else if (d.src) {
             var src = collectSources(d.src);
-            $each(src, function (s) {
+            $each(src, s => {
                 downscalex2(s);
             });
         }
+    },
+
+    each(d){
+        var target = d.target;
+        if (!target) return;
+        if (!isArray(target)) {
+            target = [target];
+        }
+
+        $each(d.src, v => {
+            env = mergeObj(env, v);
+            winston.debug('ENV += ' + JSON.stringify(v));
+            $each(target, t => 
+                build(t)
+            );
+        });
     },
 
     tool(d) {
@@ -653,6 +669,7 @@ function buildTarget(target) {
                     winston.error('No builder for subtarget type ' + stype);
                 }
             } else {
+                winston.debug(i + ' : ' + JSON.stringify(target));
                 throw 'Target content ' + i + ' must be object';
             }
         }
@@ -669,30 +686,46 @@ function buildTarget(target) {
 
 var projectFile = argv.target ? './project.json' : '<input data>';
 
-function build(data, target) {
 
-    data.additionalArguments = additionalArguments;
-    data = unwind(isString(data) ? JSON.parse(data) : data);
+function run_target(dat, target_name){
+    if (target_name) winston.info('Target:', target_name);
+    winston.debug('Target content:', JSON.stringify(dat));
+    buildTarget(dat);
+}
+
+var build_targets;
+function build(data, target_name) {
+
+    if (isString(data) && !target_name){
+        return build({ build_targets: build_targets }, data);
+    }
+     
     env = mergeObj(env, data.buildFlags);
+    data = deepclone(data);
+    data = unwind(data, env);
+    env = mergeObj(env, data.buildFlags);
+    env = mergeObj(env, additionalArguments);
 
-    if (target) {
-        if (!data || !data.build_targets) {
+    var build_targets_tmp = build_targets;
+    if (data.build_targets) {
+        build_targets = data.build_targets;
+    }
+     
+    if (target_name) {
+        if (!data || !isObject(build_targets)) {
             throw ('No build_targets in ' + projectFile);
         }
-        else if (!data.build_targets[target]) {
-            throw ('No target ' + target + ' in ' + projectFile);
+        else if (!build_targets[target_name]) {
+            throw ('No target ' + target_name + ' in ' + projectFile);
         }
         else {
-            var targetContent = data.build_targets[target]
-            winston.info('Target ' + target);
-            winston.debug('Target content: ', JSON.stringify(targetContent));
-            buildTarget(targetContent);
+            run_target(data.build_targets[target_name], target_name);
         }
     } else {
-        winston.debug('Target content: ', JSON.stringify(data));
-        buildTarget(data);
+        run_target(data, '???');
     }
 
+    build_targets = build_targets_tmp;
 }
 
 if (argv.target) {
@@ -703,7 +736,7 @@ if (argv.target) {
         }
         else {
             try {
-                build(data, argv.target);
+                build(JSON.parse( data ), argv.target);
             } catch (e) {
                 winston.error('Error opening ' + projectFile);
                 winston.error(e);
@@ -713,7 +746,7 @@ if (argv.target) {
 }
 
 mergeObj(exports, {
-    additionalArguments: additionalArguments,
+    
     activateLog: activateLog,
     spawn: spawn,
 
