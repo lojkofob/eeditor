@@ -91,9 +91,10 @@ var EditorEventsWithKitten = {
     tapCatchers: new UpdatableProto(),
 
     invokeEvent: function (e, data, params, returnChanges) {
-        if (EditorEventsWithKitten[e]) {
+        var ee = isFunction(e) ? e : EditorEventsWithKitten[e].bind(EditorEventsWithKitten);
+        if (ee) {
             params = params || {};
-            var changes = EditorEventsWithKitten[e](data, params);
+            var changes = ee(data, params);
             if (changes) {
                 objectChanged(changes, params);
             }
@@ -155,6 +156,7 @@ var EditorEventsWithKitten = {
 
     'Project.settings': function () {
 
+        invokeEventWithKitten('ProjectSettings.show');
 
     },
 

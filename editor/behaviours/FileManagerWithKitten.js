@@ -656,10 +656,29 @@ var Model3dPreviewerWorker = {
         }
     },
 
+    SoundFileWorker = {
+
+        onTap: function () {
+              
+            var m = this.match;
+            var file = m[1];
+            var face = basename(file).split('.')[0];
+            
+            var tmp = options.__soundDisabled;
+            options.__soundDisabled = 0;
+            
+            /// \todo: load, show view
+            playSound(face);
+
+            options.__soundDisabled = tmp;
+        }
+
+    },
+
     FontFileWorker = {
 
         onTap: function () {
-
+            
             var m = this.match;
             var file = m[1];
             var face = getFontFaceFromFontFile(file);
@@ -941,6 +960,8 @@ var Model3dPreviewerWorker = {
 
         '(.*\\.[to]tf)': FontFileWorker,
 
+        '(.*\\.(wav|mp3|otg))': SoundFileWorker,
+        
         '(.*\\.(fbx))$': Model3dPreviewerWorker,
         '(.*/)([^/]*)\\.dbn': DragonBonesFileWorker,
         '(.*/)([^/]*)\\.spnb?': SpineFileWorker

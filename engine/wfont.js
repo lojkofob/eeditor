@@ -2,7 +2,7 @@
 
 
 function getFontFaceFromFontFile(file) {
-    return file.split('.')[0].replace(/[^\w\d]/g, '_');
+    return basename(file).split('.')[0].replace(/[^\w\d]/g, '_');
 }
 
 var _fontTestString = "AVWBESbswy/*-1";

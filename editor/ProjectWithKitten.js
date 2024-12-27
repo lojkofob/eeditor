@@ -71,8 +71,11 @@ function ProjectWithKitten(name, onLoad) {
         serverCommand({ command: 'fileOpen', file: 'project.json' },
             function (r) {
                 try {
+                    r = JSON.parse(r);
 
-                    r = unwind(JSON.parse(r));
+                    _this.original_settings = deepclone(r);
+
+                    r = unwind(r);
 
                     _this.settings = r;
 

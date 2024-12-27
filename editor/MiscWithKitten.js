@@ -343,7 +343,7 @@ function showImage(i) {
 
 
 function reload() {
-    looperPost(function () { location.reload() });
+    looperPost(function () { html.__reload() });
 }
 
 

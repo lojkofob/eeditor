@@ -958,10 +958,12 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
                             var t = this;
 
+                            activateProjectOptions();
                             json.src = $map(json.src, function (a) {
                                 var url = modUrl(t.__dir + a);
                                 return getCachedData(url) || url;
                             });
+                            deactivateProjectOptions();
 
                             json.onload = t.__onLoad;
                             json.onend = __onSoundEnd;

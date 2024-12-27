@@ -32,7 +32,15 @@ addEditorBehaviours( {
                 
                 if (project.settings) {
                     $each(project.settings.build_targets, function(t, i){
-                        onTapHighlight( panel.__addChildBox({ __class: 'e-nav-li', __text:i, __onTap: function(){ buildProjectTarget(i); }}));
+                        if (!i.startsWith('.') && !i.startsWith('_')) {
+                            panel.__addChildBox({
+                                __class: 'e-nav-li', __text:i,
+                                __onTap(){ 
+                                    buildProjectTarget(i); 
+                                },
+                                __onTapHighlight: 1
+                            });
+                        }
                     });
                 }
                 

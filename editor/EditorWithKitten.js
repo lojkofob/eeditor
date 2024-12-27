@@ -161,7 +161,7 @@ EditorWithKitten.prototype = {
     },
 
     prepareEditorUINode: function (nod, objectToChange, baseprop) {
-
+        nod.__objectToChange = objectToChange;
         nod.__traverse(function (n) {
             if (!n.____preparedByEditor) {
                 n.____preparedByEditor = 1;
@@ -169,8 +169,7 @@ EditorWithKitten.prototype = {
                 EditFieldsWithKitten.prepare(n, baseprop, objectToChange);
 
                 EditorUIBehavioursWithKitten.prepare(n);
-
-
+ 
                 if (n.__onTap) {
                     looperPost(function () {
                         if (isFunction(EditorEventsWithKitten[n.__onTap])) {

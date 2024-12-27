@@ -877,7 +877,7 @@ function concatArraysWithUniqueItemsIds(array1, array2, idGetter, idSetter) {
 function findGetParameter(name, defValue) {
     var result = null;
     var tmp = [];
-    var items = location.search.substr(1).split("&");
+    var items = __window.location.search.substr(1).split("&");
     for (var index = 0; index < items.length; index++) {
         tmp = items[index].split("=");
         if (tmp[0] === name) result = decodeURIComponent(tmp[1]);

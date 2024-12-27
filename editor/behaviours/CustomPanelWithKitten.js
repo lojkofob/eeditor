@@ -37,13 +37,20 @@ function generatePropertyFor(value, propName, linear, ooo) {
 
     var templates = {};
 
-
-
+ 
     function fillpanel(panel, list, object) {
 
         return $filter($map(list, (prop, propname) => {
+            
+            if (!prop.__propname){
+                var ppp;
+                ObjectDefineProperties(prop, {
+                    __propname: { enumerable: false, set(v){ ppp = v; }, get(){ return ppp } },
+                    __name: { get(){ return this.__propname }, enumerable: false }
+                });
+            }
 
-            prop.__name = propname;
+            prop.__propname = propname;
 
             var template = templates[prop.type];
             if (!template) return;
@@ -80,17 +87,20 @@ function generatePropertyFor(value, propName, linear, ooo) {
 
             cell.__setAliasesData({ label: { __text: prop.label || propname } });
 
-            if (prop.tooltip)
-                cell.__tooltip = tooltip;
+            if (prop.tooltip) {
+                cell.__tooltip = prop.tooltip;
+            }
 
             if (prop.step != undefined) {
                 cell.__traverse(n => { n.__numericInputStep = prop.step; });
             }
 
+            if (prop.__defaultValue != undefined){
+                cell.__defaultValue = prop.__defaultValue;
+            }
+
             if (prop.type == 'object') {
-
                 fillpanel(cell.panel, prop.properties, object);
-
             }
 
             return cell;
@@ -161,8 +171,6 @@ function generatePropertyFor(value, propName, linear, ooo) {
                 existingPanel.__alias('header').__text = title;
                 existingPanel.__needRemoveOnClose = opts.needRemoveOnClose;
 
-                var proxyObject = {};
-
                 invokeEventWithKitten('Editor.fillCustomPanel', mergeObj({ panel: existingPanel.panel }, opts));
 
                 if (opts.headerButtons && templates['hb']) {
@@ -172,7 +180,10 @@ function generatePropertyFor(value, propName, linear, ooo) {
                     $each(opts.headerButtons, hb => {
                         var cell = headerButtonsNode.__addChildBox(template);
                         cell.__text = hb.t;
-                        cell.__onTap = function () { invokeEventWithKitten(hb.f); };
+                        cell.__onTapHighlight = 1;
+                        cell.__onTap = function () { 
+                            invokeEventWithKitten(hb.f, existingPanel);
+                        };
                     });
                 }
 
