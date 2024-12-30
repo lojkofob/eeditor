@@ -38,7 +38,7 @@ function generatePropertyFor(value, propName, linear, ooo) {
     var templates = {};
 
  
-    function fillpanel(panel, list, object) {
+    function fillpanel(panel, list, object, existingPanel) {
 
         return $filter($map(list, (prop, propname) => {
             
@@ -56,29 +56,43 @@ function generatePropertyFor(value, propName, linear, ooo) {
             if (!template) return;
 
             var cell = panel.__addChildBox(template);
+ 
 
-            var isTypeName = prop.type == 'typename';
-            if (isTypeName) {
+            switch(prop.type) {
 
-            } else {
-                cell.__propertyBinding = propname;
-            }
-
-            if (prop.type == 'list' || isTypeName) {
-                var changer = cell.$({ __class: 'e-changer' })[0];
-                if (changer) {
-                    changer.__propertyBinding += '=' + JSON.stringify(prop.values);
-                    changer.__stringifiedProperties = 1;
-                }
-            }
-
-            if (prop.type == 'ddList') {
-                var ddListNode = cell.$({ __class: 'e-ddList' })[0];
-                if (ddListNode) {
-                    ddListNode.__propertyBinding = '=' + JSON.stringify(prop.values);
-                    ddListNode.__stringifiedProperties = 1;
-                } else {
+                default:
                     cell.__propertyBinding = propname;
+                    break;
+
+                case 'typename':
+                case 'list':
+                {
+                    cell.__propertyBinding = propname;
+                    var changer = cell.$({ __class: 'e-changer' })[0];
+                    if (changer) {
+                        changer.__propertyBinding += '=' + JSON.stringify(prop.values);
+                        changer.__stringifiedProperties = 1;
+                    }
+                    break;
+                }
+            
+                case 'ddList': {
+                    cell.__propertyBinding = propname;
+                    var ddListNode = cell.$({ __class: 'e-ddList' })[0];
+                    if (ddListNode) {
+                        ddListNode.__propertyBinding = '=' + JSON.stringify(prop.values);
+                        ddListNode.__stringifiedProperties = 1;
+                    }
+                    break;
+                } 
+
+                case 'button': {
+                    cell.__text = prop.t;
+                    cell.__onTapHighlight = 1;
+                    cell.__onTap = function () { 
+                        invokeEventWithKitten(prop.f, existingPanel);
+                    };
+                    break;
                 }
             }
 
@@ -100,7 +114,7 @@ function generatePropertyFor(value, propName, linear, ooo) {
             }
 
             if (prop.type == 'object') {
-                fillpanel(cell.panel, prop.properties, object);
+                fillpanel(cell.panel, prop.properties, object, existingPanel);
             }
 
             return cell;
@@ -114,7 +128,7 @@ function generatePropertyFor(value, propName, linear, ooo) {
 
             templates.customPanel = extractLayoutFromLayout('customPanel', Editor.uiLayout);
             $each(['object', 'b', 'number', 's', 'list', 'array', 'typename', 't', 'ddList', 'img',
-                'vec2', 'vec3', 'vec4', 'ivec2', 'ivec3', 'ivec4', 'bvec2', 'bvec3', 'bvec4', 'hb'], type => {
+                'vec2', 'vec3', 'vec4', 'ivec2', 'ivec3', 'ivec4', 'bvec2', 'bvec3', 'bvec4', 'hb', 'button'], type => {
                     templates[type] = extractLayoutFromLayout(type + '_template', templates.customPanel);
                 });
 
@@ -133,7 +147,7 @@ function generatePropertyFor(value, propName, linear, ooo) {
 
         fillCustomPanel: opts => {
             opts = opts || 0;
-            var r = { cells: fillpanel(opts.panel, opts.properties, opts.object) };
+            var r = { cells: fillpanel(opts.panel, opts.properties, opts.object, opts.existingPanel) };
             Editor.prepareEditorUINode(opts.panel, opts.object, opts.__propertyBinding);
             EditFieldsWithKitten.updateAllPropsIn(opts.panel);
             Editor.ui.__needUpdateDeep = 1;
@@ -146,7 +160,7 @@ function generatePropertyFor(value, propName, linear, ooo) {
             var name = opts.name;
             var title = opts.title || name;
             var object = opts.object;
-            var properties = opts.properties;
+            
 
             if (!title || !opts || !templates.customPanel)
                 return;
@@ -171,7 +185,10 @@ function generatePropertyFor(value, propName, linear, ooo) {
                 existingPanel.__alias('header').__text = title;
                 existingPanel.__needRemoveOnClose = opts.needRemoveOnClose;
 
-                invokeEventWithKitten('Editor.fillCustomPanel', mergeObj({ panel: existingPanel.panel }, opts));
+                invokeEventWithKitten('Editor.fillCustomPanel', mergeObj({
+                     panel: existingPanel.panel,
+                     existingPanel: existingPanel
+                }, opts));
 
                 if (opts.headerButtons && templates['hb']) {
                     var template = templates['hb'];
@@ -199,7 +216,9 @@ function generatePropertyFor(value, propName, linear, ooo) {
 
             }
 
-            invokeEventWithKitten('Editor.showPanel', { panel: existingPanel, scroll: 1, force: 1 });
+            invokeEventWithKitten('Editor.showPanel', { 
+                panel: existingPanel, scroll: 1, force: 1 
+            });
             return existingPanel;
 
         },

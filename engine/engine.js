@@ -129,8 +129,13 @@ var UpdatableProtoProto = UpdatableProto.prototype = {
         // return this.a.length == 0;
 
         for (var i = 0; i < this.a.length;) {
-            if (this.a[i].__update(arg1, arg2, arg3)) {
-                this.a.splice(i, 1);
+            var a = this.a[i].__update(arg1, arg2, arg3);
+            if (a) {
+                if (a == -1) {
+                    continue;
+                } else {
+                    this.a.splice(i, 1);
+                }
             }
             else {
                 i++;

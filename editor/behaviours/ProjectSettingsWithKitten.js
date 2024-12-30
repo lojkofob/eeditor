@@ -12,29 +12,11 @@ var ProjectSettingsWithKitten = {
                 
                 f(existingPanel){
 
-                    var data = $filterObject(existingPanel.__objectToChange, v => v != null && v!= undefined);
-                    var path = 'project.json';
-
-                    if (data && path) {
-                        
-                        var tmp = Editor.currentProject.options.__projectServerPath;
-                        
-                        Editor.currentProject.options.__projectServerPath = '';
- 
-                        serverCommand({
-                            command: 'fileWrite',
-                            file: path,
-                            content: JSON.stringify(data, null, 4)
-                        }, function (r) {
-                            if (r == 1) {
-                                BUS.__post('FILES_CHANGED');
-                                AskerWithKitten.ask({ caption: "file " + path + " saved", noinput: 1 })
-                            }
-                        });
-
-                        Editor.currentProject.options.__projectServerPath = tmp;
-                        
-                    }
+                    invokeEventWithKitten("Files.save_json", {
+                        path: 'project.json',
+                        absolute: 1,
+                        data: $filterObject(existingPanel.__objectToChange, v => v != null && v != undefined)
+                    });
 
                 } 
             }

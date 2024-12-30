@@ -2057,6 +2057,45 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
     var findPanel;
     addEditorEvents('Files', {
 
+        save_json(opts){
+
+            
+            //{ data: data, path: path, absolute: 0, silent: 0 });
+
+            if (opts.data && opts.path) {
+                
+                var tmp = Editor.currentProject.options.__projectServerPath;
+        
+                if (opts.absolute)
+                    Editor.currentProject.options.__projectServerPath = '';
+        
+                serverCommand({
+                    command: 'fileWrite',
+                    file: opts.path,
+                    content: JSON.stringify(opts.data, null, 4)
+                }, r => {
+                    var cb = opts.cb;
+                    if (r == 1) {
+                        BUS.__post('FILES_CHANGED');
+                        if (!opts.silent) {
+                            AskerWithKitten.ask({ caption: "file " + opts.path + " saved", noinput: 1, ok() { cb(1) }, cancel() { cb() } })
+                        }
+                    } else {
+                        if (!opts.silent) {
+                            AskerWithKitten.ask({ caption: "file " + opts.path + " not saved!", noinput: 1, ok() { cb(1) }, cancel() { cb() } })
+                        }
+                    }
+                });
+        
+        
+                Editor.currentProject.options.__projectServerPath = tmp;
+                
+            }
+        
+        }, 
+
+        
+
         cancelFind: function () {
             if (findPanel) {
                 findPanel.input.unfocus();
@@ -2122,8 +2161,20 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                 if (!e.name.match(/^\w*$/g)) {
                     return onError('bad name. use latin characters, digits and _');
                 }
-                return serverCommand({ command: 'mkdir', path: e.path, name: e.name }, function () { updateFiles() });
+                return serverCommand({ command: 'mkdir', path: e.path, name: e.name }, function () { 
+                    updateFiles();
+                    if (e.cb) e.cb();
+                });
+            } else 
+            if (e && isArray(e.dirs)){
+
+                return serverCommand({ command: 'mkdir', dirs: e.dirs }, function () { 
+                    updateFiles();
+                    if (e.cb) e.cb();
+                });
+
             }
+
             return onError('bad args', e);
         },
 

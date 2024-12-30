@@ -117,10 +117,18 @@ function normalizePath($path) {
 function normalizeFileName($pfolder, $fn, $returnFn = false, $nopfolder = false ) {
     $ddbg = 0;
     $fullpath = ( $nopfolder ? "" : $pfolder ) . normalizeEncodingFromJS( $fn );
-    $allowDir = dewin(str_replace(realpath( '..' ), '', realpath( $pfolder )));
+
+    $pdir = realpath( $pfolder );
+
+    // may be allowed, but not exists
+    if (!$pdir) $pdir = str_replace( '../projects', realpath('../projects'), $pfolder );
+
+    $allowDir = dewin(str_replace(realpath( '..' ), '', $pdir));
     $realFullPath = normalizePath($fullpath);
     
     if ($ddbg) {
+        echo "realpath( '..' ) = ".realpath( '..' )."\n";
+        echo "pdir = $pdir \n";
         echo "pfolder = $pfolder \n";
         echo "fullpath = $fullpath \n";
         echo "realFullPath = $realFullPath \n";
@@ -388,12 +396,29 @@ if (is_array($json)) {
             }
         }
         else if ($command == 'mkdir'){
-            $fullpath = normalizeFileName( $pfolder, dirname( @$json['path']. '/1' ) .'/'. removeNotChars(@$json['name']) );
-            if ($fullpath) {
-                if (!is_dir($fullpath)) mkdir( $fullpath, 0777, true );
-                $answ['ok'] = 1;
-                $answ['result'] = "success $fullpath";
+
+            $dirs = @$json['dirs'];
+            
+            
+            if (is_array($dirs)) {
+                foreach ( $dirs as $v ) {
+                    $fullpath = normalizeFileName( $pfolder, dirname( @$v['path']. '/1' ) .'/'. removeNotChars(@$v['name']) );
+                    if ($fullpath) {
+                        if (!is_dir($fullpath)) mkdir( $fullpath, 0777, true );
+                        $answ['ok'] = 1;
+                        $answ['result'] = "success";
+                    }
+                }
+            } else {
+                $fullpath = normalizeFileName( $pfolder, dirname( @$json['path']. '/1' ) .'/'. removeNotChars(@$json['name']) );
+                if ($fullpath) {
+                    if (!is_dir($fullpath)) mkdir( $fullpath, 0777, true );
+                    $answ['ok'] = 1;
+                    $answ['result'] = "success $fullpath";
+                }
             }
+
+
         }
         else if ($command == 'fileRename'){
             
