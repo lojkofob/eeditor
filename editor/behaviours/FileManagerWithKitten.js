@@ -2074,7 +2074,7 @@ EditorUIBehavioursWithKitten.behaviours.filemanager = (function () {
                     file: opts.path,
                     content: JSON.stringify(opts.data, null, 4)
                 }, r => {
-                    var cb = opts.cb;
+                    var cb = notNullFunc(opts.cb);
                     if (r == 1) {
                         BUS.__post('FILES_CHANGED');
                         if (!opts.silent) {
