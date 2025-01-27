@@ -21,7 +21,7 @@ var forceAllShadowsUpdate = 0;
 var ShadowPrototype = Shadow.prototype = {
     constructor: Shadow,
 
-    __destruct: function () {
+    __destruct() {
         var t = this;
         var shadowNode = t.__nodeToUpdate;
         if (shadowNode && shadowNode.__isShadow) {
@@ -29,7 +29,7 @@ var ShadowPrototype = Shadow.prototype = {
         }
     },
 
-    __init: function (v) {
+    __init(v) {
         if (isArray(v)) {
             var nv = {};
             if (v[0] != undefined) nv.x = v[0];
@@ -41,11 +41,8 @@ var ShadowPrototype = Shadow.prototype = {
         mergeObj(this, v);
     },
 
-    __update: function () {
-        /*
-        if (!this.__realEnableShadow)
-            return;
-        
+    __update() {
+          
         var t = this;
         if (!t.__node) return;
         
@@ -57,19 +54,34 @@ var ShadowPrototype = Shadow.prototype = {
             parentNode = shadowNode.__parent;
         
         if (!parentNode) return;
-        
+        //debug
+        if (parentNode.__isText) {
+            // undefined behavior
+            debugger;
+        }
+        //undebug
         parentNode.update(1);
         
         var pn_scale = parentNode.__scale
-            , pn_rotate = parentNode.__rotate;
-            
-        parentNode.__scaleF = 1;
-        parentNode.__rotate = 0;
+            , pn_rotate = parentNode.__rotate
+            , pn_offset = parentNode.__offset.__clone();
         
+        var blur = t.__blur;
+        var sc = 1 / (blur || 1) * (t.__quality || 1);
+            
+
+        parentNode.__scaleF = sc;
+        parentNode.__rotate = 0;
+        parentNode.__offset.set(0,0,0);
+
+        var ppp = parentNode.__parent;
+         
+        addToScene(parentNode);
+
         shadowNode.__visible = false;
         
 //          consoleLog('update s', this);
-        
+        /*
         var box = parentNode.__getBoundingBox(),
             sz = box.max.__clone().sub(box.min);
         
@@ -80,38 +92,44 @@ var ShadowPrototype = Shadow.prototype = {
             shadowNode.__ofs.set( t.x - wp.x + p2.x, t.y + wp.y - p2.y, 0.01 );
         }
         else {
-            shadowNode.__ofs.set( t.x, t.y, 0.01 );    
+            shadowNode.__ofs.set( t.x, t.y, 0.01 );
         }
+        */
+
+        shadowNode.__ofs.set( t.x, t.y, 0.01 );
+        var sz = parentNode.__size;
         
         shadowNode.__color = t.__color;
 
-        var blur = t.__blur;
         shadowNode.__lastBlur = blur;
 
         var sqrtBlur = sqrt(blur) * 10;
         
-        var bufferTexture = renderNodeToTexture(parentNode, { __size:new Vector2( (sz.x + sqrtBlur * 2)/2,(sz.y + sqrtBlur * 2)/2 ) });
-        
-        showImage(bufferTexture);
+        var bufferTexture = renderNodeToTexture(parentNode, {
+            __size: new Vector2( (sz.x + sqrtBlur * 2) * sc, (sz.y + sqrtBlur * 2) * sc ) 
+        });
+
+        ppp.__addChildBox(parentNode);
+         
+        // showImage(bufferTexture);
             
 //         consoleLog('update s', this, parentNode);
         var opts = {
             __shader:'blur',
-            
-            c: shadowNode.__selfColor,
-            m: bufferTexture.__texture,
-            a: t.__alpha,
-            r: sz,
-            b: t.__blur
-            
+            map: bufferTexture.__texture,
+            __uniforms: set({},
+                'u_col', shadowNode.__selfColor,
+                'u_alp', t.__alpha,
+                'u_rad', sz,
+                'u_blur', t.__blur)
         };
         
         sz.x += blur * 2;
         sz.y += blur * 2;
         
         function blurit( x, y, scale ){
-            opts.m = bufferTexture.__texture;
-            opts.d = new Vector2(x, y);
+            opts.map = bufferTexture.__texture;
+            set(opts.__uniforms, "u_dvec", new Vector2(x, y));
             var newBufferTexture = renderOverTexture( sz.x, sz.y, opts, scale );
             bufferTexture.__destruct();
             bufferTexture = newBufferTexture;
@@ -139,13 +157,16 @@ var ShadowPrototype = Shadow.prototype = {
         if (shadowNode.map) shadowNode.map.__destruct();
         if (shadowNode.__bufferTexture) shadowNode.__bufferTexture.__destruct();
         
-        
-        var scale = 1 + blur * 10;
+        var scale = 1 + blur * (t.__blur_scale || 10);
         sz.x += scale;
         sz.y += scale;
         
+        
         parentNode.__scale = pn_scale;
         parentNode.__rotate = pn_rotate;
+        parentNode.__offset.__copy(pn_offset);
+
+        
         
         shadowNode.__init({
             __size: sz,
@@ -155,7 +176,7 @@ var ShadowPrototype = Shadow.prototype = {
             __bufferTexture : bufferTexture
         });
         
-        shadowNode.update();*/
+        shadowNode.update();
     }
 };
 

@@ -212,14 +212,14 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
     };
 
     texture.__image.onload = wrapFunctionInTryCatch(function () {
-
-        if (texture.__image) {
-            URL.revokeObjectURL(texture.__image.src);
+        var img = texture.__image;
+        if (img) {
+            URL.revokeObjectURL(img.src);
 
             // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
             var isJPEG = url.search(/\.(jpg|jpeg)$/) > 0 || url.search(/^data\:image\/jpeg/) === 0;
 
-            texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: texture.__image, __needsUpdate: 1 });
+            texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: img, __needsUpdate: 1 });
 
             texture.__requests = 0;
 
@@ -227,7 +227,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
                 onload(texture);
             }
 
-            texture.__image.onload = undefined;
+            img.onload = undefined;
         }
     });
 
@@ -336,7 +336,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
         if (cache.__isLoading) {
             cache.__onload.push(onload);
         } else {
-            onload(tex);
+            onload(cache.tex);
         }
         return cache.tex;
     }
@@ -364,7 +364,8 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                 onTextureLoaded(tex);
             }, onProgress, onError, urlGotModUrl, opts);
 
-    globalConfigsData.__images[srcurl] = { tex: tex, __isLoading: 1, __onload: [onload] };
+    setCachedData(srcurl, { tex: tex, __isLoading: 1, __onload: [onload] }, globalConfigsData.__images);
+    
     tex.__src = filename;
 
     if (nodeWaitingsForThis) {

@@ -27,7 +27,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
                 var s = scenes[k];
 
                 for (var i = s.__childs.length - 1; i >= 0; i--) {
-                    var r = s.__childs[i], a = r[t.__propertyArray];
+                    var r = s.__childs[i] || {}, a = r[t.__propertyArray];
                     if (!r.____visible || !r.__viewable)
                         continue;
 
@@ -870,6 +870,7 @@ function addEventListeners(elem) {
             'touchstart', onDocumentTouchDown,
 
             'touchend', onDocumentTouchEnd,
+            'touchcancel', onDocumentTouchEnd,
             'touchleave', onDocumentTouchOut,
 
             'mouseout', onDocumentMouseOut,
@@ -894,7 +895,7 @@ function addEventListeners(elem) {
             BUS.__post(__ON_VISIBILITY_CHANGED, !hiddenNow);
         }
     }
-
+    
     addEventListenersToElement(__document, set({},
         'visibilitychange', checkVisibilityChanged,
         'msvisibilitychange', checkVisibilityChanged,
@@ -906,8 +907,8 @@ function addEventListeners(elem) {
 
     addEventListenersToElement(__window, set({},
         'beforeunload', checkVisibilityChanged,
-        'focus', checkVisibilityChanged,
-        'blur', checkVisibilityChanged
+        'focus', a => { checkVisibilityChanged(); BUS.__post(__ON_FOCUSED); },
+        'blur', a => { checkVisibilityChanged(); BUS.__post(__ON_BLURED); }
     ));
 
 }

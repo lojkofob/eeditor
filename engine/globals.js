@@ -370,7 +370,7 @@ function isNumber(a) { return (typeof a === 'number') && isFinite(a); }
 
 function overrideNotEnumerableProperty(f) { return { enumerable: false, value: f } }
 
-function override$(a, e$, f$, m$, F$, c$, r$, M$) {
+function override$(a, e$, f$, m$, F$, c$, r$, M$, N$) {
     ObjectDefineProperties(a, set({},
         'e$', overrideNotEnumerableProperty(e$),
         'f$', overrideNotEnumerableProperty(f$),
@@ -378,7 +378,8 @@ function override$(a, e$, f$, m$, F$, c$, r$, M$) {
         'F$', overrideNotEnumerableProperty(F$),
         'c$', overrideNotEnumerableProperty(c$),
         'r$', overrideNotEnumerableProperty(r$),
-        'M$', overrideNotEnumerableProperty(M$)
+        'M$', overrideNotEnumerableProperty(M$),
+        'N$', overrideNotEnumerableProperty(N$)
     ));
 }
 var ArrayPrototype = Array.prototype, ObjectPrototype = Object.prototype;
@@ -400,7 +401,8 @@ override$(ArrayPrototype,
     ArrayPrototype.find, // $find
     __$countProto, // $count
     function (f) { for (var i = 0; i < this.length; i++) this[i] = f(this[i], i); return this; }, // $replace
-    function (f, fl) { return this.map(f).filter(fl); } // $mapAndFilter
+    function (f, fl) { return this.map(f).filter(fl); }, // $mapAndFilter
+    function (fl, f) { return this.filter(fl).map(f); } // $filterAndMap
 );
 
 override$(ObjectPrototype,
@@ -410,7 +412,8 @@ override$(ObjectPrototype,
     function (f) { for (var i in this) { var r = f(this[i], i); if (r) return this[i]; } }, // $find
     __$countProto, // $count
     function (f) { for (var i in this) this[i] = f(this[i], i); return this; }, // $replace
-    function (f, fl) { var a = {}, i; for (i in this) { var r = f(this[i], i); if (fl(r)) a[i] = r; } return a; } // $mapAndFilter
+    function (f, fl) { var a = {}, i; for (i in this) { var r = f(this[i], i); if (fl(r, i)) a[i] = r; } return a; }, // $mapAndFilter
+    function (fl, f) { var a = {}, i; for (i in this) { var r = fl(this[i], i); if (r) a[i] = f(r, i); } return a; } // $filterAndMap
 );
 
 function $getf(a, k, f) { var b = a ? a[k] : 0; if (isFunction(b)) return b.bind(a)(f); }
@@ -425,6 +428,7 @@ function $replace(a, f) { return $getf(a, 'r$', f) }
 
 function $findResult(a, f) { for (var i in a) { var r = f(a[i], i); if (r) return r } }
 function $mapAndFilter(a, f, fl) { return $getff(a, 'M$', f, fl || (a => a)); }
+function $filterAndMap(a, fl, f) { return $getff(a, 'N$', fl, f); }
 
 function $filterObject(a, f) { var b = {}; for (var i in a) if (f(a[i], i)) b[i] = a[i]; return b; }
 function $mapArrayToObject(a, f) { var o = {}; if (a) { for (var i = 0; i < a.length; i++) o[f(a[i], i)] = a[i]; } return o; }

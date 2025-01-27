@@ -442,10 +442,8 @@ mergeObj(NodePrototype, {
                 , x = nsx ? mmax(t.__scrollMin.x, mmin(0, px)) : t.__scrollX
                 , y = nsy ? mmax(0, mmin(t.__scrollMin.y, py)) : t.__scrollY;
 
-            if (t.__a) {
-                killAnim(t.__a);
-                t.__a = 0;
-            }
+            t.__a = killAnim(t.__a);
+
             x = t.__scroll.__stepx ? roundByStep(x, t.__scroll.__stepx) : x;
             y = t.__scroll.__stepy ? roundByStep(y, t.__scroll.__stepy) : y;
             if (animTime) {
@@ -1878,19 +1876,12 @@ mergeObj(NodePrototype, {
         }
         return t;
     },
-    /*
-        __updateShadows : function(){
-            var t = this, c = t.__childs;
-            if (t.____shadow){
-                t.____shadow.__update();
-            }
-            for (var i=0;i<c.length;i++) {
-                if (c[i].__updateShadows)
-                c[i].__updateShadows();
-            }
-            return t;
+    
+        __updateShadows(){
+            this.__traverse(a => a.____shadow && a.____shadow.__update());
+            return this;
         },
-        */
+        
 
     __calculateAbsoluteWidth(parentWidth) {
 
@@ -3559,11 +3550,8 @@ var NodeCloneProperties = {
                 //unmulticlass
 
                 if (globalConfigsData.__spriteSheetAnimations) {
-
-                    if (t.__spriteSheetAnim) {
-                        killAnim(t.__spriteSheetAnim);
-                        delete t.__spriteSheetAnim;
-                    }
+                    
+                    t.__spriteSheetAnim = killAnim(t.__spriteSheetAnim);
 
                     var spriteSheetAnim = globalConfigsData.__spriteSheetAnimations[filename];
                     if (spriteSheetAnim) {
@@ -4707,10 +4695,7 @@ var NodeCloneProperties = {
                         var thumbSize = thumb.__size.y;
                         var sliderSize = slider.__contentSize.y - thumbSize;
                         var y = sliderSize * (mmin(1, mmax(0, percent)) - 0.5);
-                        if (thumb.__a) {
-                            killAnim(thumb.__a);
-                            thumb.__a = 0;
-                        }
+                        thumb.__a = killAnim(thumb.__a);
 
                         if (time) {
                             thumb.__a = anim(thumb, { __y: y }, time, 0, easeSineO, 0);
@@ -4733,10 +4718,7 @@ var NodeCloneProperties = {
                         var thumbSize = thumb.__size.x;
                         var sliderSize = slider.__contentSize.x - thumbSize;
                         var x = sliderSize * (mmin(1, mmax(0, percent)) - 0.5);
-                        if (thumb.__a) {
-                            killAnim(thumb.__a);
-                            thumb.__a = 0;
-                        }
+                        thumb.__a = killAnim(thumb.__a);
 
                         if (time) {
                             thumb.__a = anim(thumb, { __x: x }, time, 0, easeSineO, 0);
@@ -4783,10 +4765,7 @@ var NodeCloneProperties = {
 
                                 var sliderSize = slider.__contentSize.y - thumb.__size.y;
 
-                                if (thumb.__a) {
-                                    killAnim(thumb.__a);
-                                    thumb.__a = 0;
-                                }
+                                thumb.__a = killAnim(thumb.__a);
 
                                 thumb.__y = mmax(-sliderSize / 2, mmin(sliderSize / 2, thumb.__y + dy));
 
@@ -4838,10 +4817,7 @@ var NodeCloneProperties = {
 
                                 var sliderSize = slider.__contentSize.x - thumb.__size.x;
 
-                                if (thumb.__a) {
-                                    killAnim(thumb.__a);
-                                    thumb.__a = 0;
-                                }
+                                thumb.__a = killAnim(thumb.__a);
 
                                 thumb.__x = mmax(-sliderSize / 2, mmin(sliderSize / 2, thumb.__x + dx));
 
@@ -4873,10 +4849,7 @@ var NodeCloneProperties = {
                         var t = this;
                         t.__cumulated = (t.__cumulated || new Vector2()).set(0, 0);
 
-                        if (t.__a) {
-                            killAnim(t.__a);
-                            t.__a = 0;
-                        }
+                        t.__a = killAnim(t.__a);
 
                         var bb = t.__getBoundingBox(1, 1)
                             , swch = bb.max.sub(bb.min)
@@ -5041,6 +5014,7 @@ var NodeCloneProperties = {
 
         scratio: createSomePropertyWithGetterAndSetter(function () { return __screenSize.x / __screenSize.y }),
         sc: createSomePropertyWithGetterAndSetter(function () { return __screenSize }),
+        rsc: createSomePropertyWithGetterAndSetter(function () { return __realScreenSize }),
 
         dt: createSomePropertyWithGetterAndSetter(function () { return __currentFrameDeltaTime / 1000; }),
         time: createSomePropertyWithGetterAndSetter(function () { return __lastOnFrameTime / 1000; }),

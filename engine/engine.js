@@ -1243,7 +1243,7 @@ function computeAtlasTexture(atlas) {
 
     }
 
-    var data = getCachedData(atlas.__atlasDataFile);
+    var data = atlas.__atlasData || getCachedData(atlas.__atlasDataFile);
     //debug
     if (!data) {
         consoleError('no atlas loaded!', atlas.__atlasDataFile);

@@ -29,8 +29,8 @@ function addComponentProp(props, obj, p) {
             obj[p] = props[p];
         } else {
             obj[p] = {
-                get: function () { return this.p[p]; },
-                set: function (v) { this.p[p] = v; }
+                get() { return this.p[p]; },
+                set(v) { this.p[p] = v; }
             }
         }
     }
@@ -319,8 +319,8 @@ function addEmitterProp(props, obj, p) {
     } else {
         var defValue = options.__defaultParticleEmitterPropertiesValues[p] = props[p];
         obj[p] = {
-            get: function () { return this.p[p]; },
-            set: function (v) {
+            get() { return this.p[p]; },
+            set(v) {
                 this.p[p] = (v == undefined) ? defValue || 0 : v;
             }
         }
@@ -364,12 +364,12 @@ function addEmitterProp(props, obj, p) {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 var ComponentDefaultsProtoMethods = {
-    __updateParticle: function (particle, dt) { },
-    __destruct: function (emitter) { },
-    __initEmitter: function (emitter) { },
-    __initParticle: function (particle) { },
-    __update: function (emitter, dt) { },
-    __setNeedUpdate: function () { this.__needReinit = 1 }
+    __updateParticle(particle, dt) { },
+    __destruct(emitter) { },
+    __initEmitter(emitter) { },
+    __initParticle(particle) { },
+    __update(emitter, dt) { },
+    __setNeedUpdate() { this.__needReinit = 1 }
 };
 
 var EffectComponentsFactory = makeSingleton({
@@ -377,17 +377,17 @@ var EffectComponentsFactory = makeSingleton({
     __registeredComponents: {}
 }, {
 
-    __createByType: function (type, args) {
+    __createByType(type, args) {
         if (this.__registeredComponents[type]) return new this.__registeredComponents[type](args)
     },
 
-    __createComponentFromJson: function (j) {
+    __createComponentFromJson(j) {
         if (j.t || j.__componentType)
             return mergeObj(this.__createByType(j.t || j.__componentType), j);
 
     },
 
-    __componentToJson: function (c) {
+    __componentToJson(c) {
         var o = mergeObj({ __componentType: c.t }, c.p)
 
         for (var i in emmpropopts) {
@@ -400,13 +400,13 @@ var EffectComponentsFactory = makeSingleton({
         return o;
     },
 
-    __componentsToJson: function (c) {
+    __componentsToJson(c) {
         var p = [];
         for (var i in c) p[i] = this.__componentToJson(c[i]);
         return p;
     },
 
-    __registerComponent: function (shorttype, c, proto, properties) {
+    __registerComponent(shorttype, c, proto, properties) {
 
         ObjectDefineProperties(
             mergeObjects([{ t: shorttype, constructor: c }, ComponentDefaultsProtoMethods, proto], c.prototype),
@@ -521,7 +521,7 @@ function updateColorsBuffer2(emitter, sz) {
 
 var NormalUVSBuilder = {
 
-    __updateUVSBuffer: function (emitter, sz) {
+    __updateUVSBuffer(emitter, sz) {
 
         var buffer = emitter.__uvsBuffer
             , uvses = emitter.__uvs
@@ -536,7 +536,7 @@ var NormalUVSBuilder = {
         }
     },
 
-    __generateUVS: function (emitter) {
+    __generateUVS(emitter) {
 
         var frame = globalConfigsData.__frames[emitter.p.texture];
         if (!frame || frame.__loading) return;
@@ -768,21 +768,21 @@ EffectComponentsFactory.__registerComponent('d',
             spin: defaultZeroFunction,
 
             // vector hzValue
-            force: function () { return defaultZeroVector2 },
-            velocity_factor: function () { return defaultOneVector2 },
+            force() { return defaultZeroVector2 },
+            velocity_factor() { return defaultOneVector2 },
 
-            size: function () { return default10Vector2 },
-            size_factor: function () { return defaultOneVector2 }
+            size() { return default10Vector2 },
+            size_factor() { return defaultOneVector2 }
 
         }
     },
     {
-        __destruct: function (emitter) {
+        __destruct(emitter) {
             emitter.__verticesBuffer.__destruct();
             emitter.__uvsBuffer.__destruct();
         },
 
-        __initEmitter: function (emitter) {
+        __initEmitter(emitter) {
 
             if (!emitter.__verticesBuffer){
                 emitter.__verticesBuffer = emitter.__addAttributeBuffer('position', 2);
@@ -798,7 +798,7 @@ EffectComponentsFactory.__registerComponent('d',
 
         },
 
-        __initParticle: function (particle) {
+        __initParticle(particle) {
 
             var emitter = particle.__emitter
                 , part = emitter.__part
@@ -819,11 +819,11 @@ EffectComponentsFactory.__registerComponent('d',
         },
 
         // TODO: force component!!!
-        __update: function (emitter, dt) {
+        __update(emitter, dt) {
             this.__force = this.g.force(emitter.__part);
         },
 
-        __updateParticle: function (particle, dt) {
+        __updateParticle(particle, dt) {
 
             var t = this
                 , emitter = particle.__emitter
@@ -904,20 +904,20 @@ EffectComponentsFactory.__registerComponent('c',
         var t = this;
         t.p = { color: 255, color_factor: 1 };
         t.g = {
-            color: function () { return default255Vector4 },
-            color_factor: function () { return defaultOneVector4 }
+            color() { return default255Vector4 },
+            color_factor() { return defaultOneVector4 }
         }
 
     },
 
     {
-        __initEmitter: function (emitter) {
+        __initEmitter(emitter) {
             emitter.__shader = 'part';
             emitter.__colorsBuffer = emitter.__addAttributeBuffer('c', 4);
             emitter.__colorEmitterComponent = this;
         },
 
-        __destruct: function (emitter) {
+        __destruct(emitter) {
             if (emitter.__colorEmitterComponent == this) {
                 emitter.__shader = 'partnc';
                 emitter.__colorsBuffer.__destruct();
@@ -926,7 +926,7 @@ EffectComponentsFactory.__registerComponent('c',
             }
         },
 
-        __initParticle: function (particle) {
+        __initParticle(particle) {
             particle.__start_color = this.g.color(particle.__emitter.__part).__clone().__divideScalar(255);
         }
 
@@ -946,12 +946,12 @@ EffectComponentsFactory.__registerComponent('pc',
 
         var t = this;
         t.p = { color_factor: 1 };
-        t.g = { color_factor: function () { return defaultOneVector4 } }
+        t.g = { color_factor() { return defaultOneVector4 } }
 
     },
 
     {
-        __initEmitter: function (emitter) {
+        __initEmitter(emitter) {
             emitter.__shader = 'part';
             emitter.__colorsBuffer = emitter.__addAttributeBuffer('c', 4);
             emitter.__colorEmitterComponent = this;
@@ -1018,12 +1018,12 @@ EffectComponentsFactory.__registerComponent('rta',
         var t = this;
         t.p = { accel: 0, accel_factor: 1 };
         t.g = {
-            accel: function () { return defaultZeroVector2 },
-            accel_factor: function () { return defaultOneVector2 }
+            accel() { return defaultZeroVector2 },
+            accel_factor() { return defaultOneVector2 }
         }
     },
     {
-        __updateParticle: function (particle, dt) {
+        __updateParticle(particle, dt) {
             var t = this
                 , emitter = particle.__emitter
                 , accel = particle.__start_accel;
@@ -1053,7 +1053,7 @@ EffectComponentsFactory.__registerComponent('rta',
             }
         },
 
-        __initParticle: function (particle) {
+        __initParticle(particle) {
 
             particle.__start_accel = this.g.accel(particle.__emitter.__part);
 
@@ -1090,11 +1090,11 @@ EffectComponentsFactory.__registerComponent('sub',
         t.p = { __subEmitter: '' };
     },
     {
-        __destruct: function (emitter) {
+        __destruct(emitter) {
             emitter.__render = ParticleEmitterPrototype.__render;
         },
 
-        __initEmitter: function (emitter) {
+        __initEmitter(emitter) {
             var t = this;
 
             emitter.__render = function () {
@@ -1127,7 +1127,7 @@ EffectComponentsFactory.__registerComponent('sub',
 
         },
 
-        __initParticle: function (particle, dt) {
+        __initParticle(particle, dt) {
             var t = this
                 , emitter = particle.__emitter;
 
@@ -1137,7 +1137,7 @@ EffectComponentsFactory.__registerComponent('sub',
 
                 if (!particle.__subEmitters) {
                     ObjectDefineProperty(particle, PDM.__live, {
-                        set: function (v) {
+                        set(v) {
                             this.__lll = v;
                             if (!v) {
                                 //TODO: live after die
@@ -1145,7 +1145,7 @@ EffectComponentsFactory.__registerComponent('sub',
                                     this.__subEmitters[i].__destruct();
                             }
                         },
-                        get: function () {
+                        get() {
                             return this.__lll;
                         }
                     });
@@ -1161,7 +1161,7 @@ EffectComponentsFactory.__registerComponent('sub',
 
         },
 
-        __updateParticle: function (particle, dt) {
+        __updateParticle(particle, dt) {
             if (particle.__subEmitters) {
                 for (var i = 0; i < particle.__subEmitters.length; i++) {
                     particle.__subEmitters[i].__update(dt);
@@ -1194,7 +1194,7 @@ EffectComponentsFactory.__registerComponent('tgt',
             __factor: defaultZeroFunction
         }
     }, {
-    __updateParticle: function (particle, dt) {
+    __updateParticle(particle, dt) {
         if (particle.__targetPosition) {
             var pos = particle.__current_position
                 , part = this.g.__factor(particle.__part) * dt
@@ -1206,12 +1206,12 @@ EffectComponentsFactory.__registerComponent('tgt',
         }
     },
 
-    __initParticle: function (particle) {
+    __initParticle(particle) {
         particle.__targetPosition = this.__targetPositions ? this.__targetPositions[randomInt(0, this.__targetPositions.length - 1)] : 0;
 
     },
 
-    __initEmitter: function (emitter) {
+    __initEmitter(emitter) {
         var t = this;
         t.__targetPositions = 0;
 
@@ -1261,7 +1261,7 @@ EffectComponentsFactory.__registerComponent('tl',
         }
     }, {
 
-    __updateParticle: function (particle, dt) {
+    __updateParticle(particle, dt) {
         if (this.__currentPosition) {
 
             particle.__current_position.lerp(this.__currentPosition, clamp(this.g.__factor(particle.__part) * dt, 0, 1));
@@ -1271,11 +1271,11 @@ EffectComponentsFactory.__registerComponent('tl',
         this.__currentPosition = particle.__current_position;
     },
 
-    __initParticle: function (particle) {
+    __initParticle(particle) {
 
     },
 
-    __update: function (emitter) {
+    __update(emitter) {
 
         if (this.__linked) {
             if (this.__currentPosition) {
@@ -1328,11 +1328,11 @@ EffectComponentsFactory.__registerComponent('eec',
 
     }, {
 
-    __destruct: function (emitter) {
+    __destruct(emitter) {
         delete emitter.__powerMod;
     },
 
-    __initEmitter: function (emitter) {
+    __initEmitter(emitter) {
         var t = this;
 
         if (t.__power) {
@@ -1393,11 +1393,11 @@ EffectComponentsFactory.__registerComponent('or',
         t.__changesListener = t.__setNeedUpdate.bind(t);
     },
     {
-        __destruct: function (emitter) {
+        __destruct(emitter) {
             emitter.p.origin = emitter.__originalOriginP;
         },
 
-        __update: function (emitter) {
+        __update(emitter) {
             this.__sz = (emitter.__parent || (emitter.__effect || 0).__node).__size || defaultZeroVector2;
         },
 
@@ -1427,7 +1427,7 @@ EffectComponentsFactory.__registerComponent('or',
 
         },
 
-        __initEmitter: function (emitter) {
+        __initEmitter(emitter) {
             emitter.__originalOriginP = emitter.p.origin;
 
             var t = this
@@ -1483,16 +1483,16 @@ EffectComponentsFactory.__registerComponent('sh',
         t.g = {};
     }, {
 
-    __destruct: function (emitter) {
+    __destruct(emitter) {
         // TODO:
     },
 
-    __initEmitter: function (emitter) {
+    __initEmitter(emitter) {
         var t = this;
         emitter.__shader = t.__shader;
     },
 
-    __update: function (emitter) {
+    __update(emitter) {
         var t = this;
         $each(t.g, function (f, i) { emitter[i] = f(emitter.__part); });
     }
@@ -1539,20 +1539,20 @@ EffectComponentsFactory.__registerComponent('uv',
             __animated: 0
         };
         t.g = {
-            __animationPostfix: function () { return 0 },
-            __animationPostfix_factor: function () { return 1 }
+            __animationPostfix() { return 0 },
+            __animationPostfix_factor() { return 1 }
         }
 
     }, {
 
-    __destruct: function (emitter) {
+    __destruct(emitter) {
 
         emitter.__uvsBuilder = NormalUVSBuilder;
         NormalUVSBuilder.__generateUVS(emitter);
 
     },
 
-    __updateUVSBuffer: function (emitter, sz) {
+    __updateUVSBuffer(emitter, sz) {
 
         if (!this.__uvsType && !emitter.__animUVS) {
 
@@ -1637,7 +1637,7 @@ EffectComponentsFactory.__registerComponent('uv',
 
     },
 
-    __generateUVS: function (emitter) {
+    __generateUVS(emitter) {
         var t = this;
 
         var textureName = emitter.p.texture;
@@ -1694,20 +1694,20 @@ EffectComponentsFactory.__registerComponent('uv',
 
     },
 
-    __initEmitter: function (emitter) {
+    __initEmitter(emitter) {
 
         emitter.__uvsBuilder = this;
         this.__generateUVS(emitter);
 
     },
 
-    __updateParticle: function (particle, dt) {
+    __updateParticle(particle, dt) {
         if (this.__animated) {
             particle.__animationPostfix = round(this.g.__animationPostfix_factor(particle.__part) * particle.__startAnimationPostfix);
         }
     },
 
-    __initParticle: function (particle) {
+    __initParticle(particle) {
         if (this.__animated) {
             particle.__startAnimationPostfix = this.g.__animationPostfix(particle.__emitter.__part);
         }
@@ -1769,7 +1769,7 @@ function Particle(emitter, part, matrixOrParticle, dtMult) {
 
 makeClass(Particle, {
 
-    __update: function (dt, emitter) {
+    __update(dt, emitter) {
         var particle = this;
 
         particle.__current_lifespan -= dt;
@@ -1799,17 +1799,17 @@ makeClass(Particle, {
 }, {
 
     __matrixWorld: {
-        get: function () {
+        get() {
             return this // жесть
         }
     },
     __rotate: {
-        get: function () {
+        get() {
             return this.__current_angle;
         }
     },
     __worldPosition: {
-        get: function () {
+        get() {
             var v = this.__current_position.__clone();
             v.y *= -1;
             return v;
@@ -1817,7 +1817,7 @@ makeClass(Particle, {
     },
  
     __node: {
-        get: function () {
+        get() {
             return this.__emitter.__parent.__node;
         }
     }
@@ -1896,11 +1896,11 @@ var ParticleEmitterPrototype =
 
         constructor: ParticleEmitter,
 
-        __callChange: function (p) {
+        __callChange(p) {
             $fcall(this.__changesListeners[p]);
         },
 
-        __addChangesListener: function (p, f) {
+        __addChangesListener(p, f) {
             if (!this.__changesListeners[p]) {
                 this.__changesListeners[p] = [];
             }
@@ -1908,7 +1908,7 @@ var ParticleEmitterPrototype =
             this.__changesListeners[p].push(f);
 
         },
-        __removeChangesListener: function (f, p) {
+        __removeChangesListener(f, p) {
             if (p) {
                 if (this.__changesListeners[p]) {
                     removeFromArray(f, this.__changesListeners[p]);
@@ -1924,7 +1924,7 @@ var ParticleEmitterPrototype =
         ____validToSave: 0,
         __notNormalNode: 1,
 
-        __init: function (parameters) {
+        __init(parameters) {
 
             var t = this;
             var components = parameters.c || parameters.__componentsList;
@@ -1954,7 +1954,7 @@ var ParticleEmitterPrototype =
             return t;
         },
 
-        __addComponent: function (component) {
+        __addComponent(component) {
 
             if (component) {
                 this.__components.push(component);
@@ -1968,11 +1968,11 @@ var ParticleEmitterPrototype =
             return component;
         },
 
-        __getComponentByType: function (type) {
+        __getComponentByType(type) {
             return $find(this.__components, function (c) { return c.t == type });
         },
 
-        __removeComponent: function (index) {
+        __removeComponent(index) {
             var components = this.__components;
             if (isObject(index)) index = components.indexOf(index);
             if (index >= 0) {
@@ -1984,7 +1984,7 @@ var ParticleEmitterPrototype =
             return this;
         },
 
-        __destruct: function () {
+        __destruct() {
             //cheats
             renderInfo.__emitters--;
             renderInfo.particles -= this.__particles.length;
@@ -2001,7 +2001,7 @@ var ParticleEmitterPrototype =
             return Object3DPrototype.__destruct.call(this);
         },
 
-        __removeFromParent: function () {
+        __removeFromParent() {
 
             if (this.__parent) {
                 this.__parent.__removeChild(this);
@@ -2014,7 +2014,7 @@ var ParticleEmitterPrototype =
         },
 
 
-        __reset: function (clear) {
+        __reset(clear) {
             var t = this;
             t.__elapsed = 0;
             t.__particles_ready_to_emission = 0;
@@ -2027,7 +2027,7 @@ var ParticleEmitterPrototype =
             }
         },
 
-        __render: function () {
+        __render() {
             var t = this;
 
             if (!t.map) return;
@@ -2062,7 +2062,7 @@ var ParticleEmitterPrototype =
             return 1;
         },
 
-        __update: function (dt) {
+        __update(dt) {
 
             var t = this
                 , particles = t.__particles
@@ -2196,7 +2196,7 @@ var ParticleEmitterPrototype =
             return updated;
         },
 
-        __updateGeometryBuilder: function () {
+        __updateGeometryBuilder() {
             if (this.__geometryMod == 1) {
                 this.__geometryBuilder = this.__animUVS ? AnimatedTailGeometryBuilder : TailGeometryBuilder;
             }
@@ -2205,7 +2205,7 @@ var ParticleEmitterPrototype =
             }
         },
 
-        __onTextureLoaded: function (tex) {
+        __onTextureLoaded(tex) {
             if (this.texture == tex.__src) {
                 this.__tl = 1;
                 this.texture = tex.__src;
@@ -2228,69 +2228,69 @@ function tryFindImage(filename) {
 options.__defaultParticleEmitterProperties = {
 
     name: {
-        set: function (v) {
+        set(v) {
             this.__name = v;
         },
-        get: function () {
+        get() {
             return this.__name || ('__emitter_' + this.__effect.__emitters.indexOf(this))
         }
     },
 
     enabled: {
-        set: function (v) { this.__enabled = v; },
-        get: function () { return this.__enabled }
+        set(v) { this.__enabled = v; },
+        get() { return this.__enabled }
     },
 
     __enabled: {
-        set: function (v) {
+        set(v) {
             this.____enabled = v;
             if (v && this.__effect && !this.__effect.__enabled) {
                 this.__effect.__enabled = v;
             }
             this.__lastRenderTime = __currentFrame;
         },
-        get: function () { return this.____enabled }
+        get() { return this.____enabled }
     },
 
     __geometryMod: {
-        set: function (v) {
+        set(v) {
             this.____geometryMod = v;
             this.__updateGeometryBuilder();
         },
-        get: function () { return this.____geometryMod || 0 }
+        get() { return this.____geometryMod || 0 }
     },
 
     __angleMod: {
-        set: function (v) { this.____angleMod = v; },
-        get: function () { return this.____angleMod || 0 }
+        set(v) { this.____angleMod = v; },
+        get() { return this.____angleMod || 0 }
     },
 
     //DEPRECATED!
     render_mode: {
-        set: function (v) { this.____angleMod = v; },
-        get: function () { return this.____angleMod || 0 }
+        set(v) { this.____angleMod = v; },
+        get() { return this.____angleMod || 0 }
     },
 
     sort_mode: 0,
     duration: 1,
 
     loop: {
-        set: function (v) {
+        set(v) {
             this.__loop = v;
             if (v) this.__enabled = v;
         },
-        get: function () { return this.__loop }
+        get() { return this.__loop }
     },
 
     linked: false,
     texture_animation: 0,
     blending: {
-        set: function (v) { this.__blending = this.____registeredBlending = v },
-        get: function () { return this.__blending }
+        set(v) { this.__blending = this.____registeredBlending = v },
+        get() { return this.__blending }
     },
 
     texture: {
-        set: function (v) {
+        set(v) {
             var t = this;
 
             // object is DEPRECATED 
@@ -2329,7 +2329,7 @@ options.__defaultParticleEmitterProperties = {
 
         },
 
-        get: function () {
+        get() {
             return this.p.texture;
         }
     }
@@ -2366,8 +2366,8 @@ function createDeprecatedProperty(
     pname, defaultValue, componentEmitterField, componentType
 ) {
     return {
-        get: function () { return this.p[pname] },
-        set: function (v) {
+        get() { return this.p[pname] },
+        set(v) {
             consoleDeprecated('emitter ' + pname);
             var t = this; v == undefined ? defaultValue : v; t.p[pname] = v;
             if (!t[componentEmitterField]) {
@@ -2414,15 +2414,15 @@ ObjectDefineProperties(ParticleEmitterPrototype,
 
 ObjectDefineProperties(ParticleEmitterPrototype, {
     __shaderPrefix: {
-        get: function () {
+        get() {
             return this.__colorsBuffer ? 'part' : 'partnc';
         }
     },
     __shader: {
-        get: function () {
+        get() {
             return { v: this.__shaderPrefix, f: this.____shader };
         },
-        set: function (v) {
+        set(v) {
             if (v) {
                 if (isString(v)) {
                     if (v.indexOf('part') != 0) {
@@ -2543,7 +2543,7 @@ function ParticleEffect(parent) {
 
 makeClass(ParticleEffect, {
 
-    __init: function (v) {
+    __init(v) {
         if (isString(v)) v = getEffectByName(v);
         this.loop = v.loop;
         if (v.__emitters) {
@@ -2553,7 +2553,7 @@ makeClass(ParticleEffect, {
         return this;
     },
 
-    __push: function (v) {
+    __push(v) {
         var t = this, emitter = new ParticleEmitter(t, t.__node);
         t.__node.add(emitter);
         t.__emitters.push(emitter);
@@ -2562,12 +2562,12 @@ makeClass(ParticleEffect, {
         return emitter;
     },
 
-    __pop: function (em) {
+    __pop(em) {
         removeFromArray(em, this.__emitters);
         return this;
     },
 
-    __removeFromParent: function () {
+    __removeFromParent() {
         var t = this, e;
         for (var i = 0; i < t.__emitters.length; i++) {
             e = t.__emitters[i].__destruct();
@@ -2577,7 +2577,7 @@ makeClass(ParticleEffect, {
         t.__enabled = 0;
     },
 
-    __update: function () {
+    __update() {
 
         var updated = 0
             , dt = mmin(0.5, __currentFrameDeltaTime / ONE_SECOND);
@@ -2594,17 +2594,17 @@ makeClass(ParticleEffect, {
         }
         return !updated;
     },
-    __reset: function (clear) {
+    __reset(clear) {
         $each(this.__emitters, function (e) { e.__reset(clear); });
     },
-    __disable: function () {
+    __disable() {
         $each(this.__emitters, function (e) { e.__enabled = 0; });
     },
-    __enable: function () {
+    __enable() {
         $each(this.__emitters, function (e) { e.__enabled = 1; });
     }
 
-    , __toJson: function () {
+    , __toJson() {
         var v = {};
         if (this.loop) v.loop = 1;
         for (var j in this.__emitters) {
@@ -2617,21 +2617,21 @@ makeClass(ParticleEffect, {
 
 }, {
     loop: {
-        set: function (v) { this.__loop = v; if (v) this.__enabled = v; },
-        get: function () { return this.__loop }
+        set(v) { this.__loop = v; if (v) this.__enabled = v; },
+        get() { return this.__loop }
     },
     __matrixWorld: {
-        get: function () {
+        get() {
             return this.__node.mw
         }
     },
     __rotate: {
-        get: function () {
+        get() {
             return this.__node.____rotation;
         }
     },
     __worldPosition: {
-        get: function () {
+        get() {
             return this.__node.__worldPosition
         }
     }

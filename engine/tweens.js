@@ -95,6 +95,8 @@ makeClass(Tween, {
     },
 
     __killOf(obj, property) {
+        if (!obj) return;
+
         var t = this;
 
         if (property) {
@@ -813,4 +815,4 @@ tween.to = function (o, a, b, c, d, e, agasp) {
 
 updatable.__push(tween);
 
-var anim = tween.to.bind(tween), killAnim = tween.__killOf.bind(tween), finishAnim = tween.__finishOf.bind(tween);
+var anim = tween.to.bind(tween), killAnim = function(a, b) { tween.__killOf(a, b) }, finishAnim = tween.__finishOf.bind(tween);
