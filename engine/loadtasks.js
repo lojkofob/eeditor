@@ -533,6 +533,11 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
                     break;
 
                 case TASKS_FONT:
+                    var waitsForRealLoad;
+                    if (isArray(data)){
+                        data = data[0];
+                        waitsForRealLoad = data[1];
+                    }
 
                     if (getCachedData(data) == data) {
                         onLoad();
@@ -550,14 +555,21 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
                                         _setTimeout(a => {
                                             looperPost(a => {
                                                 updateAllTextsThenFontLoaded(family);
+                                                if (waitsForRealLoad){
+                                                    onLoad();
+                                                }
                                             });
                                         }, 0.1 / tmd);
                                     });
+                                } else if (waitsForRealLoad){
+                                    onLoad();
                                 }
 
                             }, (_bowser.ios ? 1 : 0.1) / tmd);
                             
-                            onLoad();
+                            if (!waitsForRealLoad){
+                                onLoad();
+                            }
                             
                         });
 
