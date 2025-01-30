@@ -4073,7 +4073,7 @@ var NodeCloneProperties = {
                     t.__selfColor.__setRGB(1, 1, 1);
                     if (t.__shader == 'c') t.__shader = null;
                 } else {
-                    t.__selfColor.fromJson(v);
+                    t.__selfColor.__fromJson(v);
                     if (!t.map && !t.__shader) t.__shader = 'c';
                 }
                 t.__baseColor = t.__selfColor.__clone();

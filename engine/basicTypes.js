@@ -195,7 +195,7 @@ function colorToJson(color, defValue) {
 }
 
 function jsonToColor(j, defValue) {
-    return ((defValue && defValue.__isColor) ? defValue : new Color(1, 1, 1)).fromJson(j);
+    return ((defValue && defValue.__isColor) ? defValue : new Color(1, 1, 1)).__fromJson(j);
 }
 
 makeClass(Color, {
@@ -218,12 +218,12 @@ makeClass(Color, {
         return defValue;
     },
 
-    fromJson(j) {
+    __fromJson(j) {
         if (isString(j)) j = parseHexColor(j.replace('#', ''));
         if (j != undefined) {
             if (j.__isColor || isObject(j)) return this.__setRGB(j.r, j.g, j.b);
             if (isArray(j)) return this.__setRGB(j[0], j[1], j[2]);
-            if (isNumeric(j)) return j < 1 ? this.__setScalar(j) : this.setHex(j);
+            if (isNumeric(j)) return j <= 1 ? this.__setScalar(j) : this.setHex(j);
         }
         return this;
     },
@@ -233,7 +233,7 @@ makeClass(Color, {
         if (j != undefined) {
             if (j.__isColor || isObject(j)) return this.__setRGBA(j.r, j.g, j.b, j.a);
             if (isArray(j)) return this.__setRGBA(j[0], j[1], j[2], j[3]);
-            if (isNumeric(j)) return j < 1 ? this.__setScalar(j) : this.setHex(j);
+            if (isNumeric(j)) return j <= 1 ? this.__setScalar(j) : this.setHex(j);
         }
         return this;
     },
