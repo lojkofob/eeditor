@@ -1477,6 +1477,12 @@ function createXHRRequest(url, post, params, data, beforesend) {
     if (beforesend) beforesend(xhr);
 
     xhr.send(data);
+
+    if (options.__httpAuth) {
+        xhr.withCredentials = true;
+        xhr.setRequestHeader("Authorization", "Basic " + btoa(options.__httpAuth.__username + ":" + options.__httpAuth.__password));
+    }
+
     return xhr;
 
 }
