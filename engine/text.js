@@ -679,7 +679,7 @@ mergeObj(TextPrototype, {
                                         }
                                     } else {
 
-                                        for (; kk < 20; kk++, j--) {
+                                        for (; kk < 20; kk++, j--, i++) {
                                             if (i < len && txt.charAt(i) == ' ') return rtn(i, 1);
                                             if (j > 0 && txt.charAt(j) == ' ') return rtn(j, 1);
                                         }
@@ -690,17 +690,18 @@ mergeObj(TextPrototype, {
 
                         var wraptext = function (text, availableWidth) {
 
-                            //                      consoleLog(text);
+                            //  consoleLog(text);
+                            
                             var newlines = split2(text, availableWidth);
 
                             if (newlines) {
                                 var line1 = newlines[0];
                                 var line2 = newlines[1];
-                                //                         consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
+                                // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
 
                                 var width = t.__calcWidth(line1);
 
-                                //                         consoleLog(width , availableWidth);
+                                // consoleLog(width , availableWidth);
 
                                 if (width < availableWidth) {
 

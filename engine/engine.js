@@ -267,11 +267,16 @@ var _cszw, _cszh;
 
 function setupWindowOptions(force, w, h, pixelRatio) { }
 
-function onWindowResize(force) {
-
+function getWindowDocumentSize(){
     var de = __document.documentElement || 0,
         w = ((__window.innerWidth && de.clientWidth) ? mmin(__window.innerWidth, de.clientWidth) : (__window.innerWidth || de.clientWidth)) || screen.width,
         h = ((__window.innerHeight && de.clientHeight) ? mmin(__window.innerHeight, de.clientHeight) : (__window.innerHeight || de.clientHeight)) || screen.height;
+    return [w, h];
+}
+function onWindowResize(force) {
+
+    var wsz = getWindowDocumentSize(),
+        w = wsz[0], h = wsz[1];
 
     if (!force && (w == _cszw && h == _cszh))
         return;
@@ -503,7 +508,7 @@ var setDefaultRenderLoop = function () {
 function _createGame(parameters) {
 
     //debug
-    if (renderer && scene) {
+    if (renderer && scene && parameters.element == renderer.__domElement) {
         consoleError('second call to createGame. Game already created!');
         if (parameters.__renderLoop)
             renderer.__renderLoop = parameters.__renderLoop;
@@ -512,7 +517,9 @@ function _createGame(parameters) {
     }
     //undebug
 
-    renderer = new WebGLRenderer(); 
+    if (!renderer) {
+        renderer = new WebGLRenderer(); 
+    }
     
     //cheats
     renderer.__handleGLErrors(!_bowser.mobile);

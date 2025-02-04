@@ -2028,6 +2028,7 @@ function WebGLRenderer() {
             _shaderMod = v;
             return _programsCache;
         }
+        , __resetGLState: __resetGLState
         , __getVideoInfo: __getVideoInfo
         , __getCurrentProgram() { return _currentProgram }
         , __setTexture2D: __setTexture2D

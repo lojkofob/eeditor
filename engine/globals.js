@@ -1474,8 +1474,6 @@ function createXHRRequest(url, post, params, data, beforesend) {
 
     xhr.open(post ? 'POST' : 'GET', url, true);
 
-    xhr.setRequestHeader('Access-Control-Allow-Origin', 'netlify.app');
-
     if (beforesend) beforesend(xhr);
 
     xhr.send(data);
