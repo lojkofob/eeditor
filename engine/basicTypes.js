@@ -1191,12 +1191,22 @@ makeClass(Vector2, {
         return angle;
     },
 
+    // it's angle between two vectors ( like directions from 0;0 )
     __angleTo(v) {
         var ret = atan2(v.y, v.x) - atan2(this.y, this.x);
         while (ret < -PI) ret += PI * 2.0;
-        while (ret > Math.PI) ret -= PI * 2.0;
+        while (ret > PI) ret -= PI * 2.0;
         return ret;
     },
+
+    // it's angle between two points
+    __angleToPoint(v) {
+        var ret = atan2(v.y - this.y, v.x - this.x);
+        while (ret < -PI) ret += PI * 2.0;
+        while (ret > PI) ret -= PI * 2.0;
+        return ret;
+    },
+
 
     __distanceTo(v) {
         return sqrt(this.__distanceToSquared(v));

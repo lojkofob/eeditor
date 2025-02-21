@@ -508,7 +508,7 @@ var setDefaultRenderLoop = function () {
 function _createGame(parameters) {
 
     //debug
-    if (renderer && scene && parameters.element == renderer.__domElement) {
+    if (renderer && scene) {
         consoleError('second call to createGame. Game already created!');
         if (parameters.__renderLoop)
             renderer.__renderLoop = parameters.__renderLoop;
