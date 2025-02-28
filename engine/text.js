@@ -418,7 +418,7 @@ mergeObj(TextPrototype, {
         var t = this
             , tokens = tokenizeText(text)
             , lastDrawToken = 0
-            , charw = t.__charw;
+            , charw = t.__charw / t.__scaleFactor;
 
         for (var i in tokens) {
             var token = tokens[i];
@@ -427,24 +427,21 @@ mergeObj(TextPrototype, {
             if (text) {
                 if (bySymbol) {
                     var c = 0
-                    if (t.__symbol_align == ALIGN_CENTER){
+                    if (t.__symbol_align == ALIGN_CENTER && charw){
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
-                            var cw = (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor,
-                                w = charw > 0 ? charw  / t.__scaleFactor : cw;
-
-                            t.__fill(c, x + (w - cw) / 2, y);
+                            var cw = (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor
+                            t.__fill(c, x + (charw - cw) / 2, y);
                             //Increment X by wChar + spacing
-                            x += w;
+                            x += charw;
                         }
-
                     } else { 
                         // todo: ALIGN_RIGHT?
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
                             t.__fill(c, x, y);
                             //Increment X by wChar + spacing
-                            x += (charw > 0 ? charw : t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
+                            x += charw > 0 ? charw : (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
                         }
                     }
                 } else {
