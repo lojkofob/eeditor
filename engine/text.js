@@ -427,12 +427,25 @@ mergeObj(TextPrototype, {
             if (text) {
                 if (bySymbol) {
                     var c = 0
-                    for (var k = 0; k < text.length; k++) {
-                        c = text.charAt(k);
-                        t.__fill(c, x, y);
-                        //Increment X by wChar + spacing
-                        x += (charw > 0 ? charw : t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
+                    if (t.__symbol_align == ALIGN_CENTER){
+                        for (var k = 0; k < text.length; k++) {
+                            c = text.charAt(k);
+                            var cw = (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor,
+                                w = charw > 0 ? charw  / t.__scaleFactor : cw;
 
+                            t.__fill(c, x + (w - cw) / 2, y);
+                            //Increment X by wChar + spacing
+                            x += w;
+                        }
+
+                    } else { 
+                        // todo: ALIGN_RIGHT?
+                        for (var k = 0; k < text.length; k++) {
+                            c = text.charAt(k);
+                            t.__fill(c, x, y);
+                            //Increment X by wChar + spacing
+                            x += (charw > 0 ? charw : t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
+                        }
                     }
                 } else {
                     if (i > 0 && lastDrawToken) {

@@ -23,7 +23,8 @@ var __defaultTextProperties = {
     __italic: false,
     __smallCaps: false,
     __fontWeight: 0,
-    __gradient: 0
+    __gradient: 0,
+    __symbol_align: 0
 };
 
 function invertedDefTextColor() {
@@ -224,6 +225,7 @@ function _setTimeout(f, time) {
     };
     return __timeoutsIndex__;
 };
+
 
 function _setInterval(f, time) {
     __timeoutsIndex__++;
@@ -461,7 +463,7 @@ function updateFramesRoutine(t) {
             __forceAnimTime = __gameTime;
             __forceAnimDt = __currentFrameDeltaTime;
         }
-        //undebug
+        //undebug        
         updatable.__update(__gameTime, __currentFrameDeltaTime);
         looperUpdate();
 
@@ -735,7 +737,6 @@ function addParameterToPath(path, p, val) {
     path += q + p + (val == undefined ? '' : '=' + val);
     return path;
 }
-
 
 function basename(path) { return path.replace(/.*\//, "") || ''; }
 function dirname(path) { return (path.match(/.*\//) || [''])[0]; }
