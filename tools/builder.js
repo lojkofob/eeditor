@@ -272,8 +272,12 @@ var subtargetsBuilders = {
     // push all data in one js file
     // + shaders minifier
     datacache(d) {
-        var dir = mkdir(d.dst);
-        removeFile(d.dst);
+
+        mkdir(d.dst);
+
+        if (d.mode != "append")
+            removeFile(d.dst);
+
         spawntool('node-data-cache', ['-o', d.dst, '-d', d.basedir || './', collectSourcesStr(d.src, d.srcdir)]);
     },
 
@@ -424,9 +428,7 @@ var subtargetsBuilders = {
             d.src = [d.src];
 
         $each(d.src, function (s) {
-
-            spawntool('builder', ['--target', s]);
-
+            build(project_json, s);
         });
 
     },
@@ -621,10 +623,10 @@ var subtargetsBuilders = {
         }
 
         $each(d.src, v => {
-            env = mergeObj(env, v);
+            mergeObj(project_json.buildFlags, v);
             winston.debug('ENV += ' + JSON.stringify(v));
             $each(target, t => 
-                build(t)
+                build(project_json, t)
             );
         });
     },
@@ -693,39 +695,35 @@ function run_target(dat, target_name){
     buildTarget(dat);
 }
 
-var build_targets;
-function build(data, target_name) {
+var project_json;
 
-    if (isString(data) && !target_name){
-        return build({ build_targets: build_targets }, data);
-    }
-     
+function build(data, target_name) {
+    
+    var data = deepclone(data);
+    // console.log("--------------------------------------------------------- buildFlags = ");
+    // console.log(data.buildFlags);
+
     env = mergeObj(env, data.buildFlags);
-    data = deepclone(data);
+
+    // console.log("--------------------------------------------------------- env = ");
+    // console.log(env);
+
     data = unwind(data, env);
     env = mergeObj(env, data.buildFlags);
     env = mergeObj(env, additionalArguments);
-
-    var build_targets_tmp = build_targets;
-    if (data.build_targets) {
-        build_targets = data.build_targets;
-    }
      
-    if (target_name) {
-        if (!data || !isObject(build_targets)) {
-            throw ('No build_targets in ' + projectFile);
-        }
-        else if (!build_targets[target_name]) {
-            throw ('No target ' + target_name + ' in ' + projectFile);
-        }
-        else {
-            run_target(data.build_targets[target_name], target_name);
-        }
-    } else {
-        run_target(data, '???');
+    var build_targets = data.build_targets
+ 
+    if (!isObject(build_targets)) {
+        throw ('No build_targets in ' + projectFile);
     }
-
-    build_targets = build_targets_tmp;
+    else if (!build_targets[target_name]) {
+        throw ('No target ' + target_name + ' in ' + projectFile);
+    }
+    else {
+        run_target(build_targets[target_name], target_name);
+    }
+ 
 }
 
 if (argv.target) {
@@ -736,7 +734,8 @@ if (argv.target) {
         }
         else {
             try {
-                build(JSON.parse( data ), argv.target);
+                project_json = JSON.parse( data )
+                build(project_json, argv.target);
             } catch (e) {
                 winston.error('Error opening ' + projectFile);
                 winston.error(e);
