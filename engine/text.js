@@ -399,12 +399,7 @@ mergeObj(TextPrototype, {
     },
 
     // find needed texture size and cache lines params for drawing
-    __calcWidth: function (txt) {
-        var t = this;
-        txt = txt.replace(/\\[^;]*;/g, '');
-        return floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1)
-    },
-
+    
     __calcWidthReturnObj: function (txt) {
         var t = this;
         txt = txt.replace(/\\[^;]*;/g, '');
@@ -446,7 +441,7 @@ mergeObj(TextPrototype, {
                     }
                 } else {
                     if (i > 0 && lastDrawToken) {
-                        x += t.__calcWidth(lastDrawToken.v);
+                        x += t.__calcWidthReturnObj(lastDrawToken.v).w / t.__scaleFactor;
                     }
                     t.__fill(text, x, y);
                     lastDrawToken = token;
@@ -607,7 +602,7 @@ mergeObj(TextPrototype, {
                             text = text.t;
                         }
                         else {
-                            textWidth = t.__calcWidth(text) / t.__scaleFactor;
+                            textWidth = t.__calcWidthReturnObj(text).w / t.__scaleFactor;
                         }
                         var realTextWidth = textWidth + rwDiff;
 
@@ -659,7 +654,7 @@ mergeObj(TextPrototype, {
                                     txt = txt.t;
                                 }
                                 else {
-                                    textWidth = t.__calcWidth(txt);
+                                    textWidth = t.__calcWidthReturnObj(txt).w;
                                 }
 
                                 function rtn(l, k) {
@@ -709,7 +704,7 @@ mergeObj(TextPrototype, {
                                 var line2 = newlines[1];
                                 // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
 
-                                var width = t.__calcWidth(line1);
+                                var width = t.__calcWidthReturnObj(line1).w;
 
                                 // consoleLog(width , availableWidth);
 
@@ -728,7 +723,7 @@ mergeObj(TextPrototype, {
                                     while (firstSpace > 0) {
 
                                         var firstWorld = (autowrapMap ? '' : ' ') + line2.substring(0, firstSpace)
-                                            , addedWidth = t.__calcWidth(firstWorld);
+                                            , addedWidth = t.__calcWidthReturnObj(firstWorld).w;
 
                                         if (width + addedWidth < availableWidth) {
                                             line1 += firstWorld;
@@ -756,7 +751,7 @@ mergeObj(TextPrototype, {
 
                                     while (lastSpace > 0) {
                                         var lastWorld = line1.substring(lastSpace + (autowrapMap ? 0 : 1)) + (autowrapMap ? '' : ' ');
-                                        var removedWidth = t.__calcWidth(lastWorld)
+                                        var removedWidth = t.__calcWidthReturnObj(lastWorld).w
 
                                         line2 = lastWorld + line2;
                                         line1 = line1.substring(0, lastSpace);
