@@ -223,7 +223,8 @@ mergeObj(NodePrototype, {
         });
         this.__scrollVectorNeedsUpdate = 0;
     },
-
+    /*
+    DEPRECATED
     __setPropertyOnSeconds(prop, val, sec) {
         var t = this;
         if (!t.____setPropertyOnSecondsMap) t.____setPropertyOnSecondsMap = {};
@@ -235,6 +236,7 @@ mergeObj(NodePrototype, {
         }
         t.____setPropertyOnSecondsMap[prop] = { v: v, t: _setTimeout(function () { t[prop] = v; delete t.____setPropertyOnSecondsMap[prop]; }, sec) };
     },
+    */
 
     __scrollToEnd(animTime) {
         return this.__scrollToPart(1, animTime);

@@ -675,7 +675,7 @@ function _onDocumentMouseMove(e) {
     if (draggableObjects.__startDragPosition) {
 
         curDraggingObject = draggableObjects.__traverseHit(draggableObjects.__startDragPosition, function (obj) {
-            return !obj.__canDrag || obj.__canDrag(lastMousePosition)
+            return !obj.__canDrag || obj.__canDrag(lastMousePosition, mdx, mdy)
         });
 
         if (curDraggingObject) {
