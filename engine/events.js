@@ -712,7 +712,7 @@ function _onDocumentMouseMove(e) {
                     //cheats
                     if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragStart');
                     //endcheats
-                    curDraggingObject.__dragStart(curDraggingObject.__lastPosition.x, curDraggingObject.__lastPosition.y);
+                    curDraggingObject.__dragStart(curDraggingObject.__lastPosition.x, curDraggingObject.__lastPosition.y, x, y);
                 }
 
                 curDraggingObject.__isDragging = true;

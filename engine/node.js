@@ -1636,17 +1636,16 @@ mergeObj(NodePrototype, {
         pm.htc = htc;
 
         var wp = t.__worldPosition
-            , o = t.__geometryOffset;
-
-        var dx = wp.x - poswp.x, dy = wp.y - poswp.y;
-        var s = t.__size, dsx = abs(s.x) / 2, dsy = abs(s.y) / 2;
+            , o = t.__geometryOffset
+            , dx = wp.x - poswp.x, dy = wp.y - poswp.y
+            , s = t.__size, dsx = abs(s.x) / 2, dsy = abs(s.y) / 2;
         if (intersect) {
             if (o) {
                 dx += o.x * te[0];
                 dy -= o.y * te[5];
             }
             var mta = mmax(mmin(dsx * te[0], dsy * te[5]), (t.__minimalTapArea || options.__minimalTapArea) * layoutsResolutionMult);
-            intersect = dx * dx + dy * dy < mta * mta;
+            intersect = dx * dx + dy * dy < mta * mta;            
         }
 
         if (!intersect) {
@@ -1658,6 +1657,10 @@ mergeObj(NodePrototype, {
                 }
                 var pwp = poswp.__clone();
                 pwp.y *= -1;
+
+                pwp.x -= pe.x;
+                pwp.y -= pe.y;
+
                 pwp.__applyMatrix4(im);
                 
                 intersect = o ? pwp.x > -dsx + o.x && pwp.x < dsx + o.x && pwp.y > -dsy + o.y && pwp.y < dsy + o.y
@@ -1665,7 +1668,7 @@ mergeObj(NodePrototype, {
             }
             else {
                 // no transforms, simple quad test
-                intersect = abs(dx) < dsx && abs(dy) < dsy;                
+                intersect = abs(dx) < dsx && abs(dy) < dsy;
             }
 
         }
@@ -4861,8 +4864,6 @@ var NodeCloneProperties = {
                         t.__scrollMin = { x: sz.x - swch.x - (p[1] + p[3]), y: swch.y - sz.y + (p[0] + p[2]) };
                         t.__needScrollX = t.__onlyScrollY ? false : t.__scrollMin.x < -1;
                         t.__needScrollY = t.__onlyScrollX ? false : t.__scrollMin.y > 1;
-
-
 
                         return t;
                     } : undefined,
