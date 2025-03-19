@@ -848,8 +848,15 @@ function loadDataTxt(path, onload, onerror, cachename, onprogress) {
 }
 
 function loadDataJson(path, onload, onerror, onprogress, usePacking) {
-    var params = {};
-
+    var params = {}, alias = path;
+    
+    if (isObject(path)) {
+        //debug
+        if (!isString(path.path)) consoleDebug("no path for loadDataJson: ", path);
+        //undebug
+        if (path.alias) alias = path.alias;
+        path = path.path;
+    }
     //debug
     var codedJson = path.indexOf('.json.code') > 0;
     if (codedJson) {
@@ -864,7 +871,7 @@ function loadDataJson(path, onload, onerror, onprogress, usePacking) {
         }
         //undebug
         j = parseJson(j, onerror, usePacking);
-        setCachedData(path, j);
+        setCachedData(alias, j);
         if (onload) onload(j);
     }, onerror, onprogress, params);
 }

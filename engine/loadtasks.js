@@ -33,7 +33,7 @@ function getItemFromTableById(t, id) {
 }
 
 function getDataTableSources(t) {
-    return globalConfigsData[options.__baseConfigsFolder + t + '.json'];
+    return globalConfigsData[t] || globalConfigsData[options.__baseConfigsFolder + t + '.json'];
 }
 
 function writeDataTableArray(t, tbl, format, byObject, ignoreNullFields, clearMod, subformats) {
@@ -103,11 +103,24 @@ function setCachedData(name, j, obj) {
 
 
 function getJson(filename, onload, onprogress, usePacking, onerror) {
-    var cj = getCachedData(filename);
-    if (cj)
-        onload(cj);
-    else
+    var alias = isObject(filename) ? filename.alias : 0
+        , cachedData;
+    if (alias) {
+        cachedData = getCachedData(filename.path);
+        if (cachedData) {
+            setCachedData(alias, cachedData);
+        } else {
+            cachedData = getCachedData(alias);
+        }
+    } else {
+        cachedData = getCachedData(filename);
+    }     
+    if (cachedData) {
+        onload(cachedData);
+    }
+    else {
         return loadDataJson(filename, onload, onerror, onprogress, usePacking);
+    }
 }
 
 
@@ -667,29 +680,38 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
         namefunc = namefunc || function (k) { return k };
 
         for (var k = 1; k < l.length; k++) {
-            if (isString(l[k])) {
-                var name = l[k].indexOf('/') == 0 ? l[k].substring(1) : namefunc(l[k]);
-                if (ext)
-                    name = name + '.' + ext;
+            var dd = l[k], is_obj = isObject(dd), path = is_obj && isString(dd.path) ? dd.path : dd;
+            
+            if (isString(path)) {
+                path = path.indexOf('/') == 0 ? path.substring(1) : namefunc(path);
+                if (ext) {
+                    path = path + '.' + ext;
+                }
+                var alias = is_obj && isString(dd.alias) ? dd.alias : path;
                 
-                var j = getCachedData(name);
+                var j = getCachedData(alias);
                 if (j) {
                     if (ignoreIfFromCache) {
                         if (j === 1) {
                             return
                         } else {
-                            setCachedData(name, 1);
+                            setCachedData(alias, 1);
                         }
                     }
-
                     if (cb) {
-                        cb(j, name);
+                        cb(j, alias);
                     }
                 } else {
-                    t.__loadTaskOne(type || TASKS_CONFIG, name, cb);
+                    if (is_obj) {
+                        dd.path = path;
+                    } else {
+                        dd = path;
+                    }
+                    t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
                 }
-            } else {
-                t.__loadTaskOne(type || TASKS_CONFIG, l[k], cb);
+            } else 
+            {
+                t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
             }
         }
     },
