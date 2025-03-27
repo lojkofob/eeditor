@@ -107,13 +107,7 @@ function setLocalization(l, force) {
     if (!localizationDict && force)
         localizationDict = {};
 
-    if (isArray(localizationDict)) {
-        var dict = {};
-        for (i = 0; i < localizationDict.length; i += 2) {
-            dict[localizationDict[i]] = localizationDict[i + 1]
-        }
-        localizationDict = dict;
-    }
+    localizationDict = plainArrayToObject(localizationDict);
 
     options.__localization = localizationOptions[l] || localizationOptions.en;
     options.__localization.__thousandsSeparator = get(localizationDict, 'thousands_separator') || "";

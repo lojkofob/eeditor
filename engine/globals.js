@@ -637,6 +637,19 @@ function stringifyTypeOfObject(o) {
 }
 
 
+function plainArrayToObject(a){
+    if (isArray(a)) {
+        var d = {};
+        for (i = 0; i < a.length; i += 2) {
+            d[a[i]] = a[i + 1]
+        }
+        return d;
+    } else {
+        return a;
+    }
+}
+
+
 function overloadMethod(method, f) {
     return function () {
         var r;

@@ -966,6 +966,8 @@ mergeObj(NodePrototype, {
 
                 var type = (t.____corner || t.____centerFill)
                     , imgSize = t.__imgSize || map.s || { x: 2048, y: 2048 }
+                    , iszx = imgSize.x
+                    , iszy = imgSize.y
                     , x1 = 0
                     , x2 = 1
                     , y1 = 1
@@ -977,20 +979,30 @@ mergeObj(NodePrototype, {
                     , sz = t.__geomSize || t.__layoutSize
                     , szy = abs(sz.y)
                     , szx = abs(sz.x)
-                    , kx = szx / imgSize.x
-                    , ky = szy / imgSize.y;
+                    , kx = szx / iszx
+                    , ky = szy / iszy
+                    , uvt = t.____uvsTransform;
+
+                    
 
                 map.__setWrapS(t.__imgRepeatX);
                 map.__setWrapT(t.__imgRepeatY);
 
                 if (frame) {
 
-                    if (!hasFit && !type && frame.__uvsBuffers[t.____uvsTransform]) {
-                        if (t.__uvsBuffer != frame.__uvsBuffers[t.____uvsTransform]) {
+                    if (!hasFit && !type && frame.__uvsBuffers[uvt]) {
+                        if (t.__uvsBuffer != frame.__uvsBuffers[uvt]) {
                             t.__removeAttributeBuffer('uv');
-                            t.__uvsBuffer = t.____addAttributeBuffer('uv', frame.__uvsBuffers[t.____uvsTransform]);
+                            t.__uvsBuffer = t.____addAttributeBuffer('uv', frame.__uvsBuffers[uvt]);
                         }
                         return this;
+                    }
+
+                    if (hasFit && uvt > 3){
+                        // rotated by uv
+                        kx = szx / iszy;
+                        ky = szy / iszx;       
+                        var tmp = iszx; iszx = iszy; iszy = tmp;                        
                     }
 
                     x1 = frame.v[0];
@@ -1028,10 +1040,10 @@ mergeObj(NodePrototype, {
                             x2 += k;
                         }
                     }
+ 
+                    if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * iszy);
+                    if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * iszx);
 
-
-                    if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * imgSize.y);
-                    if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * imgSize.x);
                     t.__updateVertices(new Vector2(szx, szy), !t.__useFitGeomSize);
 
                 }
@@ -1063,7 +1075,7 @@ mergeObj(NodePrototype, {
 
                         if (frame.R) {
 
-                            switch (t.____uvsTransform) {
+                            switch (uvt) {
                                 case 2: var tmp = x1; x1 = x2; x2 = tmp; break; // mirrored x
                                 case 1: var tmp = y1; y1 = y2; y2 = tmp; break; // mirrored y
                             }
@@ -1097,7 +1109,7 @@ mergeObj(NodePrototype, {
                         else {
 
 
-                            switch (t.____uvsTransform) {
+                            switch (uvt) {
                                 case 1: var tmp = x1; x1 = x2; x2 = tmp; break; // mirrored x
                                 case 2: var tmp = y1; y1 = y2; y2 = tmp; break; // mirrored y
                             }
@@ -1134,20 +1146,28 @@ mergeObj(NodePrototype, {
                 else {
 
                     var getVertsArray = function () {
-                        return getFrameUv(x1, x2, y1, y2, frame && frame.R, t.____uvsTransform)
+                        return getFrameUv(x1, x2, y1, y2, frame && frame.R, uvt)
                     };
 
                     if (hasFit) {
-                        t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2, getVertsArray());
+                        
+                        if (uvt > 3){
+                            // rotated by uv
+                            t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2, 
+                                getFrameUv(y1, y2, x1, x2, frame && frame.R, uvt)
+                            );
+                        }  else {
+                            t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2, getVertsArray());
+                        }
                     }
                     else if (frame && !frame.__isSimpleImage) {
 
                         if (t.__uvsBufferName && t.__uvsBufferName != 'uv') {
                             t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName, 2, getVertsArray());
                         } else {
-                            var framebuf = frame.__uvsBuffers[t.____uvsTransform];
+                            var framebuf = frame.__uvsBuffers[uvt];
                             if (!framebuf) {
-                                framebuf = frame.__uvsBuffers[t.____uvsTransform] = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, getVertsArray(), 1);
+                                framebuf = frame.__uvsBuffers[uvt] = new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, getVertsArray(), 1);
                             }
                             t.__uvsBuffer = t.____addAttributeBuffer('uv', framebuf);
                         }
@@ -1157,7 +1177,7 @@ mergeObj(NodePrototype, {
                         // simple img
                         if (t.__uvsBufferName && t.__uvsBufferName != 'uv') {
                             t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName, 2, getVertsArray());
-                        } else if (t.____uvsTransform) {
+                        } else if (uvt) {
                             t.__uvsBuffer = t.__addAttributeBuffer('uv', 2, getVertsArray());
                         } else {
                             t.__uvsBuffer = t.____addAttributeBuffer('uv', defaultUVSBuffer); // TODO: ____uvsTransform ?
