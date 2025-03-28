@@ -1,3 +1,4 @@
+var _spawnFunction;
 
 function unwindMagicVariables(env, data, src, dst, tmp) {
 
@@ -5,11 +6,9 @@ function unwindMagicVariables(env, data, src, dst, tmp) {
     if (data) {
 
         if (!src) {
- 
-            $each(env, function (v, i) {
-                data = unwindMagicVariables(env, data, i, v, tmp);
+            $each(objectKeys(env).sort((a, b) => b.length - a.length), key => {
+                data = unwindMagicVariables(env, data, key, env[key], tmp);
             });
-
         }
         else if(isArray(data)) {
             data = $map(data, d => unwindMagicVariables(env, d, src, dst, tmp));
@@ -53,10 +52,12 @@ function _unwindObject(o) {
 
 }
 
-function unwindCommands(data) {
-
+function unwindCommands(data, ud) {
+    
     if (isObject(data) || isArray(data)) {
-        return $map(data, unwindCommands);
+        return $map(data, (v, k) => {
+            return unwindCommands(v, ud)
+        });
     } else {
         if (isString(data)) {
             var dd = data.indexOf('`');
@@ -64,14 +65,34 @@ function unwindCommands(data) {
                 if (data[dd - 1] == '\\') {
                     return data.replace(/\\`/g, '`');
                 } else {
-                    return data.replace(/`([^`]*)`/g, function (d, command) {
-                        var d = spawn([command], 1)
-                        return d;
-                    });
+                    if (_spawnFunction) {
+                        var opts;
+                        data = data.replace(/`([^`]*)`(\?[^;]+;)?/g, function(d, command, ooo) {
+                            var d = _spawnFunction([command], 1)
+                            ud.changed = ud.changed + 1;
+                            opts = ooo;
+                            return d;
+                        });
+
+                        if (isString(opts)){
+                            opts = opts.substr(1, opts.length - 2);
+                            opts = new URLSearchParams(opts);
+                            opts = Object.fromEntries(opts.entries());
+                            if (opts.format == "json"){
+                                data = JSON.parse(data);                                
+                            }
+                        }
+
+                        return data
+
+                    } else {
+                        return data;
+                    }
                 }
             }
         }
     }
+
     return data;
 
 }
@@ -169,20 +190,17 @@ function unwindLinks(data, basedata) {
 
                 var di = data.indexOf('@');
                 if (di >= 0) {
-
-
+ 
                     var foundedObject = 0;
                     var newdata = data.replace(/@\/([\w\d_\-\/\$]+)(\\@)?/g, function (d, key) {
-                        //                         console.log(key);
 
                         var r = getDeepFieldFromObject.apply(this, [basedata].concat(explodeString(key, '/', 1)));
                         if (r === undefined) {
                             return d;
                         }
 
-                        //                         r = _unwindObject(r);
                         founded++;
-
+                        
                         if (isObject(r) || isArray(r)) {
                             foundedObject = r;
                         }
@@ -197,11 +215,12 @@ function unwindLinks(data, basedata) {
                         data = foundedObject;
                         changed = 1;
                     }
-                    else
+                    else {
                         if (newdata != data) {
                             data = newdata;
                             changed = 1;
                         }
+                    }
 
                 }
 
@@ -219,29 +238,39 @@ function unwindLinks(data, basedata) {
 }
 
 
-function unwind(data, env) {
+function unwind(data, env, spawnFunction) {
     var changed = 0;
-    //  var founded = 0;
-
-    var lch = -1;
+    
+    _spawnFunction = spawnFunction;
+    var lch = -1, tmp;
 
     while (lch != changed) {
-        lch = changed
+
+        while (lch != changed) {
+            lch = changed
+
+            tmp = { changed: 0 };
+            env = env || data.buildFlags;
+            data = unwindMagicVariables(env, data, undefined, undefined, tmp);
+            changed += tmp.changed;
+            //  founded += tmp.founded;
+
+            tmp = unwindLinks(data);
+            changed += tmp.changed;
+
+            // founded += tmp.founded;
+
+            data = tmp.data;
+
+        }
 
         var tmp = { changed: 0 };
-        env = env || data.buildFlags;
-        data = unwindMagicVariables(env, data, undefined, undefined, tmp);
-        changed += tmp.changed;
-        //  founded += ud.founded;
-
-        var ud = unwindLinks(data);
-        changed += ud.changed;
-        // founded += ud.founded;
-
-        data = ud.data;
+        data = unwindCommands(data, tmp);
+        if (tmp.changed) {
+            lch = -1;            
+        }
     }
-
-    data = unwindCommands(data);
+ 
 
     // if (founded > changed) {
     /// ???

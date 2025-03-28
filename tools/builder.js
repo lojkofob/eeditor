@@ -511,13 +511,11 @@ var subtargetsBuilders = {
         var content = fs.readFileSync(d.sourceFile, 'utf8');
 
         $each(d.src, function (file, rpl) {
-
             content = content.replace(rpl, function () {
                 return fs.readFileSync(file, 'utf8')
             });
-
         });
-
+         
         fs.writeFileSync(dstFile, content);
 
     },
@@ -556,9 +554,20 @@ var subtargetsBuilders = {
 
         var dstFile = makePath([mkdir(d.dst), path.basename(d.dst)]);
         var content = fs.readFileSync(d.sourceFile, 'utf8');
-
-        $each(d.src, (rpl, rgxp) => {
-            content = content.replace(new RegExp(rgxp, d.flags || 'gm'), rpl);
+        $each(d.src, (rpl, key) => {
+            var mode = "regexp";
+            if (isObject(rpl)) {
+                rpl = rpl.value;
+                mode = rpl.mode || mode;
+            }
+            switch (mode) {
+                case "regexp":
+                    content = content.replace(new RegExp(key, d.flags || 'gm'), rpl);
+                    break;
+                case "str":
+                    content = content.replace(key, rpl);
+                    break;
+            }
         });
 
         fs.writeFileSync(dstFile, content);
@@ -697,20 +706,37 @@ function run_target(dat, target_name){
 
 var project_json;
 
+function merge_env(env, data){
+    env = mergeObj(env, data);
+    if (isString(env.VERSION)) { // "1.2.3.4"
+        const versionParts = env.VERSION.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?$/);
+        if (versionParts) {
+            const [_, major, minor, patch, build] = versionParts;
+            env.VERSION_UNDERSCORE = env.VERSION.replace(/\./g, '_');
+            env.VERSION_MAJOR = parseInt(major, 10);
+            env.VERSION_MINOR = parseInt(minor, 10);
+            env.VERSION_PATCH = parseInt(patch, 10);
+            env.VERSION_BUILD = parseInt(build, 10);
+        }
+    }
+    return env;
+}
+
 function build(data, target_name) {
     
     var data = deepclone(data);
     // console.log("--------------------------------------------------------- buildFlags = ");
     // console.log(data.buildFlags);
 
-    env = mergeObj(env, data.buildFlags);
+    env = merge_env(env, data.buildFlags);
 
     // console.log("--------------------------------------------------------- env = ");
     // console.log(env);
 
-    data = unwind(data, env);
-    env = mergeObj(env, data.buildFlags);
-    env = mergeObj(env, additionalArguments);
+    data = unwind(data, env, spawn);
+
+    env = merge_env(env, data.buildFlags);
+    env = merge_env(env, additionalArguments);
      
     var build_targets = data.build_targets
  
@@ -735,10 +761,13 @@ if (argv.target) {
         else {
             try {
                 project_json = JSON.parse( data )
-                build(project_json, argv.target);
             } catch (e) {
                 winston.error('Error opening ' + projectFile);
                 winston.error(e);
+            }
+
+            if (project_json) {
+                build(project_json, argv.target);
             }
         }
     });
