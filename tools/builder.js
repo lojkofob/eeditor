@@ -557,15 +557,20 @@ var subtargetsBuilders = {
         $each(d.src, (rpl, key) => {
             var mode = "regexp";
             if (isObject(rpl)) {
-                rpl = rpl.value;
                 mode = rpl.mode || mode;
+                rpl = rpl.value;
             }
             switch (mode) {
                 case "regexp":
                     content = content.replace(new RegExp(key, d.flags || 'gm'), rpl);
                     break;
                 case "str":
-                    content = content.replace(key, rpl);
+                    var replaced = 1;
+                    while (replaced) {
+                        var rcontent = content.replace(key, rpl);
+                        replaced = content != rcontent;
+                        content = rcontent;
+                    }
                     break;
             }
         });
