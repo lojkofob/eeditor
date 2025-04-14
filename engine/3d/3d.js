@@ -214,7 +214,7 @@ set(LoadTask__loaders, 'fbx', function (t, l) {
 });
 
 
-function Node3d(a) {
+function ENode3d(a) {
     var t = this;
 
     t.__is3D = 1;
@@ -228,7 +228,7 @@ function Node3d(a) {
         t.__dirty = 3;
     };
 
-    Node.call(this, a)
+    ENode.call(this, a)
 
     t.__matrix.__is3D = 1;
     t.mw.__is3D = 1;
@@ -238,7 +238,7 @@ function Node3d(a) {
     t.____scale = new Vector3(scale.x, scale.y, scale.z == undefined ? scale.x == scale.y ? scale.x : 1 : scale.z);
 }
 
-makeClass(Node3d, {
+makeClass(ENode3d, {
 
     __clone(refBuffers) {
 
@@ -1151,7 +1151,7 @@ makeClass(Node3d, {
 
     // end shading
 
-    , Node);
+    , ENode);
 
 
 
@@ -1369,7 +1369,7 @@ makeClass(Skeleton, {
             if (bone === undefined) {
 
                 consoleWarn('Skeleton: No bone found with UUID:', uuid);
-                bone = new Node3d();
+                bone = new ENode3d();
 
             }
 
@@ -1429,7 +1429,7 @@ var CameraPerspective = makeClass(
 			t.__near = -10000;
 			t.__far = 10000;
 
-            Node3d.call(this)
+            ENode3d.call(this)
             
             t.____projectionMatrix = new Matrix4(0, 1);
             
@@ -1527,7 +1527,7 @@ var CameraPerspective = makeClass(
                     return this.____projectionMatrix;
                 }
             }
-        }, Node3d);
+        }, ENode3d);
 
 function CameraCachedRay(cam, ppos) {
     var r = cam._cray;
@@ -1540,3 +1540,6 @@ function CameraCachedRay(cam, ppos) {
     }
     return r;
 }
+
+
+var Node3d = ENode3d;

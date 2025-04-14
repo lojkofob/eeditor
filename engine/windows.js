@@ -75,7 +75,7 @@ function __showWindow__(_window){
     
     if (_window.c) _window.c();
     
-    var wnd = _window.W = new Node( _window.n );
+    var wnd = _window.W = new ENode( _window.n );
     
     wnd.__realClose = function(){
         

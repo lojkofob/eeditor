@@ -100,8 +100,9 @@ function plainForm(p1, p2, p3) { // общее уравнение плоскос
     return new Vector4(pA, pB, pC, pD);
 }
 
+var old_Node = typeof Node == undefinedType ? null : Node;
 
-function Node(j) {
+function ENode(j) {
     j = j || {};
 
     var t = this;
@@ -132,23 +133,24 @@ function Node(j) {
 
 }
 
+
 function newNode(p, j) {
     //3d
     if (p && p.__is3D) {
-        if (j.__is3D == 0) return new Node();
-        return new Node3d();
+        if (j.__is3D == 0) return new ENode();
+        return new ENode3d();
     }
-    if (j && j.__is3D) return new Node3d();
+    if (j && j.__is3D) return new ENode3d();
     //no3d
-    return new Node();
+    return new ENode();
 }
 
 
-var NodePrototype = Node.prototype = Object.create(Object3DPrototype);
+var NodePrototype = ENode.prototype = Object.create(Object3DPrototype);
 
 mergeObj(NodePrototype, {
 
-    constructor: Node,
+    constructor: ENode,
 
     isNode: 1,
 
@@ -5458,7 +5460,7 @@ var NodeTraverseIterator = createNodeIteratorPrototype(function (method, methodN
 var HTMLNode = makeClass(function (v) {
     var t = this;
     t.__size = [1, 1];
-    Node.call(t, v);
+    ENode.call(t, v);
     t.__validToSave = 0;
     t.__childs = [];
     t.____vis = 1;
@@ -5539,7 +5541,7 @@ var HTMLNode = makeClass(function (v) {
             return this.____vis;
         }
     }
-}, Node);
+}, ENode);
 
 
 
@@ -5638,3 +5640,4 @@ function exportVertices(nodes, scale, offset) {
 }
 
 
+var Node = __window.__disable_legacy_node ? __window.Node : ENode;

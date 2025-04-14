@@ -101,7 +101,7 @@ EditorWithKitten.prototype = {
 
                             BUS.__post('EDITOR_LOADED', _this);
 
-                            _this.ui = new Node(_this.uiLayout, 1);
+                            _this.ui = new ENode(_this.uiLayout, 1);
                             _this.ui.__validToSave = 0;
                             _this.ui.__size = { x: 1, y: 1, px: 1, py: 1 };
                             _this.ui.__z = -10000;

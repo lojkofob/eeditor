@@ -1218,7 +1218,7 @@ EffectComponentsFactory.__registerComponent('tgt',
         var tgt = t.__target;
         if (tgt) {
 
-            if (tgt instanceof Node) {
+            if (tgt instanceof ENode) {
                 tgt = [tgt.__worldPosition];
             } else
                 if (isString(tgt)) {

@@ -112,7 +112,7 @@ if (typeof dragonBones != undefinedType) {
 
             var imgName = display.path || display.name;
 
-            return new Node({
+            return new ENode({
                 __img: this.__dbResourceDataAtlasId + imgName,
                 __validToSave: 0,
                 __isDBDisplay: 1,
@@ -334,7 +334,7 @@ if (typeof dragonBones != undefinedType) {
 
             var armature = dragonBones.BaseObject.borrowObject(dragonBones.Armature);
 
-            var armatureDisplay = new Node({
+            var armatureDisplay = new ENode({
                 __size: { x: 1, px: 0, y: 1, py: 0 },
                 __disableAlign: 1,
                 __validToSave: 0,

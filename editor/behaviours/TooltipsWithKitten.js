@@ -16,7 +16,7 @@ var TooltipsWithKitten = (() => {
                 t.__tooltipNode = t.__tooltipNode.__removeFromParent();
             }
 
-            t.__tooltipNode = new Node({
+            t.__tooltipNode = new ENode({
                 __text: o.text,
                 __class: 'e-tooltip',
                 __busObservers: {

@@ -1508,7 +1508,7 @@ gestures.tap = function (pos) {
         var n = Editor.currentLayout.layoutView.$('debugHitTest');
 
         if (!__window.ddd) {
-            __window.ddd = new Node({ __z: -2000, __y: -20, __notSelectable: 1, __disabled: 1, __validToSave: 0 });
+            __window.ddd = new ENode({ __z: -2000, __y: -20, __notSelectable: 1, __disabled: 1, __validToSave: 0 });
             Editor.currentLayout.layoutView.add(__window.ddd);
         }
 

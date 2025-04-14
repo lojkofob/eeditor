@@ -35,7 +35,7 @@ NodeEditWithKitten.prototype = {
     },
 
     createView: function () {
-        return this.view = new Node({ __isScene: 1, __validToSave: 0, __selectable: 0 });
+        return this.view = new ENode({ __isScene: 1, __validToSave: 0, __selectable: 0 });
     },
 
     __on: function (t, e) {

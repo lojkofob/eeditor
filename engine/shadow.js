@@ -6,7 +6,7 @@ function Shadow(nodeToUpdate, parentNode) {
     if (nodeToUpdate) {
         t.__nodeToUpdate = nodeToUpdate;
     } else {
-        t.__nodeToUpdate = new Node({
+        t.__nodeToUpdate = new ENode({
             __isShadow: 1,
             ____validToSave: 0,
             __notNormalNode: 1

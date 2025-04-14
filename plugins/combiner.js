@@ -63,7 +63,7 @@ let CombinerPlugin = (() => {
                     }
                 }
 
-                let body = new Node(cc.randomChild(sources.body));
+                let body = new ENode(cc.randomChild(sources.body));
                 cc.replaceLayoutPart(sources, body, sources.body, baseInitObject);
                 return body;
             }

@@ -305,7 +305,7 @@ function showImage(i) {
             return consoleError('image is undefined');
         }
         else
-            if (i instanceof Node) {
+            if (i instanceof ENode) {
                 var cam = new CameraOrtho();
 
                 var b = i.__getBoundingBox();
@@ -718,7 +718,7 @@ var LineNode = makeClass(
         t.opts = mergeObjExclude(opts, {
             __color: __defaultTextProperties.__color
         });
-        Node.call(t, t.opts);
+        ENode.call(t, t.opts);
     },
     {
         __drawMode: 3,

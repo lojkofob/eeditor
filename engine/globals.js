@@ -147,7 +147,7 @@ function readableStringify(d, nodeeper, pretty) {
             var m;
 
             if (typeof Text != undefinedType && d instanceof Text) { r = 'Text' + (d.__text ? (' ' + readableStringify(d.__text, 1)) : '') } else
-                if (typeof Node != undefinedType && d instanceof Node) { r = 'Node' + (d.name ? (' ' + readableStringify(d.name, 1)) : '') } else
+                if (typeof ENode != undefinedType && d instanceof ENode) { r = 'Node' + (d.name ? (' ' + readableStringify(d.name, 1)) : '') } else
                     if (typeof Object3D != undefinedType && d instanceof Object3D) { r = 'Object3D' + (d.name ? (' ' + readableStringify(d.name, 1)) : '') } else
                         if (typeof ActivityActionInstance != undefinedType && d instanceof ActivityActionInstance) { r = 'AAI ' + d.__currentActivity + '.' + d.__id } else
                             if (typeof ParticleEmitter != undefinedType && d instanceof ParticleEmitter) { r = 'Emmiter' } else

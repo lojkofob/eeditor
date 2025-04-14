@@ -541,7 +541,7 @@ function _createGame(parameters) {
             return originalToDataUrl.call(__domElement, a, b);
         };
 
-        scene = new Node({
+        scene = new ENode({
             __hitTest: function () { }, __size: { x: 1, y: 1, px: 1, py: 1 }, ha: 1, va: 1, __isScene: 1
         });
 
@@ -975,7 +975,7 @@ function renderOverTexture(width, height, params) {
     if (width && height)
         params.__size = { x: width, y: height };
 
-    var nod = new Node(params),
+    var nod = new ENode(params),
         tex = renderNodeToTexture(nod, params);
 
     nod.__destruct();

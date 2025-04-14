@@ -652,7 +652,7 @@ var FBXLoader = function () { };
         // create the main Group() to be returned by the loader
         __parseScene(deformers, geometryMap, materialMap) {
             var t = this;
-            sceneGraph = new Node3d();
+            sceneGraph = new ENode3d();
 
             const modelMap = t.__parseModels(deformers.skeletons, geometryMap, materialMap);
 
@@ -757,7 +757,7 @@ var FBXLoader = function () { };
                             break;
                         case 'Null':
                         default:
-                            model = new Node3d();
+                            model = new ENode3d();
                             break;
 
                     }
@@ -797,7 +797,7 @@ var FBXLoader = function () { };
                         if (rawBone.ID === parent.ID) {
 
                             const subBone = bone;
-                            bone = new Node3d();
+                            bone = new ENode3d();
 
                             bone.__matrixWorld.__copy(rawBone.transformLink);
 
@@ -1093,7 +1093,7 @@ var FBXLoader = function () { };
 
             }
 
-            model = new Node3d({
+            model = new ENode3d({
                 __geometry: geometry,
                 __material: material
             });
@@ -1401,7 +1401,7 @@ var FBXLoader = function () { };
 
             const preTransform = generateTransform(transformData);
 
-            const geo = new Node3d();
+            const geo = new ENode3d();
 
             if (geoNode.attrName) geo.name = geoNode.attrName;
 

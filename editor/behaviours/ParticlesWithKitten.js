@@ -198,7 +198,7 @@
 
     function createComponentPanel(component) {
 
-        var componentPanel = new Node(templates.component);
+        var componentPanel = new ENode(templates.component);
 
         var type = ParticlesComponentsTypesMap[component.t];
         var proxyObject = {};

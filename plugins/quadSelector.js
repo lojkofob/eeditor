@@ -1,6 +1,6 @@
 var QuadSelectorWithKitten = (() => {
 
-    var par = new Node({ __z: -11000, __size: [1, 1] });
+    var par = new ENode({ __z: -11000, __size: [1, 1] });
     var x1 = 0, y1 = 0, kx = 0, ky = 0, x2 = 0, y2 = 0, tmp;
 
     var n = par.__addChildBox(new LineNode({

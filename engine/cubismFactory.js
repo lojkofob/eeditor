@@ -1001,7 +1001,7 @@ var CubismObject = (() => {
 
     var COP = makeClass(function (parentNode) {
         var t = this;
-        Node.call(t);
+        ENode.call(t);
         t.__parent = parentNode;
         t.__scaleF = 1000;
         t.__components = [];
@@ -1544,7 +1544,7 @@ var CubismObject = (() => {
         )*/
 
 
-    }, Node);
+    }, ENode);
 
 
     var ExpressionDefaultFadeTime = 1

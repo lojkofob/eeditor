@@ -14,7 +14,7 @@ var GraphWithKitten = (function () {
 
         consoleLog('new LineGraphNode', opts);
 
-        Node.call(this, opts);
+        ENode.call(this, opts);
 
     }
 

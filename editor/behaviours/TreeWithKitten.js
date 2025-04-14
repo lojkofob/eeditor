@@ -195,7 +195,7 @@ TreeEntry.prototype = {
             pl.__sragStartOfs = pl.__ofs.__clone();
             pl.__z -= 30;
 
-            pl.linePlate = new Node({ __size: { x: 300, y: 2 }, __color: 0x888888, __alpha: 0.5, sha: 1, sva: 1 });
+            pl.linePlate = new ENode({ __size: { x: 300, y: 2 }, __color: 0x888888, __alpha: 0.5, sha: 1, sva: 1 });
             pl.__root.add(pl.linePlate);
 
             pl.plates = this.root().treeItem.content.$({ __plate: 1 }).filter(function (a) {
@@ -782,7 +782,7 @@ var TreeWithKitten = {
 
             if (!parentEntry) {
 
-                contentNode = new Node({ __size: { x: 1, y: 1 }, va: ALIGN_FROM_START_TO_END, __canBeFrustummed: 1 });
+                contentNode = new ENode({ __size: { x: 1, y: 1 }, va: ALIGN_FROM_START_TO_END, __canBeFrustummed: 1 });
 
                 parentEntry = new TreeEntry(
                     mergeObj({
@@ -802,7 +802,7 @@ var TreeWithKitten = {
         else {
             if (isObject(data) && !parentEntry) {
                 parentEntry = data;
-                contentNode = new Node({ __size: { x: 1, y: 1 }, va: ALIGN_FROM_START_TO_END, __canBeFrustummed: 1 });
+                contentNode = new ENode({ __size: { x: 1, y: 1 }, va: ALIGN_FROM_START_TO_END, __canBeFrustummed: 1 });
                 node.__addChildBox(contentNode);
                 node.__contentNode = contentNode;
                 contentNode.__pentry = parentEntry;

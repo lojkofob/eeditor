@@ -3,7 +3,7 @@ var RenderInfoPanel;
 BUS.__addEventListener({
     
     PROJECT_OPENED(){
-        RenderInfoPanel = new Node({
+        RenderInfoPanel = new ENode({
             sha:ALIGN_START,
             sva:ALIGN_END,
             ha:ALIGN_START, 

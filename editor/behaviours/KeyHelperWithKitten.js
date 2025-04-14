@@ -9,7 +9,7 @@ addEditorBehaviours( {
         khp.va = ALIGN_FROM_START_TO_END;
         khp.__cache = {};
         
-        var txtNode = new Node({ __class: 'e-info-field', __width:200, __spacing:10 });
+        var txtNode = new ENode({ __class: 'e-info-field', __width:200, __spacing:10 });
         
         function updateKeyHelperPanel(keyCode, key, ctrl, shift, alt, e, needAnim){
             if (!khp.__deepVisible())
@@ -21,7 +21,7 @@ addEditorBehaviours( {
             
             if (!khp.__cache[mod]) {
                 
-                khp.__cache[mod] = new Node({__size:[1,1,'o','o'], va : ALIGN_START, ha: ALIGN_FROM_START_TO_END });
+                khp.__cache[mod] = new ENode({__size:[1,1,'o','o'], va : ALIGN_START, ha: ALIGN_FROM_START_TO_END });
                 var obj = {};
                 
                 $each( keyboardMap, function(event, i){

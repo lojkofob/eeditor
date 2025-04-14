@@ -34,7 +34,7 @@ let RenderOverTexturePlugin = (() => {
 
         var sz = getSize();
         var rt = new WebGLRenderTarget(sz.x, sz.y, { __dynamic: 1 });
-        var nod = new Node({
+        var nod = new ENode({
             __size: { x: 1, y: 1 },
             __shader: 'base',
             map: rt.__texture,
