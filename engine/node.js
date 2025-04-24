@@ -1382,7 +1382,7 @@ mergeObj(NodePrototype, {
                     offsetByParent.x = (parentPadding[1] + margin[1] - parentPadding[3] - margin[3]) / 2;
                     break;
                 default:
-                    if (isNumber(va)) {
+                    if (isNumber(ha)) {
                         offsetByParent.x = lerp(ham + parentPadding[1] + margin[1], -ham - parentPadding[3] - margin[3], ha / 2);
                     } else {
                         // center
