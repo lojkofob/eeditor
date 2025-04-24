@@ -335,7 +335,7 @@ function shuffle(a) {
 function randomFloat(low, high) { return low + random() * (high - low); }
 function randomFloatSpread(range) { return range * (0.5 - random()); }
 function randomSign() { return random() < 0.5 ? -1 : 1; }
-function randomInt(_min, _max) { return floor(random() * (_max - _min + 1)) + _min; }
+function randomInt(_min, _max) { return floor(random() * (_max - _min + 1)) + round(_min); }
 function randomBool() { return random() < 0.5; }
 function randomArrayMember(a) { return a[randomInt(0, a.length - 1)] }
 

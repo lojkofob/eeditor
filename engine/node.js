@@ -216,13 +216,15 @@ mergeObj(NodePrototype, {
             sciss = t.__getScissor();
         }
 
-        $each(t.__childs, n => {
+        for (var i = 0; i < t.__childs.length; i++) {
+            var n = t.__childs[i];
             if (n.____visible) {
                 n.__parentScrollVector = scrollVector;
                 if (sciss) n.__parentSciss = sciss;
                 n.__updateMatrixWorld(force, scrollUpdate);
             }
-        });
+        }
+
         this.__scrollVectorNeedsUpdate = 0;
     },
     /*
@@ -1293,7 +1295,9 @@ mergeObj(NodePrototype, {
                 , ha = sha == undefined ? parent ? parent.____ha : ALIGN_CENTER : sha
                 , margin = t.____sizeMargin || [0, 0, 0, 0]
                 , spacing = t.____spacing || [0, 0, 0, 0]
-                , updatusObjectTable = updatusObject.__table || 0;
+                , updatusObjectTable = updatusObject.__table || 0
+                , ham = (size.x - realParentSize.x) / 2
+                , vam = (size.y - realParentSize.y) / 2;
 
             switch (ha) {
 
@@ -1303,7 +1307,7 @@ mergeObj(NodePrototype, {
                         var sx = (updatusObject.sx ? spacing[1] : 0);
                         var addedx = updatusObjectTable.__columnWidth || (size.x + margin[1] + margin[3] + spacing[3] + sx);
 
-                        offsetByParent.x = updatusObject.x + (size.x - realParentSize.x) / 2 + parentPadding[1] + margin[1] + sx;
+                        offsetByParent.x = updatusObject.x + ham + parentPadding[1] + margin[1] + sx;
                         updatusObject.sx = 1;
 
                         if (updatusObjectTable) {
@@ -1332,7 +1336,7 @@ mergeObj(NodePrototype, {
                     break;
 
                 case ALIGN_START:
-                    offsetByParent.x = (size.x - realParentSize.x) / 2 + parentPadding[1] + margin[1];
+                    offsetByParent.x = ham + parentPadding[1] + margin[1];
                     break;
 
                 case ALIGN_FROM_END_TO_START:
@@ -1341,7 +1345,7 @@ mergeObj(NodePrototype, {
                         var sx = (updatusObject.sx ? spacing[3] : 0);
                         var addedx = updatusObjectTable.__columnWidth || (size.x + margin[1] + margin[3] + spacing[1] + sx);
 
-                        offsetByParent.x = updatusObject.x - (size.x - realParentSize.x) / 2 - parentPadding[3] - margin[3] - sx;
+                        offsetByParent.x = updatusObject.x - ham - parentPadding[3] - margin[3] - sx;
                         updatusObject.sx = 1;
 
                         if (updatusObjectTable) {
@@ -1371,15 +1375,21 @@ mergeObj(NodePrototype, {
 
 
                 case ALIGN_END:
-                    offsetByParent.x = -(size.x - realParentSize.x) / 2 - parentPadding[3] - margin[3];
+                    offsetByParent.x = -ham - parentPadding[3] - margin[3];
                     break;
 
-                default:
                 case ALIGN_CENTER:
                     offsetByParent.x = (parentPadding[1] + margin[1] - parentPadding[3] - margin[3]) / 2;
                     break;
-
-            }
+                default:
+                    if (isNumber(va)) {
+                        offsetByParent.x = lerp(ham + parentPadding[1] + margin[1], -ham - parentPadding[3] - margin[3], ha / 2);
+                    } else {
+                        // center
+                        offsetByParent.x = (parentPadding[1] + margin[1] - parentPadding[3] - margin[3]) / 2;
+                    }
+                    break;
+            } 
 
             switch (va) {
                 case ALIGN_FROM_START_TO_END:
@@ -1388,7 +1398,7 @@ mergeObj(NodePrototype, {
                         var sy = (updatusObject.sy ? spacing[0] : 0);
                         var addedy = updatusObjectTable.__rowHeight || (size.y + margin[0] + margin[2] + spacing[2] + sy);
 
-                        offsetByParent.y = updatusObject.y - (size.y - realParentSize.y) / 2 - parentPadding[0] - margin[0] - sy;
+                        offsetByParent.y = updatusObject.y - vam - parentPadding[0] - margin[0] - sy;
                         updatusObject.sy = 1;
 
                         if (updatusObjectTable) {
@@ -1424,7 +1434,7 @@ mergeObj(NodePrototype, {
                     break;
 
                 case ALIGN_START:
-                    offsetByParent.y = -(size.y - realParentSize.y) / 2 - parentPadding[0] - margin[0];
+                    offsetByParent.y = -vam - parentPadding[0] - margin[0];
                     break;
 
                 case ALIGN_FROM_END_TO_START:
@@ -1433,7 +1443,7 @@ mergeObj(NodePrototype, {
                         var sy = (updatusObject.sy ? spacing[2] : 0);
                         var addedy = updatusObjectTable.__rowHeight || (size.y + margin[2] + margin[0] + spacing[0] + sy);
 
-                        offsetByParent.y = updatusObject.y + (size.y - realParentSize.y) / 2 + parentPadding[2] + margin[2] + sy;
+                        offsetByParent.y = updatusObject.y + vam + parentPadding[2] + margin[2] + sy;
                         updatusObject.sy = 1;
 
                         if (updatusObjectTable) {
@@ -1465,13 +1475,23 @@ mergeObj(NodePrototype, {
                     break;
 
                 case ALIGN_END:
-                    offsetByParent.y = (size.y - realParentSize.y) / 2 + parentPadding[2] + margin[2];
+                    offsetByParent.y = vam + parentPadding[2] + margin[2];
                     break;
 
-                default:
                 case ALIGN_CENTER:
                     offsetByParent.y = (- parentPadding[0] - margin[0] + parentPadding[2] + margin[2]) / 2;
                     break;
+
+                default:
+                    if (isNumber(va)) {
+                        offsetByParent.y = lerp(-vam - parentPadding[0] - margin[0], vam + parentPadding[2] + margin[2], va / 2);
+                    } else {
+                        // center
+                        offsetByParent.y = (-parentPadding[0] - margin[0] + parentPadding[2] + margin[2]) / 2;
+                    }
+                    break;
+                    
+
             }
 
         }
@@ -1535,9 +1555,10 @@ mergeObj(NodePrototype, {
         t.__dirty = 0;
 
         if (deep) {
-            var sz = (t.____size || 0);
-            var newUpdatusObject = { x: 0, y: 0, sx: sz.px == 'o', sy: sz.py == 'o' };
-            if (t.____va > 2 || t.____ha > 2) {
+            var sz = (t.____size || 0)
+                , newUpdatusObject = { x: 0, y: 0, sx: sz.px == 'o', sy: sz.py == 'o' };
+                
+            if (t.__manageChildsHAVA) {
                 if (t.__tableAlignRows || t.__tableAlignColumns || t.__tableAlignColumnWidth || t.__tableAlignRowHeight) {
                     newUpdatusObject.__table = {
                         x: [], y: [],
@@ -3977,6 +3998,16 @@ var NodeCloneProperties = {
             }
         },
 
+
+        __manageChildsHAVA:  {
+            get(){
+                return this.____va == ALIGN_FROM_END_TO_START ||
+                    this.____va == ALIGN_FROM_START_TO_END ||
+                    this.____ha == ALIGN_FROM_END_TO_START ||
+                    this.____ha == ALIGN_FROM_START_TO_END
+            }
+        },
+
         __dirty: {
             set(v) {
                 var t = this, parent = t.__parent;
@@ -3988,7 +4019,7 @@ var NodeCloneProperties = {
 
                     var psz = t.____size;
 
-                    if (!(t.____ha > 2 || t.____va > 2 || t.__hasAutoChilds || (psz && (psz.px == 'o' || psz.px == 'a' || psz.py == 'o' || psz.py == 'a')))) {
+                    if (!(t.__manageChildsHAVA || t.__hasAutoChilds || (psz && (psz.px == 'o' || psz.px == 'a' || psz.py == 'o' || psz.py == 'a')))) {
                         if (v == 4 && parent) {
                             parent.__dirty = 5;
                         }
@@ -4661,6 +4692,8 @@ var NodeCloneProperties = {
                 t.__onlyScrollX = v.__onlyScrollX;
                 t.____scroll = v;
                 t.__needScissor = v ? v.__noScissor ? 0 : 1 : 0;
+
+                if (!t.__needScissor && t.__selfScissor) t.__selfScissor = 0;
 
                 t.__updateSlider = function () { };
                 t.__updateSliderVisibility = function () { };
