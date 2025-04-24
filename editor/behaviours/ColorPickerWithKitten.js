@@ -263,8 +263,8 @@ var ColorPickerPanel;
                 prepareSliderHSV(pmap.hue, 'h', 1, 1);
                 prepareSliderHSV(pmap.saturation, 's', 1);
                 prepareSliderHSV(pmap.value, 'v', -1);
-                if (EditFieldsWithKitten.inputsForProperties.Node.__color)
-                    EditFieldsWithKitten.inputsForProperties.Node.__color.push(ColorPickerPanel);
+                if (EditFieldsWithKitten.inputsForProperties.ENode.__color)
+                    EditFieldsWithKitten.inputsForProperties.ENode.__color.push(ColorPickerPanel);
                 ColorPickerPanel.updatePropertyData = updateColorPicker;
             },
 

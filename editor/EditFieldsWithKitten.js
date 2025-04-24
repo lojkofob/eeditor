@@ -178,8 +178,9 @@ var EditFieldsWithKitten = {
     updatePropertyData: function (property, input, node, val, forceParts) {
 
         node = node || input.__bindedObject;
-        var type = node ? stringifyTypeOfObject(node) : 'Node';
-
+        
+        var type = node ? stringifyTypeOfObject(node) : 'ENode';
+        
         input = input || this.inputsForProperties[type][property];
 
         if (input && !property && input.__property)
@@ -258,9 +259,9 @@ var EditFieldsWithKitten = {
     },
 
     updateAllProps: function (list, node) {
-        list = list || EditFieldsWithKitten.inputsForProperties.Node;
+        list = list || EditFieldsWithKitten.inputsForProperties.ENode;
         for (var i in list) {
-            EditFieldsWithKitten.updatePropertyData(i, EditFieldsWithKitten.inputsForProperties.Node[i], node)
+            EditFieldsWithKitten.updatePropertyData(i, EditFieldsWithKitten.inputsForProperties.ENode[i], node)
         }
     },
 
@@ -323,7 +324,7 @@ var EditFieldsWithKitten = {
 
                     if (EditFieldsWithKitten.inputsForProperties[type]) {
                         if (!EditFieldsWithKitten.inputsForProperties[type][prop]) {
-                            type = "Node"; // TODO: это костыль
+                            type = "ENode"; // TODO: это костыль
                         }
                         EditFieldsWithKitten.updatePropertyData(
                             prop,
@@ -730,13 +731,15 @@ var EditFieldsWithKitten = {
 
             function addInputPropertyField(input, property) {
 
-                var type = object ? stringifyTypeOfObject(object) : 'Node';
+                var type = object ? stringifyTypeOfObject(object) : 'ENode';
                 if (!EditFieldsWithKitten.inputsForProperties[type]) EditFieldsWithKitten.inputsForProperties[type] = {};
                 if (!EditFieldsWithKitten.inputsForProperties[type][property]) EditFieldsWithKitten.inputsForProperties[type][property] = [];
 
                 EditFieldsWithKitten.inputsForProperties[type][property].push(input);
 
-                EditFieldsWithKitten.inputsForProperties.Node3d = EditFieldsWithKitten.inputsForProperties.Node;
+                EditFieldsWithKitten.inputsForProperties.ENode3d = EditFieldsWithKitten.inputsForProperties.ENode;
+                EditFieldsWithKitten.inputsForProperties.Node = EditFieldsWithKitten.inputsForProperties.ENode;
+                EditFieldsWithKitten.inputsForProperties.Node3d = EditFieldsWithKitten.inputsForProperties.ENode;
 
                 input.addedToInputsForProperties = 1;
 
