@@ -25,15 +25,7 @@ var __defaultTextProperties = {
     __fontWeight: 0,
     __gradient: 0,
     __symbol_align: 0
-};
-
-function invertedDefTextColor() {
-    var c = new Color(__defaultTextProperties.__color);
-    c.r = 1 - c.r; c.g = 1 - c.g; c.b = 1 - c.b;
-    return c;
-}
-
-var options = {
+}, options = {
 
     __default: {
         __timeMultiplier: 1,
@@ -90,75 +82,56 @@ var options = {
     }
 
 
-};
- 
+}   
+    , defaultUVSBuffer
+    , defaultIndecesBuffer1
+    , defaultIndecesBuffer2
+    , scaleFactor = 1
+    , layoutsResolutionMult
+    , TIME_NOW
+    , renderer
+    , camera
+    , scene
+    , scenes = []
+    , globalTimeSpeedMultiplier
+    , globalConfigsData
+    , globalLayoutsExtracts
+    , __realScreenSize = new Vector2()
+    , __screenSize = new Vector2()
+    , __screenCenter = new Vector2()
+    , __realScreenCenter = new Vector2()
+    , _projScreenMatrix = new Matrix4()
+    , _cszw, _cszh
+    , __gameTime
+    , __lastOnFrameTime
+    , __gameTime
+    , __realLastOnFrameTime
+    , __currentFrameDeltaTime
+    , __currentFrame
+    , __timeoutsArray__
+    , __timeoutsIndex__ 
+    , __inLooperUpdate__
+    , __looperQueue__
+    , __looperNextQueue__
+    , __looperPerFramesQueueObject__
+    , averageFPS
+    , __lastUpdatedTime__
+    , server_delta_time
+    , updatable
+    , __sessionGlobal
+    , __sessionToday;
 
-var defaultUVSBuffer;
-var defaultIndecesBuffer1;
-var defaultIndecesBuffer2;
 
-options.__reset();
-
-
-var scaleFactor = 1;
-
-var layoutsResolutionMult = 1
-    , TIME_NOW = Date.now() / ONE_SECOND;
 
 function getTime() { return TIME_NOW; }
 
-var renderer,
-    camera,
-    scene,
-    scenes = [],
-    globalTimeSpeedMultiplier = 1;
 
-
-
-function UpdatableProto() { this.a = []; }
-
-var UpdatableProtoProto = UpdatableProto.prototype = {
-    constructor: UpdatableProto,
-    __push: function (o) { this.__pop(o); this.a.push(o); return o; },
-    __pop: function (o) { removeFromArray(o, this.a); return o; },
-    __update: function (arg1, arg2, arg3) {
-        // TODO: use filter
-        // now has Bug #92295
-
-        // var ar = arguments;
-        // this.a = this.a.filter( function(a){ return !a.__update.apply(a, ar); });
-        // return this.a.length == 0;
-
-        for (var i = 0; i < this.a.length;) {
-            var a = this.a[i].__update(arg1, arg2, arg3);
-            if (a) {
-                if (a == -1) {
-                    continue;
-                } else {
-                    this.a.splice(i, 1);
-                }
-            }
-            else {
-                i++;
-            }
-        }
-        return this.a.length == 0;
-    }
+function invertedDefTextColor() {
+    var c = new Color(__defaultTextProperties.__color);
+    c.r = 1 - c.r; c.g = 1 - c.g; c.b = 1 - c.b;
+    return c;
 }
-
-// back compatibility
-UpdatableProtoProto.init = UpdatableProtoProto.__init;
-UpdatableProtoProto.push = UpdatableProtoProto.__push;
-UpdatableProtoProto.pop = UpdatableProtoProto.__pop;
-
-var updatable = new UpdatableProto()
-    , __timeoutsArray__ = {}
-    , __timeoutsIndex__ = 0
-    , __inLooperUpdate__ = 0
-    , __looperQueue__ = []
-    , __looperNextQueue__ = []
-    , __looperPerFramesQueueObject__ = {};
-
+ 
 function looperUpdate() {
     __inLooperUpdate__ = 1;
     __looperNextQueue__ = [];
@@ -239,16 +212,8 @@ function _setInterval(f, time) {
     return __timeoutsIndex__;
 };
 
-var _clearTimeout = function (i) { delete __timeoutsArray__[i] };
-var _clearInterval = _clearTimeout;
-
-var
-    __realScreenSize = new Vector2(),
-    __screenSize = new Vector2(),
-    __screenCenter = new Vector2(),
-    __realScreenCenter = new Vector2();
-
-var _projScreenMatrix = new Matrix4();
+var _clearTimeout = function (i) { delete __timeoutsArray__[i] }
+    , _clearInterval = _clearTimeout;
 
 function updateCamera(w, h, cam, x, y) {
     var cp = 0.5;
@@ -265,7 +230,6 @@ function updateCamera(w, h, cam, x, y) {
     cam.__updateProjectionMatrix();
 }
 
-var _cszw, _cszh;
 
 function setupWindowOptions(force, w, h, pixelRatio) { }
 
@@ -340,8 +304,6 @@ function onWindowResize(force) {
 
 }
 
-var __gameTime = 0.001, __lastOnFrameTime = __gameTime, __realLastOnFrameTime = 0, __currentFrameDeltaTime = 0, __currentFrame = 0;
-
 //cheats
 
 var cheatsAdjustedTimeAdd = 0, cheatsLastTimeNow = 0;
@@ -377,9 +339,6 @@ function cheatsAdjustSystemTime() {
 };
 
 //endcheats
-
-var averageFPS = mmin(options.__fpsLimit || 100, 30), currentFPS = averageFPS;
-var __lastUpdatedTime__ = 0, server_delta_time = 0;
 
 function updateTimeNow() {
 
@@ -620,23 +579,143 @@ function createGame(parameters) {
         _createGame(parameters)
     }
 }
+ 
+
+function resetAllEngine(){
+ 
+    $each(scenes => s => s.__removeFromParent());
+    
+
+    scenes = [];
+    
+    updatable = new UpdatableProto();
+    __timeoutsArray__ = {};
+    __looperQueue__ = [];
+    __looperNextQueue__ = [];
+    __looperPerFramesQueueObject__ = {};
+    globalTimeSpeedMultiplier = 1;
+    globalLayoutsExtracts = {};
+
+    layoutsResolutionMult = 1;
+    TIME_NOW = Date.now() / ONE_SECOND;
+
+    globalConfigsData = {
+
+        __frames: {},
+        __shaders: {},
+        __images: {},
+        __classes: {},
+
+        'shaders/__computeAtlas.f': "uniform sampler2D map; uniform sampler2D b; varying vec2 vUv; vec4 t; vec4 A;void main(void){vec4 B = texture2D(b, vUv);A = texture2D(map, vUv); gl_FragColor=vec4(A.rgb* B.r,B.r) ; }",
+
+    };
+    defaultUVSBuffer = defaultIndecesBuffer1 = defaultIndecesBuffer2 = 0;
+
+    scaleFactor = 1;
+    
+    PlayerState = null;
+
+    __defaultTextProperties = {
+        __color: 0xffffff,
+        __fontsize: 24,
+        __lineWidth: 0,
+        __lineColor: 0,
+        __lineSpacing: 0,
+        __addedLineSpacing: 0,
+        __addedLineSpacingMultiplier: 1,
+        __fontspacing: 0,
+        __charw: 0,
+        __text: '',
+        __autoscale: false,
+        __shader: null,
+        __align: ALIGN_CENTER,
+        __autowrap: false,
+        __autoRecalcOnResize: false,
+        __dontLocalize: 0,
+        __fontface: '',
+        __safeFontFace: 'Arial, Helvetica, sans-serif',
+        __lineAlpha: 1,
+        __italic: false,
+        __smallCaps: false,
+        __fontWeight: 0,
+        __gradient: 0,
+        __symbol_align: 0
+    };
 
 
+    options = {
 
-var globalConfigsData = {
+        __default: {
+            __timeMultiplier: 1,
 
-    __frames: {},
+            __minimalTapArea: 35,
+            __baseFontsFolder: '',
+            __baseSoundsFolder: '',
+            __baseImgFolder: 'img/',
+            __baseConfigsFolder: 'conf/',
+            __baseLayoutsFolder: 'layouts/',
+            __baseShadersFolder: 'shaders/',
+            __baseParticlesFolder: 'particles/',
+            __baseDragonBonesFolder: 'db/',
+            __baseSpineFolder: 'spine/',
+            __baseLive2dFolder: 'live2d/',
+            __baseCssFolder: 'css/',
+            __baseHtmlFolder: 'html/',
+            __goodResolution: { x: 640, y: 960 },
+            __disableCache: 0,
+            __disableCacheByVer: 1,
+            //debug
+            __soundDisabled: 1,
+            //undebug
+            __scaleFactor: 0,
+            __prepareJsons: 0,
+            __fpsLimit: 100,
+            __projectServerPath: '',
+            __allServerPath: '',
+            __particlesCurveValuesCacheSize: 100,
+            __preventDefaultEvents: 1,
+            __localesDir: 'lang/',
+            __atlasFramesPrefix: '',
+            __autoRemoveKeyFrameAnimation: 1,
+            __doubleTapTimeout: 0.3,
 
-    'shaders/__computeAtlas.f': "uniform sampler2D map; uniform sampler2D b; varying vec2 vUv; vec4 t; vec4 A;void main(void){vec4 B = texture2D(b, vUv);A = texture2D(map, vUv); gl_FragColor=vec4(A.rgb* B.r,B.r) ; }",
+            __defaultTextProperties: __defaultTextProperties,
 
-    __shaders: {},
-    __images: {},
-    __classes: {}
+            __storeChildsAsObject: 0,
+            __disablePacking: 0,
 
-};
+            __loadingPolicies: {
+                __retryIfErrorTimeout: 0,
+                __retryIfErrorTimeoutMultiplier: 2,
+                __retryIfErrorTries: 0,
+                __callErrorEveryTime: 0
+            },
 
-var globalLayoutsExtracts = {};
+            __supportedLangs: ['en']
 
+        },
+
+        __reset: function () {
+            mergeObjectDeep(this, this.__default);
+        }
+    };
+
+    options.__reset();
+
+
+    __lastOnFrameTime = __gameTime = 0.001;
+    
+    currentFPS = averageFPS = mmin(options.__fpsLimit || 100, 30);
+    
+    
+    __sessionGlobal, __sessionToday = 
+    __lastUpdatedTime__ = server_delta_time =
+    scene = renderer = __timeoutsIndex__ = __inLooperUpdate__ = camera = 
+    __realLastOnFrameTime = __currentFrameDeltaTime = __currentFrame = 0;
+
+}
+
+resetAllEngine()
 
 function getVertexShaderData(v) { return globalConfigsData[options.__baseShadersFolder + v + '.v']; }
 function getFragmentShaderData(v) { return globalConfigsData[options.__baseShadersFolder + v + '.f']; }

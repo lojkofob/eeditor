@@ -76,9 +76,6 @@ function LocalRemoveKey(key) {
     }
 }
 
-var __sessionGlobal = 0, __sessionToday = 0;
-
-
 function getAppVersionCode() {
     var pd = options.__projectData;
     if (pd && pd.vercode) return pd.vercode;
@@ -1560,3 +1557,36 @@ function deactivateProjectOptions() { };
 var _tmpx2;
 function poly3(x, a, b, c, d) { _tmpx2 = x * x; return a + b * x + c * _tmpx2 + d * _tmpx2 * x; }
 function poly4(x, a, b, c, d, e) { _tmpx2 = x * x; return a + b * x + c * _tmpx2 + d * _tmpx2 * x + e * _tmpx2 * _tmpx2; }
+
+
+
+
+var UpdatableProto = makeClass( 
+function() { this.a = []; },
+{
+    __push: function (o) { this.__pop(o); this.a.push(o); return o; },
+    __pop: function (o) { removeFromArray(o, this.a); return o; },
+    __update: function (arg1, arg2, arg3) {
+        // TODO: use filter
+        // now has Bug #92295
+
+        // var ar = arguments;
+        // this.a = this.a.filter( function(a){ return !a.__update.apply(a, ar); });
+        // return this.a.length == 0;
+
+        for (var i = 0; i < this.a.length;) {
+            var a = this.a[i].__update(arg1, arg2, arg3);
+            if (a) {
+                if (a == -1) {
+                    continue;
+                } else {
+                    this.a.splice(i, 1);
+                }
+            }
+            else {
+                i++;
+            }
+        }
+        return this.a.length == 0;
+    }
+});
