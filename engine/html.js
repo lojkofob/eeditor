@@ -220,15 +220,16 @@ var html = (function () {
                 __window.location.href = url;
             }
         },
-        __openAppStore(_url){
 
-            function opensdk() {
-                var a = get.apply(__window, arguments);
-                if (isFunction(a)) { 
-                    a.call(arguments[0]);
-                    return 1;
-                }
+        __opensdk(){
+            var a = get.apply(__window, arguments);
+            if (isFunction(a)) { 
+                a.call(arguments[0]);
+                return 1;
             }
+        },
+
+        __openAppStore(_url){
 
             function openurl(){
                 var url = _url || options.__appStoreUrl;
@@ -251,13 +252,15 @@ var html = (function () {
             }
             
             // tiktok
-            return opensdk(__window, "openAppStore") ||
+            return html.__opensdk(__window, "openAppStore") ||
+                // bidease
+                html.__opensdk(__window, "trackClick") ||
                 // facebook
-                opensdk(__window, "FbPlayableAd", "onCTAClick") ||
+                html.__opensdk(__window, "FbPlayableAd", "onCTAClick") ||
                 // mintegral
-                opensdk(__window, "install") ||
+                html.__opensdk(__window, "install") ||
                 // bgy
-                opensdk(__bgy, "open") ||
+                html.__opensdk(__bgy, "open") ||
                 // mraid or raw redirect
                 openurl() ||
                 // nothing to open

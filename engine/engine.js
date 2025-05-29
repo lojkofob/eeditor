@@ -115,6 +115,7 @@ var __defaultTextProperties = {
     , __looperNextQueue__
     , __looperPerFramesQueueObject__
     , averageFPS
+    , currentFPS
     , __lastUpdatedTime__
     , server_delta_time
     , updatable
