@@ -1565,7 +1565,9 @@ var UpdatableProto = makeClass(
 function() { this.a = []; },
 {
     __push: function (o) { this.__pop(o); this.a.push(o); return o; },
+    push: function (o) { this.__pop(o); this.a.push(o); return o; },
     __pop: function (o) { removeFromArray(o, this.a); return o; },
+    pop: function (o) { removeFromArray(o, this.a); return o; },
     __update: function (arg1, arg2, arg3) {
         // TODO: use filter
         // now has Bug #92295
@@ -1590,3 +1592,4 @@ function() { this.a = []; },
         return this.a.length == 0;
     }
 });
+
