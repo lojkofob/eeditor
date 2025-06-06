@@ -1345,6 +1345,10 @@ function WebGLRenderer() {
             _currentCullFace = null;
 
         _enabledGLFlags = {};
+        if (_enabledAttributes) {
+            _enabledAttributes.fill(0);
+            _enabledInstancingdAttributes.fill(0);
+        }
     }
 
     function __setDefaultGLState(callback) {

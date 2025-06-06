@@ -114,24 +114,22 @@ fs.readFile(outFile, 'utf8', function (err, data) {
 
             default:
 
-                var data;
+                var data
+                , b64mimes = {
+                    fbx: 'model/fbx',
+                    skel: 'model/skel',
+                    ttf: 'font/truetype',
+                    otf: 'font/otf',
+                    mp3: 'audio/mp3'
+                },
 
-                switch (ext) {
-                    case 'fbx':
-                        data = "data:model/fbx;base64," + base64_encode(file);
-                        break;
-                    case 'ttf':
-                        data = "data:font/truetype;base64," + base64_encode(file); // data:font/ttf ?
-                        break;
-                    case 'otf':
-                        data = "data:font/otf;base64," + base64_encode(file);
-                        break;
-                    case 'mp3':
-                        data = "data:audio/mp3;base64," + base64_encode(file);
-                        break;
-                    default:
-                        data = fs.readFileSync(file, { encoding: 'utf8' });
-                        break;
+
+                mime = b64mimes[ext];
+                
+                if (mime) {
+                    data = "data:"+ b64mimes[ext] + ";base64," + base64_encode(file);
+                } else {
+                    data = fs.readFileSync(file, { encoding: 'utf8' });
                 }
 
                 if (argv.directory && file.startsWith(argv.directory)) {
@@ -147,6 +145,10 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                         outFileData += '"' + data.replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"';
                         break;
 
+                    case 'atlas':
+                        outFileData += '"' + data.replace(/\n/g, '\\n') + '"';
+                        break;
+ 
                     default:
                         outFileData += '"' + data + '"';
                         break;

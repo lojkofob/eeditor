@@ -958,8 +958,13 @@ function loadDataJson(path, onload, onerror, onprogress, usePacking) {
 
 function _getRawData(filename, onload, cachename, onprogress, onerror, needBuffer) {
     cachename = cachename || filename;
-    if (globalConfigsData.hasOwnProperty(cachename)) {
-        onload(globalConfigsData[cachename]);
+    var cachedData = globalConfigsData[cachename];
+    if (cachedData != undefined) {
+        if (needBuffer && cachedData.startsWith && cachedData.startsWith("data:")) {
+            cachedData = base64coder.toUint8Array(cachedData);
+            globalConfigsData[cachename] = cachedData;
+        }
+        onload(cachedData);
     }
     else {
         return (needBuffer ? loadDataBuffer : loadDataTxt)(filename, onload, onerror, cachename, onprogress);

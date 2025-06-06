@@ -774,8 +774,6 @@ var Model3dPreviewerWorker = {
 
                         _setTimeout(function () {
 
-                            var pos = new Vector2(0, 0), c = 0;
-
                             var dbs = previewNode.__spineObject;
 
                             if (dbs && dbs.__bounds) {

@@ -1219,15 +1219,33 @@ EffectComponentsFactory.__registerComponent('tgt',
         if (tgt) {
 
             if (tgt instanceof ENode) {
-                tgt = [tgt.__worldPosition];
-            } else
-                if (isString(tgt)) {
-                    var node = emitter.__effect.__node;
-                    if (node) {
-                        tgt = $filter($map((node.__root || node.__getRoot()).$(tgt), n => n.__worldPosition), wp => wp);
-                    }
-                }
-            if (tgt.length) {
+                if (tgt.__worldPosition) tgt = [tgt.__worldPosition]; else tgt = 0;
+            } else if (isString(tgt)) {
+                var node = emitter.__effect.__node;
+                if (node) {
+                    var root = node.__root || node.__getRoot();
+                    if (root) {
+                        tgt = $mapAndFilter(root.$(tgt), n => n.__worldPosition);
+                    } else tgt = 0;
+                } else tgt = 0;
+            } else if (isObject(tgt)) {
+                var node = emitter.__effect.__node;
+                if (node) {
+                    var root = node.__root || node.__getRoot();
+                    if (root) {
+                        var tmp = [];
+                        $each(tgt, (v, k)=>{
+                            var n = root.__alias(k) || root.__alias(v);
+                            if (n) {
+                                tmp.push(n.__worldPosition);
+                            }
+                        });
+                        tgt = tmp;
+                    } else tgt = 0;
+                } else tgt = 0;
+            }
+            
+            if (tgt && tgt.length) {
                 t.__targetPositions = tgt;
             }
         }
@@ -1929,8 +1947,10 @@ var ParticleEmitterPrototype =
             var t = this;
             var components = parameters.c || parameters.__componentsList;
 
-            if (!components && !t.__components.length && !t.__defaultComponent) {
-                t.__defaultComponent = t.__addComponent(EffectComponentsFactory.__createByType('d'))
+            if (!t.__defaultComponent) {
+                if (!components && !t.__components.length) {
+                    t.__defaultComponent = t.__addComponent(EffectComponentsFactory.__createByType('d'))
+                } 
             }
 
             for (var i in parameters) {
@@ -1946,7 +1966,14 @@ var ParticleEmitterPrototype =
             }
 
             for (var i in components) {
-                t.__addComponent(EffectComponentsFactory.__createComponentFromJson(deepclone(components[i])))
+                var component = EffectComponentsFactory.__createComponentFromJson(deepclone(components[i]));
+
+                t.__addComponent(component);
+
+                if (component.t == 'd') {
+                    t.__defaultComponent = component;
+                }
+
             }
 
             t.__nodePosition.__copy(t.__parent.__worldPosition);

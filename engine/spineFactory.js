@@ -91,7 +91,12 @@ var SpineObject = (function () {
     });
 
 
-    globalConfigsData[options.__baseShadersFolder + 'spine.v'] = "\
+    var shaders_registered;
+
+    SHD.prototype.compile = function () {
+        if (!shaders_registered){
+            
+            globalConfigsData[options.__baseShadersFolder + 'spine.v'] = "\
 attribute vec4 a_position;\
 attribute vec4 a_color;\
 attribute vec4 a_color2;\
@@ -107,7 +112,7 @@ v_texCoords = a_texCoords;\
 gl_Position = u_projTrans * a_position;\
 }";
 
-    globalConfigsData[options.__baseShadersFolder + 'spine.f'] = "\
+            globalConfigsData[options.__baseShadersFolder + 'spine.f'] = "\
 #ifdef GL_ES\n#define LOWP lowp\nprecision mediump float;\n#else\n#define LOWP\n#endif\n\
 varying LOWP vec4 v_light;\
 varying LOWP vec4 v_dark;\
@@ -122,9 +127,8 @@ void main(){\
     gl_FragColor = c;\
 }";
 
-
-    //debug
-    globalConfigsData[options.__baseShadersFolder + 'spine_debug.v'] = "\
+            //debug
+            globalConfigsData[options.__baseShadersFolder + 'spine_debug.v'] = "\
 attribute vec4 a_position;\
 attribute vec4 a_color;\
 uniform mat4 u_projTrans;\
@@ -134,28 +138,29 @@ v_color = a_color;\
 gl_Position = u_projTrans * a_position;\
 }";
 
-    globalConfigsData[options.__baseShadersFolder + 'spine_debug.f'] = "\
+            globalConfigsData[options.__baseShadersFolder + 'spine_debug.f'] = "\
 #ifdef GL_ES\n#define LOWP lowp\nprecision mediump float;\n#else\n#define LOWP\n#endif\n\
 varying LOWP vec4 v_color;\
 uniform LOWP vec3 color;\
 uniform LOWP float a;\
 void main(){\
-    gl_FragColor = vec4( v_color.rgb * color, v_color.a * a);\
+   gl_FragColor = vec4( v_color.rgb * color, v_color.a * a);\
 }";
-    //undebug
+            //undebug
+            shaders_registered = 1;
+        }
 
-
-    SHD.prototype.compile = function () {
         this.__program = renderer.__getWebGLProgram({
             v: getVertexShaderData(this.vertexShader) ? this.vertexShader : 'spine',
             f: getFragmentShaderData(this.fragmentShader) ? this.fragmentShader : 'spine'
         });
+        // consoleLog("Spine shader compiled", this.__program);        
         this.program = this.__program.__program;
     };
 
 
     function draw(skeleton, shader, batcher, renderer, uniforms1, uniforms2) {
-
+        
         shader.bind();
 
         _currentSpineProgram = shader.program;
@@ -238,7 +243,7 @@ void main(){\
             set: function (v) {
                 var t = this;
                 if (t.____spineObject) {
-                    t.____spineObject.__destruct();
+                    t.____spineObject.__destruct();                    
                     delete t.____spineObject;
                 }
                 if (v) {
@@ -375,8 +380,7 @@ void main(){\
                 try {
                     
                     getJson("res/mm/animatedNPC/new_mm_NPC_cat_idle/mm_NPC_cat_idle.json?", r => ncat = r);
-                    
-                // debugger;
+                
                     if (ncat) {
                         consoleLog( data.__data.skins[0].attachments.body.body );
                         jsonDiff(data.__data.animations.mm_NPC_cat_idle.deform.default.head.head, ncat.animations.mm_NPC_cat_idle.deform.default.head.head);
@@ -390,7 +394,7 @@ void main(){\
                 */
 
                 t.__setSkeleton(skeletonJson.readSkeletonData(data.__data));
-                //debugger;
+                
                 // Create an AnimationState, and set the initial animation in looping mode.
                 t.__animationStateData = new spine.AnimationStateData(t.__skeleton.data);
 
@@ -402,7 +406,7 @@ void main(){\
                     __ready: 1,
                     __animation: t.__defaultAnimationOnStart
                 });
-
+                //cheats
                 if (options.__spineLogEvents) {
                     animationState.addListener({
                         start: function (track) {
@@ -425,6 +429,7 @@ void main(){\
                         }
                     });
                 }
+                //endcheats
 
                 if (t.__parent && t.__parent.__onSpineReady)
                     t.__parent.__onSpineReady();
@@ -470,15 +475,15 @@ void main(){\
                 __render: sp_render,
                 t: t,
                 __validToSave: 0,
-                __uniforms: {
-                    u_projTrans: function () {
+                __uniforms: set({}, 
+                    'u_projTrans', k => {
                         var m = a.__projectionMatrix.__clone().__multiply(a.__matrixWorld).e;
                         m[14] = 0;
                         return m;
                     },
-                    a: function () { return a.__alpha }
-                    //                 color: function(){ return a.__color }
-                }
+                    'a', k => a.__alpha * (a.__parent ? a.__parent.__opacityDeep : 1)
+                    //  color: function(){ return a.__color }
+                )
             });
             return this;
         },
@@ -494,7 +499,7 @@ void main(){\
             if (t.__currentAnimation) {
                 t.__stop();
             }
-            params = params || 0;
+            params = params || {};
             var animationName = params.__animationName || params.name || params;
             //             speedUp = params.__speedUp ? 1 / params.__speedUp : 0,
             //             repeatNumber = params.__repeatNumber,
@@ -502,7 +507,23 @@ void main(){\
 
             t.__currentAnimation = animationName;
 
-            t.__animationState.setAnimation(0, animationName, true);
+            var e = t.__animationState.setAnimation(
+                params.__trackIndex || 0, // trackIndex
+                animationName, 
+                params.__loop == undefined ? true : params.__loop
+            );
+
+            var onEnd = params.__onEnd;
+            if (e && onEnd) {
+                e = e.animation;
+                if (e && e.duration > 0) {
+                    t.__onEndAnimationTimeout = _setTimeout(a => {
+                        t.__onEndAnimationTimeout = 0;
+                        onEnd();
+                    }, e.duration);
+                }
+            }
+            
             return this;
         },
 
@@ -518,7 +539,11 @@ void main(){\
 
         __stop: function () {
             //this.__setEmptyAnimations();
-            return this;
+            var t = this;
+            if (t.__onEndAnimationTimeout) {
+                t.__onEndAnimationTimeout = _clearTimeout(t.__onEndAnimationTimeout);
+            }
+            return t;
         },
 
         __setSkin: function (skin, add) {
@@ -630,7 +655,8 @@ void main(){\
             function () {
                 var t = this;
                 if (t.____defaultAnimationOnStart == undefined && t.__skeleton) {
-                    t.____defaultAnimationOnStart = ($find(t.__skeleton.data.animations, a => 1) || 0).name;
+                    var idle = $find(t.__skeleton.data.animations, a => a.name == 'idle');
+                    t.____defaultAnimationOnStart = idle ? idle : ($find(t.__skeleton.data.animations, a => 1) || 0).name;
                 }
                 return this.____defaultAnimationOnStart;
 
@@ -652,7 +678,9 @@ void main(){\
                         this.__defaultAnimationOnStart = v;
                     }
                 }
-                else this.__stop();
+                else {
+                    this.__stop();
+                }
             }
         ),
 
