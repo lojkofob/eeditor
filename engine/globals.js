@@ -1477,25 +1477,31 @@ function clearXMLHttpRequest(xhr) {
 }
 
 function createXHRRequest(url, post, params, data, beforesend) {
+ 
+    if (options.__disableXHRRequests) {
+        consoleError("try to load xhr", path);
+        var cb = params.onloadend || params.onloadend;
+        if (cb) {
+            setTimeout(cb, 1);
+        }
+    } else {
+        var xhr = new XMLHttpRequest();
+        for (var i in params) {
+            xhr[i] = params[i];
+        }
 
-    var xhr = new XMLHttpRequest();
-    for (var i in params)
-        xhr[i] = params[i];
+        xhr.open(post ? 'POST' : 'GET', url, true);
 
-    xhr.open(post ? 'POST' : 'GET', url, true);
+        if (beforesend) beforesend(xhr);
+        
+        if (options.__httpAuth) {
+            xhr.withCredentials = true;
+            xhr.setRequestHeader("Authorization", "Basic " + btoa(options.__httpAuth.__username + ":" + options.__httpAuth.__password));
+        }
 
-    if (beforesend) beforesend(xhr);
-
-    
-    if (options.__httpAuth) {
-        xhr.withCredentials = true;
-        xhr.setRequestHeader("Authorization", "Basic " + btoa(options.__httpAuth.__username + ":" + options.__httpAuth.__password));
+        xhr.send(data);
+        return xhr;
     }
-
-    
-    xhr.send(data);
-
-    return xhr;
 
 }
 
