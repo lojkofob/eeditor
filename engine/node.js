@@ -5369,58 +5369,35 @@ var NodeCloneProperties = {
 
 // properties for shaders
 set(NodePropertiesObject,
-    'frrot', createSomePropertyWithGetterAndSetter(function () { return (this.__frame || 0).R }),
-    'frcnt', createSomePropertyWithGetterAndSetter(function () { return (this.__frame || 0).c || defaultHalfVector2 }),
+    'u_frrot', createSomePropertyWithGetterAndSetter(function () { return (this.__frame || 0).R }),
+    'u_frcnt', createSomePropertyWithGetterAndSetter(function () { return (this.__frame || 0).c || defaultHalfVector2 }),
 
-    'scratio', createSomePropertyWithGetterAndSetter(function () { return __screenSize.x / __screenSize.y }),
-    'sc', createSomePropertyWithGetterAndSetter(function () { return __screenSize }),
-    'rsc', createSomePropertyWithGetterAndSetter(function () { return __realScreenSize }),
+    'u_scratio', createSomePropertyWithGetterAndSetter(function () { return __screenSize.x / __screenSize.y }),
+    'u_scsz', createSomePropertyWithGetterAndSetter(function () { return __screenSize }),
+    'u_rscsz', createSomePropertyWithGetterAndSetter(function () { return __realScreenSize }),
 
-    'dt', createSomePropertyWithGetterAndSetter(function () { return __currentFrameDeltaTime / 1000; }),
-    'time', createSomePropertyWithGetterAndSetter(function () { return __lastOnFrameTime / 1000; }),
-    'u_time', createSomePropertyWithGetterAndSetter(function () { return fract(__lastOnFrameTime / 1000); }),
+    'u_cfdt', createSomePropertyWithGetterAndSetter(function () { return __currentFrameDeltaTime / 1000; }),
+    'u_time', createSomePropertyWithGetterAndSetter(function () { return __lastOnFrameTime / 1000; }),
+    'u_ftime', createSomePropertyWithGetterAndSetter(function () { return fract(__lastOnFrameTime / 1000); }),
 
-    'size', createSomePropertyWithGetterAndSetter(function () { return this.__geomSize || this.__size }),
-    'width', createSomePropertyWithGetterAndSetter(function () { return this.__width }),
-    'height', createSomePropertyWithGetterAndSetter(function () { return this.__height }),
+    'u_size', createSomePropertyWithGetterAndSetter(function () { return this.__geomSize || this.__size }),
+    'u_width', createSomePropertyWithGetterAndSetter(function () { return this.__width }),
+    'u_height', createSomePropertyWithGetterAndSetter(function () { return this.__height }),
 
-    'imgsz', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize }),
-    'imgw', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.x : 0 }),
-    'imgh', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.y : 0 }),
+    'u_imgsz', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize }),
+    'u_imgw', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.x : 0 }),
+    'u_imgh', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.y : 0 }),
 
-    'atlassz', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize }),
-    'atlasw', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize ? this.____atlasSize.x : 0 }),
-    'atlash', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize ? this.____atlasSize.y : 0 }),
+    'u_atlassz', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize }),
+    'u_atlasw', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize ? this.____atlasSize.x : 0 }),
+    'u_atlash', createSomePropertyWithGetterAndSetter(function () { return this.____atlasSize ? this.____atlasSize.y : 0 }),
 
-    'uvrx', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.x / this.____atlasSize.x : 0 }),
-    'uvry', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.y / this.____atlasSize.y : 0 }),
-    'uvix', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.x / this.____imgSize.x : 0 }),
-    'uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
+    'u_uvrx', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.x / this.____atlasSize.x : 0 }),
+    'u_uvry', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____imgSize.y / this.____atlasSize.y : 0 }),
+    'u_uvix', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.x / this.____imgSize.x : 0 }),
+    'u_uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
 );
-
-NodePrototype.__node_properties_for_shaders_obj = {
-    frrot: 1, 
-    frcnt: 1, 
-    scratio:1, 
-    sc: 1,
-    rsc: 1, 
-    dt: 1, 
-    time: 1, 
-    u_time: 1, 
-    size: 1, 
-    width: 1, 
-    height: 1, 
-    imgsz: 1, 
-    imgw: 1, 
-    imgh: 1, 
-    atlassz: 1,
-    atlasw: 1, 
-    atlash: 1, 
-    uvrx: 1, 
-    uvry: 1, 
-    uvix: 1, 
-    uviy: 1
-};
+ 
 
 //debug
 function NodeSelfProperty(publicName, privateName, g, s) {
