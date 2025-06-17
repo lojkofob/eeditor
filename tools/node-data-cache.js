@@ -142,11 +142,11 @@ fs.readFile(outFile, 'utf8', function (err, data) {
 
                     case 'html':
                     case 'css':
-                        outFileData += '"' + data.replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"';
+                        outFileData += '"' + data.replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\n') + '"';
                         break;
 
                     case 'atlas':
-                        outFileData += '"' + data.replace(/\n/g, '\\n') + '"';
+                        outFileData += '"' + data.replace(/\n/g, '\\n').replace(/\r/g, '') + '"';
                         break;
  
                     default:

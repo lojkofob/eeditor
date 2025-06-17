@@ -737,7 +737,16 @@ function registerClasses(j) {
             if (j.name == 'classes') {
                 if (isObject(j.__childs)){ 
                     for (var i in j.__childs) {
-                        globalConfigsData.__classes[i] = j.__childs[i].__childs['_0'];
+                        var cc = j.__childs[i].__childs
+                            , _0 = cc._0 || get(cc,'_0');
+                        if (_0) {
+                            globalConfigsData.__classes[i] = _0;
+                        } else {
+                            for (var kk in cc){
+                                globalConfigsData.__classes[i] = cc[kk];
+                                break;
+                            }
+                        }
                     }
                 }
                 else

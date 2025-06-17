@@ -2353,7 +2353,7 @@ mergeObj(NodePrototype, {
         return this;
     }
 
-    //debug     
+    
     , __selectable: 1,
 
     __select() {
@@ -2370,10 +2370,13 @@ mergeObj(NodePrototype, {
         }
     },
 
+    __toggleSelection(){ this.selected ? this.__unselect() : this.__select() },
 
     __someParentSelected() {
         return this.__traverseParents(function (n) { return n.selected });
     },
+
+    //debug
 
     toJsString() {
         return JSON.stringify(this.__toJson(), 1, 4).replace(/    "(\w*)":/g, function (a, b) { return '   ' + b + ':' });

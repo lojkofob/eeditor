@@ -182,13 +182,26 @@ var getEventCoords = function (e, v) {
 
 
 function setCurrentDraggingObject(n, withoutUpdate) {
-    curDraggingObject = n;
-    if (!withoutUpdate) {
-        curDraggingObject.mousedown = mouse.__clone().__divideScalar(layoutsResolutionMult);
-        curDraggingObject.__lastMousePosition = mouse.__clone();
-        curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.__clone();
+    if (curDraggingObject) {
+        curDraggingObject.__isDragging = 0;
+
+        if (curDraggingObject.__dragEnd) {
+            //cheats
+            if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragEnd');
+            //endcheats
+            curDraggingObject.__dragEnd();
+        }        
     }
-    curDraggingObject.__isDragging = 1;
+
+    curDraggingObject = n;
+    if (n){
+        if (!withoutUpdate) {
+            curDraggingObject.mousedown = mouse.__clone().__divideScalar(layoutsResolutionMult);
+            curDraggingObject.__lastMousePosition = mouse.__clone();
+            curDraggingObject.__lastPosition = curDraggingObject.__worldPosition.__clone();
+        }
+        curDraggingObject.__isDragging = 1;
+    }
 
 }
 
@@ -719,7 +732,7 @@ function _onDocumentMouseMove(e) {
             }
         }
 
-        if (curDraggingObject.__isDragging) {
+        if (curDraggingObject && curDraggingObject.__isDragging) {
             curDraggingObject.__lastPosition.set(x, y);
             curDraggingObject.__lastMousePosition = currentMousePosition;
 

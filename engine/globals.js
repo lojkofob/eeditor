@@ -1424,7 +1424,7 @@ function makeSingleton(data, protoMethods, properties, baseClassProto, wrapMetho
         protoMethods.__init = defaultMergeInit;
 
     return new (makeClass(
-        function () { mergeObj(this, data) },
+        function () { mergeObj(this, data); if (baseClassProto) baseClassProto.apply(this, arguments) },
         protoMethods,
         properties,
         baseClassProto,

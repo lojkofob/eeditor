@@ -266,13 +266,8 @@ makeClass(Color, {
     },
 
     __setScalar(scalar) {
-
-        this.r = scalar;
-        this.g = scalar;
-        this.b = scalar;
-
+        this.r = this.g = this.b = scalar;
         return this;
-
     },
 
     setHex(hex) {
@@ -445,6 +440,10 @@ makeClass(Color, {
 
         return new Color(this.r, this.g, this.b);
 
+    },
+
+    __cloneRGBA(){
+        return new Color().__setRGBA(this.r, this.g, this.b, this.a);
     },
 
     __copy(color) {
