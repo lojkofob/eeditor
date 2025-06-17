@@ -5398,6 +5398,30 @@ set(NodePropertiesObject,
     'uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
 );
 
+NodePrototype.__node_properties_for_shaders_obj = {
+    frrot: 1, 
+    frcnt: 1, 
+    scratio:1, 
+    sc: 1,
+    rsc: 1, 
+    dt: 1, 
+    time: 1, 
+    u_time: 1, 
+    size: 1, 
+    width: 1, 
+    height: 1, 
+    imgsz: 1, 
+    imgw: 1, 
+    imgh: 1, 
+    atlassz: 1,
+    atlasw: 1, 
+    atlash: 1, 
+    uvrx: 1, 
+    uvry: 1, 
+    uvix: 1, 
+    uviy: 1
+};
+
 //debug
 function NodeSelfProperty(publicName, privateName, g, s) {
     g = g || function () { return this[privateName] };
