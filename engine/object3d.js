@@ -70,7 +70,7 @@ var Object3dPropertiesObject = {
 
     __matrixWorld: {
         get() {
-            if (this.____visible && this.__matrixWorldNeedsUpdate || this.__matrixNeedsUpdate)
+            if (this.____visible && (this.__matrixWorldNeedsUpdate || this.__matrixNeedsUpdate))
                 this.__updateMatrixWorld();
             return this.mw;
         }

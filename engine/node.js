@@ -2448,11 +2448,7 @@ mergeObj(NodePrototype, {
             __corner(v) {
                 if (v) {
                     v[0] = Number((v[0] || 0).toFixed(1));
-                    v[1] = Number((v[1] || 0).toFixed(1));
-                    /*
-                    v[0] = round(v[0]||0);
-                    v[1] = round(v[1]||0);
-                    */
+                    v[1] = Number((v[1] || 0).toFixed(1));                    
                     if (v[2]) {
                         v[2] = Number(v[2].toFixed(2));
                     }

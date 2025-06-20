@@ -139,6 +139,10 @@ makeClass(Tween, {
         }
 
         return t.a.length;
+    },
+
+    __softkill(){
+        this.__update = a => 1;
     }
 
 }, {}, UpdatableProto);

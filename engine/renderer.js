@@ -1998,6 +1998,23 @@ function WebGLRenderer() {
         
     }
 
+    
+    function __generateMipmap(tex) {
+        tex.__checkGLTexture();
+        __setTexture2D
+        if (tex.__webglTexture) {
+            tex.__minFilter = GL_LINEAR_MIPMAP_LINEAR;
+            if (tex.v > 0 && tex.__version !== tex.v) {
+                __uploadTexture(tex, 0);
+            } else {
+                __bindTexture(tex.__webglTexture);
+            }
+            gl.generateMipmap(GL_TEXTURE_2D);
+        }
+    }
+
+
+
     //cheats
     function __handleGLErrors(val) {
         debugOnGLError = val ? function(){
@@ -2038,6 +2055,7 @@ function WebGLRenderer() {
         , __setTexture2D: __setTexture2D
         , __invalidateState: __invalidateState
         , __setBlending: __setBlending
+        , __generateMipmap: __generateMipmap
         //cheats
         , __handleGLErrors: __handleGLErrors
         , __disableGLDebug: __disableGLDebug

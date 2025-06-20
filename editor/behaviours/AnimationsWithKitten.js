@@ -746,6 +746,7 @@ var AnimationsWithKitten = (function () {
                 case 'cropy':
                 case 'cropx':
                 case '__alpha':
+                case '__alphaDeep':
                 case '__visible':
                     addKFrameSimpleProp(prop, prev || 0, next);
                     break;
