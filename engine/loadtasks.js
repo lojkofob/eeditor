@@ -960,14 +960,14 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     var lang = l[1];
 
                     if (options.__supportedLangs.indexOf(lang) < 0) {
-                        lang = 'en';
+                        lang = options.__defaultLang || 'en';
                     }
 
                     var lname = options.__localesDir + lang + '.json';
                     var cb = function () {
 
                         var dict = getCachedData(lname);
-                        prepareLocalizationDict(dict);
+                        setCachedData(lname, prepareLocalizationDict(dict));
                         setLocalization(lang);
 
                     };

@@ -107,8 +107,6 @@ function setLocalization(l, force) {
     if (!localizationDict && force)
         localizationDict = {};
 
-    localizationDict = plainArrayToObject(localizationDict);
-
     options.__localization = localizationOptions[l] || localizationOptions.en;
     options.__localization.__thousandsSeparator = get(localizationDict, 'thousands_separator') || "";
     options.__localization.__decimalMark = get(localizationDict, 'decimal_mark') || ".";
@@ -135,6 +133,9 @@ function __pluralize(d, a, i) { if (a) { d = d + a.t; if (a.a[i]) d = d + a.a[i]
 
 function prepareLocalizationDict(dict) {
 
+
+    dict = plainArrayToObject(dict);
+
     function autoReplaceLocalsInLocals(str, recursive) {
         if (dict && str && str.replace) {
             str = str.replace(/{(\w+)}/gm, function (wordSk, word) {
@@ -146,7 +147,7 @@ function prepareLocalizationDict(dict) {
     }
 
     if (dict.__plurales)
-        return;
+        return dict;
 
     var localizationPlurales = {};
 
@@ -215,6 +216,7 @@ function prepareLocalizationDict(dict) {
     //             debugger;
     //         });
 
+    return dict;
 
 }
 
@@ -225,7 +227,7 @@ function TR(k) {
         if ((args.length > 1) && t && t.replace) {
             // Since 1592 Duncan MacLeod kills {0} mans, {1} womans, {2} childs and {3} dogs
 
-            var keyPlurales = localizationDict.__plurales[k];
+            var keyPlurales = localizationDict.__plurales ? localizationDict.__plurales[k] : 0;
             if (keyPlurales && options.__localization) {
 
                 $each(keyPlurales.__variableOrderForms, function (vof, i) {
