@@ -113,7 +113,7 @@ function magick_convert() {
 var toolsDir = __dirname;
 
 function tool(t, opts) {
-    return ['node', makePath([toolsDir, t]), colorize ? '--colorize': ''].concat(opts);
+    return ['node', makePath([toolsDir, t]), colorize ? '--colorize' : ''].concat(opts);
 }
 
 function spawntool(t, opts) {
@@ -203,7 +203,7 @@ var subtargetsBuilders = {
     sounds(d) {
         mkdir(d.dst);
         mkdir('./tmp/tmp')
-        spawntool('soundsprite', ['-e mp3 -o sounds --array --samplerate '+ (d.samplerate||44100) +' -d', d.dst].concat(collectSources(d.src)))
+        spawntool('soundsprite', ['-e mp3 -o sounds --array --samplerate ' + (d.samplerate || 44100) + ' -d', d.dst].concat(collectSources(d.src)))
     },
 
     //simple resizing images for icons, previews, thumbnails etc
@@ -291,40 +291,52 @@ var subtargetsBuilders = {
         }
     },
 
-    ftp_upload(d){
+    ftp_upload(d) {
         var pass = d.password
             , user = d.user
             , server = d.server
             , url = d.url || `https://${server}/`
             , _path = d.path || ''
-            , src = collectSources(d.src);
+            , basedir = d.basedir
+            , src = collectSources(d.src, basedir);
 
         if (!src) throw 'ftp_upload: need src'
         if (!server) throw 'ftp_upload: need server'
-        
-        if (src){
+
+        if (src) {
             var num = src.length;
-            if (user && pass){
+            if (user && pass) {
                 server = `${user}:${pass}@${server}`;
-            } else if (user){
+            } else if (user) {
                 server = `${user}@${server}`;
             }
 
+            var uploadedFiles = []
+
             $each(src, s => {
                 var filename = path.basename(s)
-                spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${_path}/${filename}`])
+                    , filePath = _path;
+
+                if (basedir) {
+                    filePath += s.replace(basedir, '')
+                } else {
+                    filePath += `/${filename}`
+                }
+
+                uploadedFiles.push(filePath)
+
+                spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${filePath}`])
             });
 
             winston.info(`${num} files uploaded, check it at:`)
-            
-            $each(src, s => {
-                var filename = path.basename(s)
-                winston.info(`${url}/${_path}/${filename}`)
+
+            $each(uploadedFiles, s => {
+                winston.info(`${url}/${s}`)
             })
         }
     },
 
-    zip(d){
+    zip(d) {
         var src = d.src;
         var zipname = d.dst;
 
@@ -335,18 +347,18 @@ var subtargetsBuilders = {
                 } else {
                     var tmp_path = 'zip_tmp/'
                     mkdir(tmp_path);
-                    fs.copyFileSync( 
-                        makePath([spawnCwd||'', zipfilename]),
-                        makePath([spawnCwd||'', tmp_path, filename])
+                    fs.copyFileSync(
+                        makePath([spawnCwd || '', zipfilename]),
+                        makePath([spawnCwd || '', tmp_path, filename])
                     );
-                    
+
                     spawn(['zip', '-r', '-9', '-m', '../' + zipname, filename], {
-                        cwd: path.join(spawnCwd||'', tmp_path)
+                        cwd: path.join(spawnCwd || '', tmp_path)
                     });
-                    
-                    fs.rmdirSync(  makePath([spawnCwd||'', tmp_path]) );
+
+                    fs.rmdirSync(makePath([spawnCwd || '', tmp_path]));
                 }
-            })                
+            })
         } else {
             src = $map(collectSources(src, spawnCwd), f => f.replace(spawnCwd, ''));
             $each(src, filename => {
@@ -354,7 +366,7 @@ var subtargetsBuilders = {
             });
         }
     },
-    
+
     minify(d) {
 
         var compressor = d.compressor || 'gcc';
@@ -515,7 +527,7 @@ var subtargetsBuilders = {
                 return fs.readFileSync(file, 'utf8')
             });
         });
-         
+
         fs.writeFileSync(dstFile, content);
 
     },
@@ -629,7 +641,7 @@ var subtargetsBuilders = {
         }
     },
 
-    each(d){
+    each(d) {
         var target = d.target;
         if (!target) return;
         if (!isArray(target)) {
@@ -639,7 +651,7 @@ var subtargetsBuilders = {
         $each(d.src, v => {
             mergeObj(project_json.buildFlags, v);
             winston.debug('ENV += ' + JSON.stringify(v));
-            $each(target, t => 
+            $each(target, t =>
                 build(project_json, t)
             );
         });
@@ -669,7 +681,7 @@ function buildTarget(target) {
                 activateLog(subtarget.log);
 
                 spawnCwd = subtarget.cwd;
-                
+
                 echo = subtarget.echo;
 
                 var stype = String(subtarget.type).toLowerCase();
@@ -703,7 +715,7 @@ function buildTarget(target) {
 var projectFile = argv.target ? './project.json' : '<input data>';
 
 
-function run_target(dat, target_name){
+function run_target(dat, target_name) {
     if (target_name) winston.info('Target:', target_name);
     winston.debug('Target content:', JSON.stringify(dat));
     buildTarget(dat);
@@ -711,7 +723,7 @@ function run_target(dat, target_name){
 
 var project_json;
 
-function merge_env(env, data){
+function merge_env(env, data) {
     env = mergeObj(env, data);
     if (isString(env.VERSION)) { // "1.2.3.4"
         const versionParts = env.VERSION.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?$/);
@@ -728,7 +740,7 @@ function merge_env(env, data){
 }
 
 function build(data, target_name) {
-    
+
     var data = deepclone(data);
     // console.log("--------------------------------------------------------- buildFlags = ");
     // console.log(data.buildFlags);
@@ -742,9 +754,9 @@ function build(data, target_name) {
 
     env = merge_env(env, data.buildFlags);
     env = merge_env(env, additionalArguments);
-     
+
     var build_targets = data.build_targets
- 
+
     if (!isObject(build_targets)) {
         throw ('No build_targets in ' + projectFile);
     }
@@ -754,7 +766,7 @@ function build(data, target_name) {
     else {
         run_target(build_targets[target_name], target_name);
     }
- 
+
 }
 
 if (argv.target) {
@@ -765,7 +777,7 @@ if (argv.target) {
         }
         else {
             try {
-                project_json = JSON.parse( data )
+                project_json = JSON.parse(data)
             } catch (e) {
                 winston.error('Error opening ' + projectFile);
                 winston.error(e);
@@ -779,7 +791,7 @@ if (argv.target) {
 }
 
 mergeObj(exports, {
-    
+
     activateLog: activateLog,
     spawn: spawn,
 
