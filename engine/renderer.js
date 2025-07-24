@@ -291,10 +291,10 @@ function Texture(image, params) {
 
     _texturesCache[textureIdCount] = this;
     params = params || 0;
-
+    
     this.__init(mergeObj({
         __magFilter: GL_LINEAR,
-        __minFilter: params.__generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR,
+        __minFilter: (params.__generateMipmaps || params.__manualMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR,
         __flipY: true,
         __wraps: GL_CLAMP_TO_EDGE,
         __wrapt: GL_CLAMP_TO_EDGE,
@@ -1701,9 +1701,12 @@ function WebGLRenderer() {
 
             if (!renderTarget.__webglFramebuffer) {
 
-                var texture = renderTarget.__texture;
+                var texture = renderTarget.__texture
+                    , glFormat = texture.__format
+                    , glType = texture.__type;
 
-                renderTarget.__needMips = texture.__generateMipmaps && __isImagePowerOfTwo(renderTarget);
+                renderTarget.__generateMipmaps = texture.__generateMipmaps && __isImagePowerOfTwo(renderTarget);
+                renderTarget.__manualMipmaps = texture.__manualMipmaps;
 
                 texture.__checkGLTexture();
   
@@ -1716,17 +1719,14 @@ function WebGLRenderer() {
                 __bindTexture(texture.__webglTexture);
                 __setTextureParameters(texture);
 
-                var glFormat = texture.__format;
-                var glType = texture.__type;
-
                 __texImage2D(GL_TEXTURE_2D, 0, glFormat, renderTarget.width, renderTarget.height, 0, glFormat, glType, null);
-
+                
                 gl.bindFramebuffer(GL_FRAMEBUFFER, renderTarget.__webglFramebuffer);
 
                 gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.__webglTexture, 0);
                 
                 gl.bindFramebuffer(GL_FRAMEBUFFER, null);
-                
+                 
                 __checkGLErrors(renderTarget.__webglFramebuffer);
 
                 __bindTexture(null);
@@ -1746,10 +1746,37 @@ function WebGLRenderer() {
         } else {
 
             if (_currentRenderTarget) {
-                if (_currentRenderTarget.__needMips) {
-                    __bindTexture(_currentRenderTarget.__texture.__webglTexture);
+
+                var texture = _currentRenderTarget.__texture;
+                if (_currentRenderTarget.__manualMipmaps) {
+                           
+                    gl.bindTexture(GL_TEXTURE_2D, texture.__webglTexture);
+ 
+
+                    gl.generateMipmap(gl.TEXTURE_2D);
+ 
+ 
+                    
+                     
+ 
+                    $each(_currentRenderTarget.__manualMipmaps, (mm, i) => {
+                        var w = mm.width, h = mm.height, mipmap_level = i + 1;
+
+                        __texImage2D(GL_TEXTURE_2D, mipmap_level, texture.__format, w, h, 0, texture.__format, texture.__type, null );
+
+                        gl.bindFramebuffer(gl.FRAMEBUFFER, mm.__webglFramebuffer);
+
+                        gl.copyTexSubImage2D(GL_TEXTURE_2D, mipmap_level, 0, 0, 0, 0, w, h);
+    
+                    });
+
+                }
+                else
+                if (_currentRenderTarget.__generateMipmaps) {
+                    __bindTexture(texture.__webglTexture);
                     gl.generateMipmap(GL_TEXTURE_2D);
                 }
+
             }
 
             __scissor(_scissor);
@@ -2030,6 +2057,7 @@ function WebGLRenderer() {
     return {
         __domElement: __domElement
         , __init: __init
+        , __bindTexture: __bindTexture
         , __initAttributes: __initAttributes
         , __enableAttribute: __enableAttribute
         , __disableUnusedAttributes: __disableUnusedAttributes
