@@ -987,7 +987,7 @@ mergeObj(NodePrototype, {
                     , ky = szy / iszy
                     , uvt = t.____uvsTransform;
 
-                    
+
 
                 map.__setWrapS(t.__imgRepeatX);
                 map.__setWrapT(t.__imgRepeatY);
@@ -1002,11 +1002,11 @@ mergeObj(NodePrototype, {
                         return this;
                     }
 
-                    if (hasFit && uvt > 3){
+                    if (hasFit && uvt > 3) {
                         // rotated by uv
                         kx = szx / iszy;
-                        ky = szy / iszx;       
-                        var tmp = iszx; iszx = iszy; iszy = tmp;                        
+                        ky = szy / iszx;
+                        var tmp = iszx; iszx = iszy; iszy = tmp;
                     }
 
                     x1 = frame.v[0];
@@ -1044,7 +1044,7 @@ mergeObj(NodePrototype, {
                             x2 += k;
                         }
                     }
- 
+
                     if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * iszy);
                     if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * iszx);
 
@@ -1154,13 +1154,13 @@ mergeObj(NodePrototype, {
                     };
 
                     if (hasFit) {
-                        
-                        if (uvt > 3){
+
+                        if (uvt > 3) {
                             // rotated by uv
-                            t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2, 
+                            t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2,
                                 getFrameUv(y1, y2, x1, x2, frame && frame.R, uvt)
                             );
-                        }  else {
+                        } else {
                             t.__uvsBuffer = t.__addAttributeBuffer(t.__uvsBufferName || 'uv', 2, getVertsArray());
                         }
                     }
@@ -1192,7 +1192,7 @@ mergeObj(NodePrototype, {
             }
 
         } else {
-            t.__uvsBuffer = t.____addAttributeBuffer('uv', defaultUVSBuffer);            
+            t.__uvsBuffer = t.____addAttributeBuffer('uv', defaultUVSBuffer);
         }
 
         return this;
@@ -1389,7 +1389,7 @@ mergeObj(NodePrototype, {
                         offsetByParent.x = (parentPadding[1] + margin[1] - parentPadding[3] - margin[3]) / 2;
                     }
                     break;
-            } 
+            }
 
             switch (va) {
                 case ALIGN_FROM_START_TO_END:
@@ -1490,7 +1490,7 @@ mergeObj(NodePrototype, {
                         offsetByParent.y = (-parentPadding[0] - margin[0] + parentPadding[2] + margin[2]) / 2;
                     }
                     break;
-                    
+
 
             }
 
@@ -1548,7 +1548,7 @@ mergeObj(NodePrototype, {
             }
 
         }
-        
+
 
         var scrollVector = t.__scrollVector, child;
 
@@ -1557,7 +1557,7 @@ mergeObj(NodePrototype, {
         if (deep) {
             var sz = (t.____size || 0)
                 , newUpdatusObject = { x: 0, y: 0, sx: sz.px == 'o', sy: sz.py == 'o' };
-                
+
             if (t.__manageChildsHAVA) {
                 if (t.__tableAlignRows || t.__tableAlignColumns || t.__tableAlignColumnWidth || t.__tableAlignRowHeight) {
                     newUpdatusObject.__table = {
@@ -1688,7 +1688,7 @@ mergeObj(NodePrototype, {
                 dy -= o.y * te[5];
             }
             var mta = mmax(mmin(dsx * te[0], dsy * te[5]), (t.__minimalTapArea || options.__minimalTapArea) * layoutsResolutionMult);
-            intersect = dx * dx + dy * dy < mta * mta;            
+            intersect = dx * dx + dy * dy < mta * mta;
         }
 
         if (!intersect) {
@@ -1705,7 +1705,7 @@ mergeObj(NodePrototype, {
                 pwp.y -= pe.y;
 
                 pwp.__applyMatrix4(im);
-                
+
                 intersect = o ? pwp.x > -dsx + o.x && pwp.x < dsx + o.x && pwp.y > -dsy + o.y && pwp.y < dsy + o.y
                     : pwp.x > -dsx && pwp.x < dsx && pwp.y > -dsy && pwp.y < dsy;
             }
@@ -1896,7 +1896,7 @@ mergeObj(NodePrototype, {
             t.____animTextAction = anim(t, { __animatedText: [from, to] }, time, 0, easing, delay);
 
             if (withscaling) {
-                mergeObj( tween.to(t, {}, time, 0, easing, delay), {
+                mergeObj(tween.to(t, {}, time, 0, easing, delay), {
                     __update(tm) {
                         if (!this.s) this.s = tm;
                         tm -= this.s + this.d;
@@ -1924,12 +1924,12 @@ mergeObj(NodePrototype, {
         }
         return t;
     },
-    
-        __updateShadows(){
-            this.__traverse(a => a.____shadow && a.____shadow.__update());
-            return this;
-        },
-        
+
+    __updateShadows() {
+        this.__traverse(a => a.____shadow && a.____shadow.__update());
+        return this;
+    },
+
 
     __calculateAbsoluteWidth(parentWidth) {
 
@@ -2346,14 +2346,14 @@ mergeObj(NodePrototype, {
 
     }
 
-    , __addBusObservers(){
+    , __addBusObservers() {
         var o = {};
         for (var i = 0; i < arguments.length; i += 2) { o[arguments[i]] = arguments[i + 1]; }
         this.__busObservers = o;
         return this;
     }
 
-    
+
     , __selectable: 1,
 
     __select() {
@@ -2370,7 +2370,7 @@ mergeObj(NodePrototype, {
         }
     },
 
-    __toggleSelection(){ this.selected ? this.__unselect() : this.__select() },
+    __toggleSelection() { this.selected ? this.__unselect() : this.__select() },
 
     __someParentSelected() {
         return this.__traverseParents(function (n) { return n.selected });
@@ -2448,7 +2448,7 @@ mergeObj(NodePrototype, {
             __corner(v) {
                 if (v) {
                     v[0] = Number((v[0] || 0).toFixed(1));
-                    v[1] = Number((v[1] || 0).toFixed(1));                    
+                    v[1] = Number((v[1] || 0).toFixed(1));
                     if (v[2]) {
                         v[2] = Number(v[2].toFixed(2));
                     }
@@ -3597,7 +3597,7 @@ var NodeCloneProperties = {
                 //unmulticlass
 
                 if (globalConfigsData.__spriteSheetAnimations) {
-                    
+
                     t.__spriteSheetAnim = killAnim(t.__spriteSheetAnim);
 
                     var spriteSheetAnim = globalConfigsData.__spriteSheetAnimations[filename];
@@ -3640,7 +3640,7 @@ var NodeCloneProperties = {
 
                                 if (!preparedFames.length) {
                                     consoleError('no frames prepared to sprite sheet anim', filename);
-                                    
+
                                     //multiclass
                                     applyImgToSelfProperties();
                                     //unmulticlass
@@ -3712,7 +3712,7 @@ var NodeCloneProperties = {
                 }
 
                 function clearSelfImage() {
-                 
+
                     if (t.__frame && t.__uvsBuffer == t.__frame.__uvsBuffers[t.____uvsTransform])
                         delete t.__uvsBuffer;
                     delete t.____imgSize;
@@ -3724,118 +3724,118 @@ var NodeCloneProperties = {
                 if (!t.__keepImage)
                     clearSelfImage();
 
-                if (filename == ' '){
+                if (filename == ' ') {
                     t.____img = filename;
                 } else
-                if (filename != undefined) {
+                    if (filename != undefined) {
 
-                    //                 __window.__loadImageStack = 'i ' + filename;
+                        //                 __window.__loadImageStack = 'i ' + filename;
 
-                    filename = getFrameName(filename);
-                    
-                    if (globalConfigsData.__frames.hasOwnProperty(filename)) // загружено из атласа или просто кэш картинок
-                    {
-                        var frame = globalConfigsData.__frames[filename]
-                            , map = frame.tex
-                            , image = map ? map.__image : 0;
+                        filename = getFrameName(filename);
 
-                        if (frame.__loading) {
+                        if (globalConfigsData.__frames.hasOwnProperty(filename)) // загружено из атласа или просто кэш картинок
+                        {
+                            var frame = globalConfigsData.__frames[filename]
+                                , map = frame.tex
+                                , image = map ? map.__image : 0;
 
-                            //multiclass
-                            t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
-                            //unmulticlass
+                            if (frame.__loading) {
 
-                            if (map.__nodesWaitingsForThis) {
-                                map.__nodesWaitingsForThis.push(t);
-                            }
-                            else {
-                                map.__nodesWaitingsForThis = [t];
-                            }
+                                //multiclass
+                                t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
+                                //unmulticlass
 
-                            t.__notReady = 1;
-
-                            //multiclass
-                            applyImgToSelfProperties();
-                            //unmulticlass
-
-                            return;
-
-                        } else {
-                            delete t.__notReady;
-                        }
-
-                        if (t.__keepImage)
-                            clearSelfImage();
-
-                        t.__frame = frame;
-                        t.map = map;
-
-                        if (frame.__isSimpleImage) {
-
-                            if (image) {
-                                t.____atlasSize = new Vector2(image.width, image.height);
-                                t.____imgSize = t.____atlasSize;
-                            }
-                            else {
                                 if (map.__nodesWaitingsForThis) {
                                     map.__nodesWaitingsForThis.push(t);
                                 }
                                 else {
                                     map.__nodesWaitingsForThis = [t];
                                 }
+
+                                t.__notReady = 1;
+
                                 //multiclass
                                 applyImgToSelfProperties();
                                 //unmulticlass
+
                                 return;
+
+                            } else {
+                                delete t.__notReady;
                             }
+
+                            if (t.__keepImage)
+                                clearSelfImage();
+
+                            t.__frame = frame;
+                            t.map = map;
+
+                            if (frame.__isSimpleImage) {
+
+                                if (image) {
+                                    t.____atlasSize = new Vector2(image.width, image.height);
+                                    t.____imgSize = t.____atlasSize;
+                                }
+                                else {
+                                    if (map.__nodesWaitingsForThis) {
+                                        map.__nodesWaitingsForThis.push(t);
+                                    }
+                                    else {
+                                        map.__nodesWaitingsForThis = [t];
+                                    }
+                                    //multiclass
+                                    applyImgToSelfProperties();
+                                    //unmulticlass
+                                    return;
+                                }
+                            }
+                            else {
+
+                                var ox = image.width, oy = image.height;
+                                t.____atlasSize = new Vector2(ox, oy);
+                                t.____imgSize = frame.s;
+
+
+                            }
+
+                            t.__dirty = 3;
+
+                            if (t.__onImageLoaded)
+                                t.__onImageLoaded()
+
+
+                        } else {
+
+                            if (isString(filename) && filename) {
+                                t.__notReady = 1;
+
+                                //debug
+                                //                         if (t.__imgPropertiesAppliedByClass)
+                                //                             debugger;
+
+                                t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
+
+                                //undebug
+
+                                loadImage(filename, function () {
+                                    delete t.__notReady;
+                                }, t, 0, function () {
+                                    delete t.__notReady;
+                                    if (t.__onLoadImageError)
+                                        t.__onLoadImageError();
+                                    //multiclass
+                                    delete t.__imgPropertiesAppliedByClass;
+                                    //unmulticlass
+
+                                });
+                            }
+
                         }
-                        else {
 
-                            var ox = image.width, oy = image.height;
-                            t.____atlasSize = new Vector2(ox, oy);
-                            t.____imgSize = frame.s;
-
-
-                        }
-
-                        t.__dirty = 3;
-
-                        if (t.__onImageLoaded)
-                            t.__onImageLoaded()
-
-
-                    } else {
-
-                        if (isString(filename) && filename) {
-                            t.__notReady = 1;
-
-                            //debug
-                            //                         if (t.__imgPropertiesAppliedByClass)
-                            //                             debugger;
-
-                            t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
-
-                            //undebug
-
-                            loadImage(filename, function () {
-                                delete t.__notReady;
-                            }, t, 0, function () {
-                                delete t.__notReady;
-                                if (t.__onLoadImageError)
-                                    t.__onLoadImageError();
-                                //multiclass
-                                delete t.__imgPropertiesAppliedByClass;
-                                //unmulticlass
-
-                            });
-                        }
+                        if (t.__shader == 'c')
+                            t.__shader = null;
 
                     }
-
-                    if (t.__shader == 'c')
-                        t.__shader = null;
-
-                }
 
                 //multiclass
                 applyImgToSelfProperties();
@@ -3873,7 +3873,7 @@ var NodeCloneProperties = {
                 return this.__particleEffect;
             },
             set(v) {
-                
+
                 var t = this;
 
                 if (t.__particleEffect == v)
@@ -3998,8 +3998,8 @@ var NodeCloneProperties = {
         },
 
 
-        __manageChildsHAVA:  {
-            get(){
+        __manageChildsHAVA: {
+            get() {
                 return this.____va == ALIGN_FROM_END_TO_START ||
                     this.____va == ALIGN_FROM_START_TO_END ||
                     this.____ha == ALIGN_FROM_END_TO_START ||
@@ -4450,7 +4450,7 @@ var NodeCloneProperties = {
         __classModificator: {
             set(v) {
                 var t = this, c = t.____classes;
-                
+
                 if (v) {
                     var changed = 0;
                     if (c) {
@@ -4460,7 +4460,7 @@ var NodeCloneProperties = {
                                 changed = 1;
                             }
                         }
-                    } 
+                    }
                     if (changed) {
                         t.__classes = t.__classes;
                     }
@@ -4477,10 +4477,9 @@ var NodeCloneProperties = {
 
         __classes: {
             set(v) {
-                
+
                 //multiclass
-                if (!__propertiesAppliedByClass) 
-                {
+                if (!__propertiesAppliedByClass) {
                     this.____classes = v;
                 }
 
@@ -4714,7 +4713,7 @@ var NodeCloneProperties = {
                         slider.__visible = 1;
 
                         if (slider.__visibilityChecked) {
-                            slider.__tween({__alphaDeep: 1}, 0.3);
+                            slider.__tween({ __alphaDeep: 1 }, 0.3);
                         } else {
                             slider.__alphaDeep = 1;
                         }
@@ -4723,7 +4722,7 @@ var NodeCloneProperties = {
 
                         if (slider.__visibilityChecked) {
                             slider.__a = _setTimeout(a => { slider.__a = slider.__visible = 0 }, 0.3);
-                            slider.__tween({__alphaDeep: 0}, 0.3);
+                            slider.__tween({ __alphaDeep: 0 }, 0.3);
                         } else {
                             slider.__alphaDeep = 0;
                             slider.__visible = 0;
@@ -4751,6 +4750,7 @@ var NodeCloneProperties = {
 
                     var thumb = slider.__thumb;
                     if (thumb) {
+
                         var thumbSize = thumb.__size.y;
                         var sliderSize = slider.__contentSize.y - thumbSize;
                         var y = sliderSize * (mmin(1, mmax(0, percent)) - 0.5);
@@ -4811,7 +4811,8 @@ var NodeCloneProperties = {
                         slider.__init({
 
                             __canDrag() {
-                                thumb.__y = mouse.y - slider.__screenPosition().y;
+                                thumb.__y = (mouse.y - slider.__screenPosition().y) / layoutsResolutionMult;
+
                                 if (slider.__drag(0, 0, 0, 0)) {
                                     slider.__highlight(1);
                                     return 1;
@@ -4827,6 +4828,8 @@ var NodeCloneProperties = {
                                 thumb.__a = killAnim(thumb.__a);
 
                                 thumb.__y = mmax(-sliderSize / 2, mmin(sliderSize / 2, thumb.__y + dy));
+
+                                console.log("thumb.__y 2", thumb.__y);
 
                                 var percent = thumb.__y / sliderSize + 0.5;
 
@@ -4863,7 +4866,7 @@ var NodeCloneProperties = {
                         slider.__init({
 
                             __canDrag() {
-                                thumb.__x = mouse.x - slider.__screenPosition().x;
+                                thumb.__x = (mouse.x - slider.__screenPosition().x) / layoutsResolutionMult;
                                 if (slider.__drag(0, 0, 0, 0)) {
                                     slider.__highlight(1);
                                     return 1;
@@ -5064,7 +5067,7 @@ var NodeCloneProperties = {
                 //unmulticlass
             }
         },
- 
+
         __imgRepeatY: createSomePropertyWithGetterAndSetter(
             function () { return this.____imgRepeatY },
             function (v) {
@@ -5317,7 +5320,7 @@ var NodeCloneProperties = {
                     }
 
                     BUS.__addEventListener(objectKeys(t.____busObservers), t);
-                    
+
                 }
             }
         ),
@@ -5393,7 +5396,7 @@ set(NodePropertiesObject,
     'u_uvix', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.x / this.____imgSize.x : 0 }),
     'u_uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
 );
- 
+
 
 //debug
 function NodeSelfProperty(publicName, privateName, g, s) {

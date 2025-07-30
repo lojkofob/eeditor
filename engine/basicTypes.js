@@ -77,7 +77,7 @@ makeClass(MyBufferAttribute, {
     },
 
     __destruct() {
-        if (this.__notDestruct){
+        if (this.__notDestruct) {
             return;
         }
         delete _buffersCache[this.id];
@@ -140,7 +140,7 @@ makeClass(MyBufferAttribute, {
 
         var t = this;
         t.__bindBuffer();
-       
+
         var programAttribute = programAttributes[t.__name];
         if (programAttribute !== undefined) {
 
@@ -153,7 +153,7 @@ makeClass(MyBufferAttribute, {
             renderer.__enableAttribute(programAttribute, t.__instansingDivisor);
 
             gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, t.__stride, 0);
-            
+
             return t.__webglBuffer !== undefined
         } else {
             //debug
@@ -161,7 +161,7 @@ makeClass(MyBufferAttribute, {
                 consoleDebug('no attribute in program ', t.__name);
             }
             //undebug
-        } 
+        }
     },
 
     __clone() {
@@ -442,7 +442,7 @@ makeClass(Color, {
 
     },
 
-    __cloneRGBA(){
+    __cloneRGBA() {
         return new Color().__setRGBA(this.r, this.g, this.b, this.a);
     },
 
@@ -679,29 +679,29 @@ function Matrix4(e, is3D) {
 makeClass(Matrix4, {
 
     __isMatrix4: true,
- 
-	__makePerspective( left, right, top, bottom, near, far) {
 
-		const te = this.e;
-		const x = 2 * near / ( right - left );
-		const y = 2 * near / ( top - bottom );
+    __makePerspective(left, right, top, bottom, near, far) {
 
-		const a = ( right + left ) / ( right - left );
-		const b = ( top + bottom ) / ( top - bottom );
+        const te = this.e;
+        const x = 2 * near / (right - left);
+        const y = 2 * near / (top - bottom);
 
-		let c, d;
- 
-        c = - ( far + near ) / ( far - near );
-        d = ( - 2 * far * near ) / ( far - near ); 
+        const a = (right + left) / (right - left);
+        const b = (top + bottom) / (top - bottom);
 
-		te[ 0 ] = x;	te[ 4 ] = 0;	te[ 8 ] = a; 	te[ 12 ] = 0;
-		te[ 1 ] = 0;	te[ 5 ] = y;	te[ 9 ] = b; 	te[ 13 ] = 0;
-		te[ 2 ] = 0;	te[ 6 ] = 0;	te[ 10 ] = c; 	te[ 14 ] = d;
-		te[ 3 ] = 0;	te[ 7 ] = 0;	te[ 11 ] = - 1;	te[ 15 ] = 0;
+        let c, d;
 
-		return this;
+        c = - (far + near) / (far - near);
+        d = (- 2 * far * near) / (far - near);
 
-	},
+        te[0] = x; te[4] = 0; te[8] = a; te[12] = 0;
+        te[1] = 0; te[5] = y; te[9] = b; te[13] = 0;
+        te[2] = 0; te[6] = 0; te[10] = c; te[14] = d;
+        te[3] = 0; te[7] = 0; te[11] = - 1; te[15] = 0;
+
+        return this;
+
+    },
 
     set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
 

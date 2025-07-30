@@ -82,7 +82,7 @@ var __defaultTextProperties = {
     }
 
 
-}   
+}
     , defaultUVSBuffer
     , defaultIndecesBuffer1
     , defaultIndecesBuffer2
@@ -109,7 +109,7 @@ var __defaultTextProperties = {
     , __currentFrameDeltaTime
     , __currentFrame
     , __timeoutsArray__
-    , __timeoutsIndex__ 
+    , __timeoutsIndex__
     , __inLooperUpdate__
     , __looperQueue__
     , __looperNextQueue__
@@ -132,7 +132,7 @@ function invertedDefTextColor() {
     c.r = 1 - c.r; c.g = 1 - c.g; c.b = 1 - c.b;
     return c;
 }
- 
+
 function looperUpdate() {
     __inLooperUpdate__ = 1;
     __looperNextQueue__ = [];
@@ -234,7 +234,7 @@ function updateCamera(w, h, cam, x, y) {
 
 function setupWindowOptions(force, w, h, pixelRatio) { }
 
-function getWindowDocumentSize(){
+function getWindowDocumentSize() {
     var de = __document.documentElement || 0,
         w = ((__window.innerWidth && de.clientWidth) ? mmin(__window.innerWidth, de.clientWidth) : (__window.innerWidth || de.clientWidth)) || screen.width,
         h = ((__window.innerHeight && de.clientHeight) ? mmin(__window.innerHeight, de.clientHeight) : (__window.innerHeight || de.clientHeight)) || screen.height;
@@ -256,7 +256,7 @@ function onWindowResize(force) {
 
     _cszw = w;
     _cszh = h;
- 
+
     if (options.__layoutsResolutionMult) {
 
         layoutsResolutionMult = options.__layoutsResolutionMult;
@@ -268,17 +268,17 @@ function onWindowResize(force) {
     } else if (options.__goodResolution) {
 
         layoutsResolutionMult = mmin(mmin(1.0, w / options.__goodResolution.x), mmin(1.0, h / options.__goodResolution.y));
-        
+
     }
 
     scaleFactor = pixelRatio;
- 
+
     //cheats
     if (_bowser.android || _bowser.mobile || _bowser.ios) {
         // var r = options.__upscaleResolution || options.__goodResolution;
         // showMessage("resize\n", w, h, " / ", r.x, r.y, "\nl =", layoutsResolutionMult.toFixed(2), "s =",pixelRatio.toFixed(2))
         consoleLog("resize", w, h, layoutsResolutionMult.toFixed(2), pixelRatio.toFixed(2));
-    }    
+    }
     //endcheats
 
     renderer.__setPixelRatio(pixelRatio);
@@ -376,7 +376,7 @@ var PerformanceProfiler = (function () {
                 renderInfo.averageDrawTime = renderInfo.drawTime / currentFPS;
                 renderInfo.renderTime = 0;
                 renderInfo.drawTime = 0;
-                
+
             }
 
             lt = now;
@@ -460,7 +460,7 @@ var setDefaultRenderLoop = function () {
         if (c) {
             renderer.__finishRender();
         }
-    
+
         //cheats
         renderInfo.renderTime += (Date.now() - tm) / ONE_SECOND;
         //endcheats
@@ -480,14 +480,14 @@ function _createGame(parameters) {
     //undebug
 
     if (!renderer) {
-        renderer = new WebGLRenderer(); 
+        renderer = new WebGLRenderer();
     }
-    
+
     //cheats
     renderer.__handleGLErrors(!_bowser.mobile);
     //endcheats
 
-    renderer.__init(function(){
+    renderer.__init(function () {
 
         camera = new CameraOrtho();
 
@@ -521,21 +521,21 @@ function _createGame(parameters) {
         }
 
         var __onFrame = wrapFunctionInTryCatch(
-                parameters.__onFrame || function (t) {
-                    if (updateFramesRoutine(t)) {
-                        //cheats
-                        renderInfo.frames++;
-                        //endcheats
-                        if (gl) {
-                            renderer.__renderLoop();
-                        }
+            parameters.__onFrame || function (t) {
+                if (updateFramesRoutine(t)) {
+                    //cheats
+                    renderInfo.frames++;
+                    //endcheats
+                    if (gl) {
+                        renderer.__renderLoop();
                     }
-                    requestAnimFrame(__onFrame);
-                }, 1, 1);
-            
+                }
+                requestAnimFrame(__onFrame);
+            }, 1, 1);
+
         if (__mraid) {
             var old___onFrame = __onFrame;
-            __onFrame = function(t){
+            __onFrame = function (t) {
                 if (__mraid.__isReady()) {
                     old___onFrame(t);
                 } else {
@@ -556,7 +556,7 @@ function _createGame(parameters) {
         _setInterval(onWindowResize, PI / 10);
 
         addEventListenersToElement(__window, set({},
-            'resize', onWindowResize,
+            'resize', a => onWindowResize(),
             'deviceorientation', function (event) {
                 // TODO: fix fluctuations 
                 var tmp = __deviceOrientation.__clone();
@@ -573,22 +573,22 @@ function _createGame(parameters) {
 function createGame(parameters) {
 
     if (__mraid) {
-        __mraid.__waitForReady( a => {
+        __mraid.__waitForReady(a => {
             _createGame(parameters);
         });
     } else {
         _createGame(parameters)
     }
 }
- 
 
-function resetAllEngine(){
- 
+
+function resetAllEngine() {
+
     $each(scenes => s => s.__removeFromParent());
-    
+
 
     scenes = [];
-    
+
     updatable = new UpdatableProto();
     __timeoutsArray__ = {};
     __looperQueue__ = [];
@@ -613,7 +613,7 @@ function resetAllEngine(){
     defaultUVSBuffer = defaultIndecesBuffer1 = defaultIndecesBuffer2 = 0;
 
     scaleFactor = 1;
-    
+
     PlayerState = null;
 
     __defaultTextProperties = {
@@ -705,14 +705,14 @@ function resetAllEngine(){
 
 
     __lastOnFrameTime = __gameTime = 0.001;
-    
+
     currentFPS = averageFPS = mmin(options.__fpsLimit || 100, 30);
-    
-    
-    __sessionGlobal, __sessionToday = 
-    __lastUpdatedTime__ = server_delta_time =
-    scene = renderer = __timeoutsIndex__ = __inLooperUpdate__ = camera = 
-    __realLastOnFrameTime = __currentFrameDeltaTime = __currentFrame = 0;
+
+
+    __sessionGlobal, __sessionToday =
+        __lastUpdatedTime__ = server_delta_time =
+        scene = renderer = __timeoutsIndex__ = __inLooperUpdate__ = camera =
+        __realLastOnFrameTime = __currentFrameDeltaTime = __currentFrame = 0;
 
 }
 
@@ -735,14 +735,14 @@ function registerClasses(j) {
     else if (isObject(j)) {
         if (j.name) {
             if (j.name == 'classes') {
-                if (isObject(j.__childs)){ 
+                if (isObject(j.__childs)) {
                     for (var i in j.__childs) {
                         var cc = j.__childs[i].__childs
-                            , _0 = cc._0 || get(cc,'_0');
+                            , _0 = cc._0 || get(cc, '_0');
                         if (_0) {
                             globalConfigsData.__classes[i] = _0;
                         } else {
-                            for (var kk in cc){
+                            for (var kk in cc) {
                                 globalConfigsData.__classes[i] = cc[kk];
                                 break;
                             }
@@ -750,9 +750,9 @@ function registerClasses(j) {
                     }
                 }
                 else
-                for (var i in j.__childs) {
-                    registerClasses(j.__childs[i]);
-                }
+                    for (var i in j.__childs) {
+                        registerClasses(j.__childs[i]);
+                    }
             } else {
                 if (j.__childs && j.__childs.length) {
                     globalConfigsData.__classes[j.name] = j.__childs[0];
@@ -938,7 +938,7 @@ function loadDataTxt(path, onload, onerror, cachename, onprogress) {
 
 function loadDataJson(path, onload, onerror, onprogress, usePacking) {
     var params = {}, alias = path;
-    
+
     if (isObject(path)) {
         //debug
         if (!isString(path.path)) consoleDebug("no path for loadDataJson: ", path);
@@ -1469,13 +1469,13 @@ function destroyImage(img) {
 }
 
 function findperbr(elem, n1, n2) {
-    return elem[n1] || elem['ms' + n2 ] || elem['moz' + n2] || elem['webkit' + n2]
+    return elem[n1] || elem['ms' + n2] || elem['moz' + n2] || elem['webkit' + n2]
 }
 
 function isFullScreen(elem) {
-    var st=screen.top || screen.availTop || __window.screenTop;
-    if(st!=__window.screenY) return false;
-    return __window.fullScreen==true || (screen.height-__document.documentElement.clientHeight<=30);
+    var st = screen.top || screen.availTop || __window.screenTop;
+    if (st != __window.screenY) return false;
+    return __window.fullScreen == true || (screen.height - __document.documentElement.clientHeight <= 30);
 }
 
 function enterFullScreen(elem, opts) {
@@ -1496,28 +1496,28 @@ function exitFullScreen(elem) {
 //cheats
 // function now works well for all devices and web-views, need detection by window/screen size
 function getSafeAreaPaddings() {
-    if (options.__safeArea == undefined){
+    if (options.__safeArea == undefined) {
         options.__safeArea = 0;
         try {
             if (_bowser.mobile) {
                 var body = html.__getBody();
                 var safePaddings;
-                function test(prefix, func){
+                function test(prefix, func) {
                     var aa = ["top", "left", "bottom", "right"]
-                        , e = html.__addCSSStyle("body { "+ $map(aa, s => prefix + "-" + s + ":" + func + "(safe-area-inset-" + s + ");") + "; }")
+                        , e = html.__addCSSStyle("body { " + $map(aa, s => prefix + "-" + s + ":" + func + "(safe-area-inset-" + s + ");") + "; }")
                         , cstyle = getComputedStyle(body);
                     safePaddings = $map(aa, a => toNumber(cstyle.getPropertyValue(prefix + "-" + a)));
-                    html.__removeElement(e);                
+                    html.__removeElement(e);
                 }
 
                 if ($find(['env', 'constant'], func => $find(['margin', 'padding', 'sa'], prefix => {
                     test(prefix, func);
                     return safePaddings[0] || safePaddings[1] || safePaddings[2] || safePaddings[3]
-                }))){
+                }))) {
                     options.__safeArea = safePaddings;
-                } 
+                }
             }
-        } catch(e){ }
+        } catch (e) { }
     }
     return options.__safeArea;
 }
