@@ -70,7 +70,7 @@ function base64_decode(base64str, file) {
 // console.log("read ", outFile)
 
 fs.readFile(outFile, 'utf8', function (err, data) {
-    
+
     if (typeof data === 'string' || data instanceof String) {
         outFileData = data;
     }
@@ -102,11 +102,11 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                     if (!outFileDataImgs) {
                         outFileDataImgs = '\n\n mergeObj ( globalConfigsData.__images, { \n';
                     }
-                    
+
                     if (argv.directory && file.startsWith(argv.directory)) {
                         file = file.replace(argv.directory, '');
                     }
-                    
+
                     outFileDataImgs += zpt1 + '\n"' + file + '":' + '"' + data + '"';
                     zpt1 = '\n\n,';
                 }
@@ -115,19 +115,19 @@ fs.readFile(outFile, 'utf8', function (err, data) {
             default:
 
                 var data
-                , b64mimes = {
-                    fbx: 'model/fbx',
-                    skel: 'model/skel',
-                    ttf: 'font/truetype',
-                    otf: 'font/otf',
-                    mp3: 'audio/mp3'
-                },
+                    , b64mimes = {
+                        fbx: 'model/fbx',
+                        skel: 'model/skel',
+                        ttf: 'font/truetype',
+                        otf: 'font/otf',
+                        mp3: 'audio/mp3',
+                        mp4: 'video/mp4'
+                    },
 
+                    mime = b64mimes[ext];
 
-                mime = b64mimes[ext];
-                
                 if (mime) {
-                    data = "data:"+ b64mimes[ext] + ";base64," + base64_encode(file);
+                    data = "data:" + b64mimes[ext] + ";base64," + base64_encode(file);
                 } else {
                     data = fs.readFileSync(file, { encoding: 'utf8' });
                 }
@@ -148,7 +148,7 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                     case 'atlas':
                         outFileData += '"' + data.replace(/\n/g, '\\n').replace(/\r/g, '') + '"';
                         break;
- 
+
                     default:
                         outFileData += '"' + data + '"';
                         break;
