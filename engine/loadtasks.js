@@ -78,7 +78,7 @@ function getCachedData(name, obj) {
                 name = name.slice(options.__projectServerPath.length); j = obj[name];
             }
         }
-        
+
         return j;
     }
     //debug
@@ -114,7 +114,7 @@ function getJson(filename, onload, onprogress, usePacking, onerror) {
         }
     } else {
         cachedData = getCachedData(filename);
-    }     
+    }
     if (cachedData) {
         onload(cachedData);
     }
@@ -192,7 +192,13 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
     }), true);
 
-    video.src = url;
+    var cached = getCachedData(url, globalConfigsData.__images);
+    if (cached) {
+        video.src = cached;
+    } else {
+        video.src = url;
+    }
+
     video.load();
     if (video.autoplay) {
         video.play();
@@ -345,7 +351,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     var opts = nodeWaitingsForThis ? nodeWaitingsForThis.__loadImageOptions || 0 : 0;
 
     var cache = getCachedData(srcurl, globalConfigsData.__images);
-    if (cache && cache.tex){
+    if (cache && cache.tex) {
         if (cache.__isLoading) {
             cache.__onload.push(onload);
         } else {
@@ -367,7 +373,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                     frame.c = defaultHalfVector2;
                     delete frame.__loading;
                 }
-                
+
                 var cache = getCachedData(srcurl, globalConfigsData.__images);
                 if (cache && cache.__isLoading) {
                     cache.__isLoading = 0;
@@ -378,7 +384,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
             }, onProgress, onError, urlGotModUrl, opts);
 
     setCachedData(srcurl, { tex: tex, __isLoading: 1, __onload: [onload] }, globalConfigsData.__images);
-    
+
     tex.__src = filename;
 
     if (nodeWaitingsForThis) {
@@ -547,7 +553,7 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
 
                 case TASKS_FONT:
                     var waitsForRealLoad;
-                    if (isArray(data)){
+                    if (isArray(data)) {
                         data = data[0];
                         waitsForRealLoad = data[1];
                     }
@@ -568,22 +574,22 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
                                         _setTimeout(a => {
                                             looperPost(a => {
                                                 updateAllTextsThenFontLoaded(family);
-                                                if (waitsForRealLoad){
+                                                if (waitsForRealLoad) {
                                                     onLoad();
                                                 }
                                             });
                                         }, 0.1 / tmd);
                                     });
-                                } else if (waitsForRealLoad){
+                                } else if (waitsForRealLoad) {
                                     onLoad();
                                 }
 
                             }, (_bowser.ios ? 1 : 0.1) / tmd);
-                            
-                            if (!waitsForRealLoad){
+
+                            if (!waitsForRealLoad) {
                                 onLoad();
                             }
-                            
+
                         });
 
                     }
@@ -681,14 +687,14 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
         for (var k = 1; k < l.length; k++) {
             var dd = l[k], is_obj = isObject(dd), path = is_obj && isString(dd.path) ? dd.path : dd;
-            
+
             if (isString(path)) {
                 path = path.indexOf('/') == 0 ? path.substring(1) : namefunc(path);
                 if (ext) {
                     path = path + '.' + ext;
                 }
                 var alias = is_obj && isString(dd.alias) ? dd.alias : path;
-                
+
                 var j = getCachedData(alias);
                 if (j) {
                     if (ignoreIfFromCache) {
@@ -709,8 +715,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     }
                     t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
                 }
-            } else 
-            {
+            } else {
                 t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
             }
         }
@@ -910,7 +915,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                     break;
 
                 case TASKS_ATLAS:
-                    
+
                     var atlas = {
                         __atlasImageFile: l[1],
                         __atlasDataFile: l[2],
@@ -918,7 +923,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                         __atlasFramePrefix: l[4],
                         __tryToUseLSCache: l[5]
                     };
-                    
+
                     if (!globalConfigsData.__frames[atlas.__atlasImageFile]) {
 
                         t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasImageFile });
@@ -1003,8 +1008,8 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                             json.onload = t.__onLoad;
                             json.onend = __onSoundEnd;
 
-                            $each(json.arr, s => json.sprite[s[0]] = s.slice(1) );
-                            
+                            $each(json.arr, s => json.sprite[s[0]] = s.slice(1));
+
                             var howl = new __window.Howl(json);
                             for (var i in json.sprite) {
                                 sounds[i] = { howl: howl, __name: i };

@@ -86,31 +86,18 @@ fs.readFile(outFile, 'utf8', function (err, data) {
     var outFileDataImgs;
     var zpt1 = '';
     var zpt2 = '';
+
+
+    function isImageType(type) {
+        return type && type.split && (type.split('/')[0] == 'image' || type.split('/')[0] == 'video');
+    }
+
     for (var i in files) {
         var file = files[i];
 
         console.log('cache file', file);
         var ext = path.extname(file).replace('.', '');
         switch (ext) {
-
-            case 'png':
-            case 'jpg':
-
-                var data = "data:image/" + ext + ";base64," + base64_encode(file);
-
-                if (data) {
-                    if (!outFileDataImgs) {
-                        outFileDataImgs = '\n\n mergeObj ( globalConfigsData.__images, { \n';
-                    }
-
-                    if (argv.directory && file.startsWith(argv.directory)) {
-                        file = file.replace(argv.directory, '');
-                    }
-
-                    outFileDataImgs += zpt1 + '\n"' + file + '":' + '"' + data + '"';
-                    zpt1 = '\n\n,';
-                }
-                break;
 
             default:
 
@@ -121,12 +108,18 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                         ttf: 'font/truetype',
                         otf: 'font/otf',
                         mp3: 'audio/mp3',
-                        mp4: 'video/mp4'
+                        mp4: 'video/mp4',
+                        webm: 'video/webm',
+                        png: 'image/png',
+                        jpg: 'image/jpg',
+                        jpeg: 'image/jpeg'
                     },
 
-                    mime = b64mimes[ext];
+                    mime = b64mimes[ext],
+                    isImage = 0;
 
                 if (mime) {
+                    isImage = isImageType(mime);
                     data = "data:" + b64mimes[ext] + ";base64," + base64_encode(file);
                 } else {
                     data = fs.readFileSync(file, { encoding: 'utf8' });
@@ -136,7 +129,17 @@ fs.readFile(outFile, 'utf8', function (err, data) {
                     file = file.replace(argv.directory, '');
                 }
 
-                outFileData += zpt2 + '\n"' + file + '":';
+                if (isImage) {
+                    if (!outFileDataImgs) {
+                        outFileDataImgs = '\n\n mergeObj ( globalConfigsData.__images, { \n';
+                    }
+
+                    outFileDataImgs += zpt1 + '\n"' + file + '":' + '"' + data + '"';
+                    zpt1 = '\n\n,';
+                    break;
+                } else {
+                    outFileData += zpt2 + '\n"' + file + '":';
+                }
 
                 switch (ext) {
 
