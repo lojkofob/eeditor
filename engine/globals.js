@@ -29,7 +29,7 @@ var _localStorage
 
 try {
     _localStorage = typeof localStorage != undefinedType ? localStorage : 0;
-} catch(err) {
+} catch (err) {
     //cheats
     consoleError('Local storage error', err);
     //endcheats
@@ -251,7 +251,12 @@ var M = Math, __document = document, __window = window, __mraid,
 
 var ObjectDefineProperties = Object.defineProperties, ObjectDefineProperty = Object.defineProperty, ObjectCreate = Object.create;
 
-
+function ObjectDefinePropertiesA() {
+    var oo = arguments[0];
+    for (var i = 1; i < arguments.length; i += 2) {
+        ObjectDefineProperty(oo, arguments[i], arguments[i + 1]);
+    }
+};
 
 
 
@@ -634,7 +639,7 @@ function stringifyTypeOfObject(o) {
 }
 
 
-function plainArrayToObject(a){
+function plainArrayToObject(a) {
     if (isArray(a)) {
         var d = {};
         for (i = 0; i < a.length; i += 2) {
@@ -1477,7 +1482,7 @@ function clearXMLHttpRequest(xhr) {
 }
 
 function createXHRRequest(url, post, params, data, beforesend) {
- 
+
     if (options.__disableXHRRequests) {
         consoleError("try to load xhr", path);
         var cb = params.onloadend || params.onloadend;
@@ -1493,7 +1498,7 @@ function createXHRRequest(url, post, params, data, beforesend) {
         xhr.open(post ? 'POST' : 'GET', url, true);
 
         if (beforesend) beforesend(xhr);
-        
+
         if (options.__httpAuth) {
             xhr.withCredentials = true;
             xhr.setRequestHeader("Authorization", "Basic " + btoa(options.__httpAuth.__username + ":" + options.__httpAuth.__password));
@@ -1567,35 +1572,35 @@ function poly4(x, a, b, c, d, e) { _tmpx2 = x * x; return a + b * x + c * _tmpx2
 
 
 
-var UpdatableProto = makeClass( 
-function() { this.a = []; },
-{
-    __push: function (o) { this.__pop(o); this.a.push(o); return o; },
-    push: function (o) { this.__pop(o); this.a.push(o); return o; },
-    __pop: function (o) { removeFromArray(o, this.a); return o; },
-    pop: function (o) { removeFromArray(o, this.a); return o; },
-    __update: function (arg1, arg2, arg3) {
-        // TODO: use filter
-        // now has Bug #92295
+var UpdatableProto = makeClass(
+    function () { this.a = []; },
+    {
+        __push: function (o) { this.__pop(o); this.a.push(o); return o; },
+        push: function (o) { this.__pop(o); this.a.push(o); return o; },
+        __pop: function (o) { removeFromArray(o, this.a); return o; },
+        pop: function (o) { removeFromArray(o, this.a); return o; },
+        __update: function (arg1, arg2, arg3) {
+            // TODO: use filter
+            // now has Bug #92295
 
-        // var ar = arguments;
-        // this.a = this.a.filter( function(a){ return !a.__update.apply(a, ar); });
-        // return this.a.length == 0;
+            // var ar = arguments;
+            // this.a = this.a.filter( function(a){ return !a.__update.apply(a, ar); });
+            // return this.a.length == 0;
 
-        for (var i = 0; i < this.a.length;) {
-            var a = this.a[i].__update(arg1, arg2, arg3);
-            if (a) {
-                if (a == -1) {
-                    continue;
-                } else {
-                    this.a.splice(i, 1);
+            for (var i = 0; i < this.a.length;) {
+                var a = this.a[i].__update(arg1, arg2, arg3);
+                if (a) {
+                    if (a == -1) {
+                        continue;
+                    } else {
+                        this.a.splice(i, 1);
+                    }
+                }
+                else {
+                    i++;
                 }
             }
-            else {
-                i++;
-            }
+            return this.a.length == 0;
         }
-        return this.a.length == 0;
-    }
-});
+    });
 
