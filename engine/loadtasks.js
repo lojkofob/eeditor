@@ -174,20 +174,30 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
     video.addEventListener('loadeddata', wrapFunctionInTryCatch(function () {
 
-        texture.__update = function () {
-            //TODO: check playing
-            var v = this.__image, ct = v.currentTime;
-            this.__needsUpdate = ct != (v.__lastCurrentTime || 0);
-            v.__lastCurrentTime = ct;
-        };
+        video.currentTime = 0;
+        texture.v = 1;
+        
+        ObjectDefineProperties(texture, {
+            __version: { get() { this.__image.currentTime + 1 }, set(){ } }
+        });
 
         video.width = video.videoWidth;
         video.height = video.videoHeight;
 
-        updatable.push(texture);
-
         if (onload) {
             onload(texture);
+        }
+
+        if (video.autoplay) {
+            // ios autoplay bug hack
+            _setTimeout(a => {
+                if (!video.currentTime) {
+                    texture.__update = function(t, dt){
+                        video.currentTime += dt / 1000; 
+                    };
+                    updatable.push(texture)
+                }
+            }, 0.1);
         }
 
     }), true);
@@ -203,6 +213,7 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
     if (video.autoplay) {
         video.play();
     }
+
 
     texture.__isVideo = 1;
     texture.__abort = texture.abort = function () {
@@ -236,12 +247,12 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
             URL.revokeObjectURL(img.src);
 
             // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
-            var isJPEG = url.search(/\.(jpg|jpeg)$/) > 0 || url.search(/^data\:image\/jpeg/) === 0;
+            var isJPEG = url.search(/\.(jpg|jpeg)$/) > 0 || url.startsWith("data:image/jpeg");
 
             texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: img, __needsUpdate: 1 });
 
             texture.__requests = 0;
-
+  
             if (onload) {
                 onload(texture);
             }

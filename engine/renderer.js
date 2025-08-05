@@ -2028,7 +2028,7 @@ function WebGLRenderer() {
     
     function __generateMipmap(tex) {
         tex.__checkGLTexture();
-        __setTexture2D
+        
         if (tex.__webglTexture) {
             tex.__minFilter = GL_LINEAR_MIPMAP_LINEAR;
             if (tex.v > 0 && tex.__version !== tex.v) {
