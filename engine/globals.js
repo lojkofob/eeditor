@@ -21,7 +21,8 @@ var EDM = createDeobfuscatingMap({
     , projectionMatrix = "projectionMatrix";
 
 
-var undefinedType = typeof undefined;
+var undefinedType = typeof undefined, _undefined = undefined;
+
 
 var _bowser = typeof bowser == undefinedType ? 0 : bowser;
 
@@ -112,7 +113,11 @@ function getDeepFieldFromObjectAndSetIfUndefined() {
     return r;
 }
 
-var get = getDeepFieldFromObject;
+var get = getDeepFieldFromObject
+    , get1 = (a, b) => a ? a[b] : _undefined
+    , get2 = (a, b, c) => a ? get1(a[b], c) : _undefined
+    , get3 = (a, b, c, d) => a ? get2(a[b], c, d) : _undefined;
+
 
 var consoleError = function () { }, consoleWarn = function () { }, consoleLog = function () { }, consoleDebug = function () { };
 //cheats

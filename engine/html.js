@@ -134,23 +134,39 @@ var html = (function () {
     var __bgy;
 
     if (!__mintegral) {
-        BUS.__addEventListener(__ON_GAME_LOADED, a => { 
+        BUS.__addEventListener(__ON_GAME_LOADED, a => {
             //bgy
             __bgy = get(__window, 'BGY_MRAID');
             if (__bgy) {
                 // do not remove. this string is needed by bgy ads app tester
                 console.log("window.BGY_MRAID.open()");
                 get(__bgy, 'gameReady').call(__bgy);
-                BUS.__addEventListener(__ON_GAME_END, a => { get(__bgy, 'gameEnd').call(__bgy); return 1; });                
+                BUS.__addEventListener(__ON_GAME_END, a => { get(__bgy, 'gameEnd').call(__bgy); return 1; });
             }
             //nobgy
 
-            BUS.__post(__ON_GAME_START); 
-            return 1; 
+            BUS.__post(__ON_GAME_START);
+            return 1;
         });
     }
 
-    
+
+
+    function addScript(opts) {
+        if (!opts || !opts.src) return;
+        var script = html_createElement("script");
+        set(script,
+            "async", opts.async,
+            "onload", opts.onLoad,
+            "onerror", a => { consoleError("loader error while loading " + script.src); opts.onError ? opts.onError() : 0; },
+            "src", opts.src + (opts.disableCache ? (opts.src.indexOf('?') > 0 ? '&' : '?') + 'rnd=' + random() : "")
+        );
+        $each(opts.attributes, (v, k) => script.setAttribute(k, v));
+        html_addHtmlToHead(script);
+        return script;  
+    }
+
+
 
     return makeSingleton({
 
@@ -170,6 +186,7 @@ var html = (function () {
         __getElementById: html_getElementById,
         __init: html_init,
 
+        __addScript: addScript,
         __removeElement: function (e) {
             var pn = (e || 0).parentNode;
             if (pn) pn.removeChild(e);
@@ -221,24 +238,24 @@ var html = (function () {
             }
         },
 
-        __opensdk(){
+        __opensdk() {
             var a = get.apply(__window, arguments);
-            if (isFunction(a)) { 
+            if (isFunction(a)) {
                 a.call(arguments[0]);
                 return 1;
             }
         },
 
-        __openAppStore(_url){
+        __openAppStore(_url) {
 
-            function openurl(){
+            function openurl() {
                 var url = _url || options.__appStoreUrl;
-                if (isObject(url)){
+                if (isObject(url)) {
                     //detect platfrom url
-                    url = _bowser.ios && url.ios ? url.ios : 
-                          _bowser.mac && url.mac ? url.mac : 
-                          _bowser.ios && url.mac ? url.mac : 
-                          _bowser.mac && url.ios ? url.ios : (url.android || url.ios);
+                    url = _bowser.ios && url.ios ? url.ios :
+                        _bowser.mac && url.mac ? url.mac :
+                            _bowser.ios && url.mac ? url.mac :
+                                _bowser.mac && url.ios ? url.ios : (url.android || url.ios);
                 }
                 if (isString(url)) {
                     // mraid (Unity, AppLovin)
@@ -250,7 +267,7 @@ var html = (function () {
                     return 1;
                 }
             }
-            
+
             // tiktok
             return html.__opensdk(__window, "openAppStore") ||
                 // bidease
@@ -273,11 +290,11 @@ var html = (function () {
 
 // playable ads functions
 
-__mraid = (function() {
+__mraid = (function () {
     var mraid = get(__window, "mraid");
     // do not remove. this string is needed by unity ads app tester
     console.log("mraid.open(url)", mraid ? 1 : 0);
-    if (mraid){
+    if (mraid) {
         var loading = 'loading', hidden = 'hidden', viewableChange = 'viewableChange', ready = 'ready'
 
         mraid.__isViewable = get(mraid, 'isViewable');
@@ -287,29 +304,29 @@ __mraid = (function() {
         mraid.__removeEventListener = get(mraid, 'removeEventListener');
 
         mergeObj(mraid, {
-            __isReady(){
+            __isReady() {
                 var mraid_state = mraid.__getState()
                 return mraid_state != loading && mraid_state != hidden && __mraid.__isViewable();
             },
-            __waitForReady(callback){
+            __waitForReady(callback) {
 
                 var mraid_state = __mraid.__getState()
                 if (mraid_state == loading) {
-                    __mraid.__addEventListener(ready, function(){ 
+                    __mraid.__addEventListener(ready, function () {
                         __mraid.__removeEventListener(ready);
                         callback();
                     });
                 } else
-                if (mraid_state == hidden || !__mraid.__isViewable()) {
-                    __mraid.__addEventListener(viewableChange, isViewable => {
-                        if (isViewable) {
-                            __mraid.__removeEventListener(viewableChange);
-                            callback();
-                        }
-                    })
-                } else {
-                    callback();
-                }
+                    if (mraid_state == hidden || !__mraid.__isViewable()) {
+                        __mraid.__addEventListener(viewableChange, isViewable => {
+                            if (isViewable) {
+                                __mraid.__removeEventListener(viewableChange);
+                                callback();
+                            }
+                        })
+                    } else {
+                        callback();
+                    }
 
             }
         });
@@ -318,4 +335,4 @@ __mraid = (function() {
     }
 })();
 
-  
+
