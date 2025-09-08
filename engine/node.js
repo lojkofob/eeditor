@@ -2959,7 +2959,7 @@ mergeObj(NodePrototype, {
                     if (options.__storeChildsAsObject) {
                         if (!o.__childs) o.__childs = {};
                         o.__childs[jjj.name || ('_' + i)] = jjj;
-                        if (jjj.name) delete jjj.name;
+                        if (!jjj.__extract) delete jjj.name;
                     } else {
                         if (!o.__childs) o.__childs = [];
                         o.__childs.push(jjj);

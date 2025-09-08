@@ -176,9 +176,9 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
         video.currentTime = 0;
         texture.v = 1;
-        
+
         ObjectDefineProperties(texture, {
-            __version: { get() { this.__image.currentTime + 1 }, set(){ } }
+            __version: { get() { this.__image.currentTime + 1 }, set() { } }
         });
 
         video.width = video.videoWidth;
@@ -192,8 +192,8 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
             // ios autoplay bug hack
             _setTimeout(a => {
                 if (!video.currentTime) {
-                    texture.__update = function(t, dt){
-                        video.currentTime += dt / 1000; 
+                    texture.__update = function (t, dt) {
+                        video.currentTime += dt / 1000;
                     };
                     updatable.push(texture)
                 }
@@ -252,7 +252,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
             texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: img, __needsUpdate: 1 });
 
             texture.__requests = 0;
-  
+
             if (onload) {
                 onload(texture);
             }
@@ -953,7 +953,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
                 case TASKS_CLASS: t.__loadSome(l, options.__baseLayoutsFolder, 0, registerClasses); break;
 
-                case TASKS_LAYOUT: t.__loadSome(l, options.__baseLayoutsFolder, 0); break;
+                case TASKS_LAYOUT: t.__loadSome(l, options.__baseLayoutsFolder, 0, registerLayouts); break;
 
                 case TASKS_EFFECT: t.__loadSome(l, options.__baseParticlesFolder); break;
 

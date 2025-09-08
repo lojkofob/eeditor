@@ -767,14 +767,15 @@ function registerClasses(j) {
     }
 }
 
-function __pushExtract(j, rname) {
+function __pushExtract(j, rname, jname) {
     if (!globalLayoutsExtracts[rname]) {
         globalLayoutsExtracts[rname] = {};
     }
-    globalLayoutsExtracts[rname][j.name] = j;
+    globalLayoutsExtracts[rname][jname] = j;
 }
 
-function __extractL(j, rname) {
+function __extractL(j, rname, jname) {
+
     if (isArray(j)) {
 
         for (var i = 0; i < j.length;) {
@@ -787,10 +788,15 @@ function __extractL(j, rname) {
     }
     else if (j) {
 
-        __extractL(j.__childs, rname);
+        if (isArray(j.__childs)) {
+            __extractL(j.__childs, rname)
+        } else {
+            j.__childs = $map(j.__childs, (c, k) => __extractL(c, rname, k) ? 0 : c);
+        }
 
-        if (j.__extract && j.name) {
-            __pushExtract(j, rname);
+        jname = j.name || jname;
+        if (j.__extract && jname) {
+            __pushExtract(j, rname, jname);
             return 1;
         }
     }
@@ -798,9 +804,9 @@ function __extractL(j, rname) {
 }
 
 
-function registerLayout(name, j) {
-    if (j && name) {
-        __extractL(j, name.replace(options.__baseLayoutsFolder, '').replace('.json', ''));
+function registerLayouts(j, path) {
+    if (j && path) {
+        __extractL(j, path.replace(options.__baseLayoutsFolder, '').replace('.json', ''));
     }
 }
 
