@@ -4829,8 +4829,6 @@ var NodeCloneProperties = {
 
                                 thumb.__y = mmax(-sliderSize / 2, mmin(sliderSize / 2, thumb.__y + dy));
 
-                                console.log("thumb.__y 2", thumb.__y);
-
                                 var percent = thumb.__y / sliderSize + 0.5;
 
                                 if (t.__needScrollY) {

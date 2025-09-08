@@ -98,6 +98,19 @@ function getAppVersion() {
     return __PROJECT_VERSION__;
 }
 
+function getDeepFieldFromObject() {
+    var r = arguments[0];
+    if (r)
+        for (var i = 1; i < arguments.length; i++) {
+            var a = arguments[i];
+            if (a != undefined) {
+                r = r[a];
+                if (r == undefined)
+                    return;
+            }
+        }
+    return r;
+}
 
 function getDeepFieldFromObjectAndSetIfUndefined() {
     var r = arguments[0];
@@ -899,9 +912,9 @@ function concatArraysWithUniqueItemsIds(array1, array2, idGetter, idSetter) {
 }
 
 function findGetParameter(name, defValue) {
-    var result = null;
-    var tmp = [];
-    var items = __window.location.search.substr(1).split("&");
+    var result = null
+        , tmp = []
+        , items = __window.location.search.substr(1).split("&");
     for (var index = 0; index < items.length; index++) {
         tmp = items[index].split("=");
         if (tmp[0] === name) result = decodeURIComponent(tmp[1]);
@@ -1442,20 +1455,6 @@ function makeSingleton(data, protoMethods, properties, baseClassProto, wrapMetho
     ))();
 }
 
-function getDeepFieldFromObject() {
-    var r = arguments[0];
-    if (r)
-        for (var i = 1; i < arguments.length; i++) {
-            var a = arguments[i];
-            if (a != undefined) {
-                r = r[a];
-                if (r == undefined)
-                    return;
-            }
-        }
-    return r;
-}
-
 function addToScene(node, sc) {
     sc = sc || scene;
     if (node) {
@@ -1489,7 +1488,7 @@ function clearXMLHttpRequest(xhr) {
 function createXHRRequest(url, post, params, data, beforesend) {
 
     if (options.__disableXHRRequests) {
-        consoleError("try to load xhr", path);
+        consoleError("try to load xhr", url);
         var cb = params.onloadend || params.onloadend;
         if (cb) {
             setTimeout(cb, 1);
