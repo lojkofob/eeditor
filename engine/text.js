@@ -1,16 +1,17 @@
-var globalTextCache = [];
-var globalTextCleaner;
+var globalTextCache = []
+    , globalTextCleaner
+
+    , colorStringProperty = {
+        get() { return color_to_string(this.__color); },
+        set(v) { this.__color = v; }
+    };
+    
 
 function TextPParameters() {
     Object.apply(this);
     mergeObj(this, __defaultTextProperties);
 }
 TextPParameters.prototype = ObjectCreate(Object.prototype);
-var colorStringProperty = {
-    get: function () { return color_to_string(this.__color); },
-    set: function (v) { this.__color = v; }
-};
-
 ObjectDefineProperties(TextPParameters.prototype, { __colorString: colorStringProperty });
 
 function Text() {
@@ -205,10 +206,10 @@ function addTextProp(props, obj, p) {
         obj[p] = props[p];
     } else
         obj[p] = {
-            get: function () {
+            get() {
                 return this.__p[p];
             },
-            set: function (v) {
+            set(v) {
                 var t = this;
                 if (t[p] != v) {
                     t.__p[p] = v;
@@ -264,11 +265,11 @@ mergeObj(TextPrototype, {
     ____validToSave: 0,
     __notNormalNode: 1,
 
-    __clone: function () {
+    __clone() {
         return deepclone(this.__p);
     },
 
-    __init: function (parameters) {
+    __init(parameters) {
         var t = this;
 
         if (!isObject(parameters)) {
@@ -292,7 +293,7 @@ mergeObj(TextPrototype, {
 
     //     __canBeFrustummed: 1,
 
-    __render: function () {
+    __render() {
         var t = this;
         t.__lastRenderTime = TIME_NOW;
         t.__rendered = 1;
@@ -319,7 +320,7 @@ mergeObj(TextPrototype, {
         return 1;
     },
 
-    __clearTexture: function () {
+    __clearTexture() {
         var t = this;
 
         if (t.__bufferTexture) {
@@ -353,7 +354,7 @@ mergeObj(TextPrototype, {
 
     },
 
-    __destruct: function () {
+    __destruct() {
         var t = this;
         t.__clearTexture();
 
@@ -371,11 +372,11 @@ mergeObj(TextPrototype, {
 
     },
 
-    __getFontMod: function () {
+    __getFontMod() {
         return (this.__italic ? 'italic ' : '') + (this.__smallCaps ? 'small-caps ' : '') + (this.__fontWeight ? fontWeights[this.__fontWeight] + ' ' : '');
     },
 
-    __getFont: function (fs) {
+    __getFont(fs) {
         var t = this, ff = t.__fontface || __defaultTextProperties.__fontface;
         if (!ff || !globalConfigsData[ff] || globalConfigsData[ff] == 1) {
             ff = __defaultTextProperties.__safeFontFace;
@@ -383,11 +384,11 @@ mergeObj(TextPrototype, {
         return this.__getFontMod() + fs * t.__scaleFactor + "px \"" + ff + '"';
     },
 
-    raycast: function () {
+    raycast() {
 
     },
 
-    __fill: function (text, x, y) {
+    __fill(text, x, y) {
         var t = this;
         if (t.__lineWidth > 0) {
             t.__ctx.lineCap = t.__ctx.lineJoin = 'round';
@@ -399,17 +400,22 @@ mergeObj(TextPrototype, {
     },
 
     // find needed texture size and cache lines params for drawing
-    
-    __calcWidthReturnObj: function (txt) {
+
+    __calcWidthReturnNum(txt) {
+        var t = this;
+        return floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1)
+    },
+
+    __calcWidthReturnObj(txt) {
         var t = this;
         txt = txt.replace(/\\[^;]*;/g, '');
         return {
-            w: floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1),
+            w: t.__calcWidthReturnNum(txt),
             t: txt
         }
     },
 
-    __drawString: function (text, x, y, bySymbol) {
+    __drawString(text, x, y, bySymbol) {
         var t = this
             , tokens = tokenizeText(text)
             , lastDrawToken = 0
@@ -422,7 +428,7 @@ mergeObj(TextPrototype, {
             if (text) {
                 if (bySymbol) {
                     var c = 0
-                    if (t.__symbol_align == ALIGN_CENTER && charw){
+                    if (t.__symbol_align == ALIGN_CENTER && charw) {
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
                             var cw = (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor
@@ -430,7 +436,7 @@ mergeObj(TextPrototype, {
                             //Increment X by wChar + spacing
                             x += charw;
                         }
-                    } else { 
+                    } else {
                         // todo: ALIGN_RIGHT?
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
@@ -486,7 +492,7 @@ mergeObj(TextPrototype, {
 
     },
 
-    update: function (deep) {
+    update(deep) {
         var t = this, parent = t.__parent;
         //debug
         if (t.__debugUpdate)
@@ -505,7 +511,7 @@ mergeObj(TextPrototype, {
 
         var size = parent.__contentSize.__clone();
 
-        if (t.__autowrap) {
+        if (t.__autowrap || t.__autodots) {
             var aosz = parent.____size;
             var msz = parent.__maxsize;
             if (msz && aosz) {
@@ -617,11 +623,82 @@ mergeObj(TextPrototype, {
 
                     }
 
+                    if (t.__autodots && !t.__autowrap) {
+                        //debug
+                        if (t.__parent.__debugDots)
+                            debugger;
+                        //undebug
 
-                    if (this.__autowrap) {
+                        var dots = "..."
+                            //, kk = 0
+                            , availableWidth = size.x * t.__scaleFactor
+                            , cachedMap = new Map()
+                            , _clamptext = (text, begin, beginWidth, end, endWidth) => {
+                                
+                                if (begin >= end) {
+                                    pushtocache(text + dots);
+                                } else {
+                                    // kk++;
+                                    var koeff = (availableWidth - beginWidth) / (endWidth - beginWidth)
+                                        , l = floor(begin + koeff * (end - begin));
+
+                                    // \todo: use autowrapMap
+                                    // \todo: remove recursion
+
+                                    dotted = 1;
+
+                                    var ltext = text.substring(0, l).trimEnd()
+                                        , ltextWidth = cachedMap[l] ? cachedMap[l] : (cachedMap[l] = t.__calcWidthReturnNum(ltext));
+
+                                    l = ltext.length;
+
+                                    //consoleLog(kk, ltext, ltextWidth, l);
+
+                                    if (ltextWidth <= availableWidth) {
+                                        if (end - l <= 1) {
+                                            pushtocache(ltext + dots);
+                                        } else {
+                                            var pnextl = clamp(floor((l + end) / 2), l + 1, end)
+                                                , nexttext = text.substring(0, pnextl).trimEnd()
+                                                , nextl = nexttext.length
+                                                , nexttextWidth = cachedMap[nextl]?  cachedMap[nextl] : (cachedMap[nextl] = t.__calcWidthReturnNum(nexttext));
+                                            _clamptext(nexttext, l, ltextWidth, nextl, nexttextWidth)
+                                        }
+                                    } else {
+                                        _clamptext(text, begin, beginWidth, l, ltextWidth)
+                                    }
+                                }
+
+                            }
+
+                            , clamptext = (text) => {
+                                if (!isObject(text)) {
+                                    // kk++;
+                                    text = t.__calcWidthReturnObj(text.trimEnd());
+                                }
+                                if (text.w > availableWidth) {
+                                    availableWidth = (size.x - t.__calcWidthReturnNum(dots)) * t.__scaleFactor;
+                                    cachedMap[text.t.length] = text.w;
+                                    _clamptext(text.t, 0, 0, text.t.length, text.w);
+                                } else {
+                                    pushtocache(text.t);
+                                }
+                            };
+
+                        // consoleLog("--------------------------------");
+
+                        for (var i = 0; i < textLines.length; i++) {
+                            clamptext(textLines[i]);
+                        }
+
+                        // consoleLog("---- splitted by ", kk, " operations");
+
+                    } else if (t.__autowrap) {
+
+                        //TODO: t.__autodots!
 
                         //debug
-                        if (this.__parent.__debugWrap)
+                        if (t.__parent.__debugWrap)
                             debugger;
                         //undebug
 
@@ -693,89 +770,85 @@ mergeObj(TextPrototype, {
                                 }
                             }
 
-                        var wraptext = function (text, availableWidth) {
+                            , wraptext = function (text, availableWidth) {
 
-                            //  consoleLog(text);
-                            
-                            var newlines = split2(text, availableWidth);
+                                //  consoleLog(text);
 
-                            if (newlines) {
-                                var line1 = newlines[0];
-                                var line2 = newlines[1];
-                                // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
+                                var newlines = split2(text, availableWidth);
 
-                                var width = t.__calcWidthReturnObj(line1).w;
+                                if (newlines) {
+                                    var line1 = newlines[0];
+                                    var line2 = newlines[1];
+                                    // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
 
-                                // consoleLog(width , availableWidth);
+                                    var width = t.__calcWidthReturnObj(line1).w;
 
-                                if (width < availableWidth) {
+                                    // consoleLog(width , availableWidth);
 
-                                    var findFirstSpace = autowrapMap ? function (line) {
-                                        for (var i = 1, l = mmax(1, mmin(line.length - 2, 5)); i < l; i++) {
-                                            if (canWrapSymbol(line, i))
-                                                return i;
-                                        }
-                                    } : function (line) {
-                                        return line.indexOf(' ');
-                                    }
+                                    if (width < availableWidth) {
 
-                                    var firstSpace = findFirstSpace(line2);
-                                    while (firstSpace > 0) {
+                                        var findFirstSpace = autowrapMap ? line => {
+                                            for (var i = 1, l = mmax(1, mmin(line.length - 2, 5)); i < l; i++) {
+                                                if (canWrapSymbol(line, i))
+                                                    return i;
+                                            }
+                                        } : line => line.indexOf(' ');
 
-                                        var firstWorld = (autowrapMap ? '' : ' ') + line2.substring(0, firstSpace)
-                                            , addedWidth = t.__calcWidthReturnObj(firstWorld).w;
-
-                                        if (width + addedWidth < availableWidth) {
-                                            line1 += firstWorld;
-                                            line2 = line2.substring(firstSpace + (autowrapMap ? 0 : 1));
-                                            width += addedWidth;
-                                        } else {
-                                            break;
-                                        }
 
                                         var firstSpace = findFirstSpace(line2);
+                                        while (firstSpace > 0) {
+
+                                            var firstWorld = (autowrapMap ? '' : ' ') + line2.substring(0, firstSpace)
+                                                , addedWidth = t.__calcWidthReturnObj(firstWorld).w;
+
+                                            if (width + addedWidth < availableWidth) {
+                                                line1 += firstWorld;
+                                                line2 = line2.substring(firstSpace + (autowrapMap ? 0 : 1));
+                                                width += addedWidth;
+                                            } else {
+                                                break;
+                                            }
+
+                                            var firstSpace = findFirstSpace(line2);
+                                        }
+
+                                    } else {
+
+                                        var findLastSpace = autowrapMap ? line => {
+                                            for (var i = line.length - 1; i > 1; i--) {
+                                                if (canWrapSymbol(line, i))
+                                                    return i;
+                                            }
+                                        } : line => line.lastIndexOf(' ');
+
+                                        var lastSpace = findLastSpace(line1);
+
+                                        while (lastSpace > 0) {
+                                            var lastWorld = line1.substring(lastSpace + (autowrapMap ? 0 : 1)) + (autowrapMap ? '' : ' ');
+                                            var removedWidth = t.__calcWidthReturnObj(lastWorld).w
+
+                                            line2 = lastWorld + line2;
+                                            line1 = line1.substring(0, lastSpace);
+                                            width -= removedWidth;
+
+                                            if (width <= availableWidth)
+                                                break;
+
+                                            lastSpace = findLastSpace(line1);
+                                        }
+
+                                    }
+
+                                    pushtocache(line1);
+
+                                    if (line2.length) {
+                                        wraptext(line2, availableWidth);
                                     }
 
                                 } else {
-
-                                    var findLastSpace = autowrapMap ? function (line) {
-                                        for (var i = line.length - 1; i > 1; i--) {
-                                            if (canWrapSymbol(line, i))
-                                                return i;
-                                        }
-                                    } : function (line) {
-                                        return line.lastIndexOf(' ');
-                                    }
-
-                                    var lastSpace = findLastSpace(line1);
-
-                                    while (lastSpace > 0) {
-                                        var lastWorld = line1.substring(lastSpace + (autowrapMap ? 0 : 1)) + (autowrapMap ? '' : ' ');
-                                        var removedWidth = t.__calcWidthReturnObj(lastWorld).w
-
-                                        line2 = lastWorld + line2;
-                                        line1 = line1.substring(0, lastSpace);
-                                        width -= removedWidth;
-
-                                        if (width <= availableWidth)
-                                            break;
-
-                                        lastSpace = findLastSpace(line1);
-                                    }
-
+                                    pushtocache(text);
                                 }
-
-                                pushtocache(line1);
-
-                                if (line2.length)
-                                    wraptext(line2, availableWidth);
-
-                            } else {
-                                pushtocache(text);
-
-                            }
-
-                        }
+                            };
 
                         for (var i = 0; i < textLines.length; i++) {
                             wraptext(textLines[i], availableWidth);
@@ -783,11 +856,10 @@ mergeObj(TextPrototype, {
 
                     }
                     else {
-                        for (var i in textLines) {
+                        for (var i = 0; i < textLines.length; i++) {
                             pushtocache(textLines[i]);
                         }
                     }
-
 
                     for (var i in cachedlines) {
                         cachedlines[i].x = t.__align * (-cachedlines[i].w + w) / 2;
@@ -902,8 +974,9 @@ mergeObj(TextPrototype, {
 
                     t.__size = [rw, rh];
 
-                    if (t.__cacheCanvas)
+                    if (t.__cacheCanvas) {
                         t.__canvas = canvas;
+                    }
 
                 }
 
@@ -915,7 +988,7 @@ mergeObj(TextPrototype, {
             var scale = 1;
 
             if (t.__autoscale) {
-                scale *= mmin(1, mmin(size.x / sa.w, size.y / sa.h));
+                scale = mmin(1, mmin(size.x / sa.w, size.y / sa.h));
             }
 
             t.__scaleF = scale;

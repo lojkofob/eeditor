@@ -2863,6 +2863,7 @@ mergeObj(NodePrototype, {
 
                     if (o.__text.__autoscale) o.__text.__autoscale = 1;
                     if (o.__text.__autowrap) o.__text.__autowrap = 1;
+                    if (o.__text.__autodots) o.__text.__autodots = 1;
 
                     saveShadow(o.__text, t.__textMesh.__shadow);
                 }

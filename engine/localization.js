@@ -1,8 +1,8 @@
 
 var localizationDict,
-    localizationOptions = {
+    localizationOptions = set({},
 
-        ru: {
+        'ru', {
             __pluralizeForm: function (d, n, f) { f = floor(d); n = f % 10; return (d > 19 || d < 11) ? (n > 0 ? n > 1 ? n > 4 ? 2 : 1 : (f != d ? 1 : 0) : 2) : 2; },
 
 
@@ -16,25 +16,25 @@ var localizationDict,
             __decimalMark: ','
         },
 
-        en: {
+        'en', {
             __pluralizeForm: function (d) { return d == 1 ? 0 : 1; },
             __thousandsSeparator: ',',
             __decimalMark: '.'
         },
 
-        pt: {
+        'pt', {
             __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
             __thousandsSeparator: ',',
             __decimalMark: '.'
         },
 
-        fr: {
+        'fr', {
             __pluralizeForm: function (d) { return d < 1.5 ? 0 : 1; },
             __thousandsSeparator: ',',
             __decimalMark: '.'
         },
 
-        ja: {
+        'ja', {
             __pluralizeForm: function (d, n, f) { return 0; },
 
             // 3040-309F : hiragana
@@ -57,9 +57,7 @@ var localizationDict,
                 __smallKana: 'ァィゥェォッャュョヶぁぅぇぉっゃゅょ々',
                 __canWrapSymRegexp: new RegExp(/[^\w;\\#]/)
             }
-        },
-
-    };
+        });
 
 
 function js_GetLanguage() { /* override me */ }
@@ -107,9 +105,9 @@ function setLocalization(l, force) {
     if (!localizationDict && force)
         localizationDict = {};
 
-    options.__localization = localizationOptions[l] || localizationOptions.en;
-    options.__localization.__thousandsSeparator = get(localizationDict, 'thousands_separator') || "";
-    options.__localization.__decimalMark = get(localizationDict, 'decimal_mark') || ".";
+    options.__localization = get1(localizationOptions, l) ||  get1(localizationOptions, 'en');
+    options.__localization.__thousandsSeparator = ifdef(get(localizationDict, 'thousands_separator'), options.__localization.__thousandsSeparator);
+    options.__localization.__decimalMark = ifdef(get(localizationDict, 'decimal_mark'), options.__localization.__decimalMark);
 
     __defaultTextProperties.__addedLineSpacing = l == 'ja' ? 8 : 0;
 

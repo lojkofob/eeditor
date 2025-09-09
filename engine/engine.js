@@ -1,31 +1,8 @@
 var PlayerState = null;
 
-var __defaultTextProperties = {
-    __color: 0xffffff,
-    __fontsize: 24,
-    __lineWidth: 0,
-    __lineColor: 0,
-    __lineSpacing: 0,
-    __addedLineSpacing: 0,
-    __addedLineSpacingMultiplier: 1,
-    __fontspacing: 0,
-    __charw: 0,
-    __text: '',
-    __autoscale: false,
-    __shader: null,
-    __align: ALIGN_CENTER,
-    __autowrap: false,
-    __autoRecalcOnResize: false,
-    __dontLocalize: 0,
-    __fontface: '',
-    __safeFontFace: 'Arial, Helvetica, sans-serif',
-    __lineAlpha: 1,
-    __italic: false,
-    __smallCaps: false,
-    __fontWeight: 0,
-    __gradient: 0,
-    __symbol_align: 0
-}, options = {
+var __defaultTextProperties, 
+    
+    options = {
 
     __default: {
         __timeMultiplier: 1,
@@ -60,8 +37,6 @@ var __defaultTextProperties = {
         __atlasFramesPrefix: '',
         __autoRemoveKeyFrameAnimation: 1,
         __doubleTapTimeout: 0.3,
-
-        __defaultTextProperties: __defaultTextProperties,
 
         __storeChildsAsObject: 0,
         __disablePacking: 0,
@@ -631,6 +606,7 @@ function resetAllEngine() {
         __shader: null,
         __align: ALIGN_CENTER,
         __autowrap: false,
+        __autodots: false,
         __autoRecalcOnResize: false,
         __dontLocalize: 0,
         __fontface: '',

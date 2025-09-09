@@ -1606,9 +1606,9 @@ function WebGLRenderer() {
             toList = tmp.__renderList;
 
         }
-
-        if (object.__allProjectionMatrix) {
-            _currentProjectionMatrix = object.__allProjectionMatrix;
+        var allPm = object.__allProjectionMatrix;
+        if (allPm) {
+            _currentProjectionMatrix = allPm;
         }
 
         object.__projectionMatrix = _currentProjectionMatrix;
