@@ -1400,7 +1400,7 @@ gestures.__onPointerDown = function () {
     if (EditFieldsWithKitten.focusedInput)
         EditFieldsWithKitten.focusedInput.unfocus();
 
-    BUS.__post('__ON_POINTER_DOWN');
+    BUS.__post(__ON_POINTER_DOWN);
 
 
 
@@ -1425,7 +1425,7 @@ gestures.__drag = function (dx, dy) {
 }
 
 gestures.__onPointerUp = function () {
-    BUS.__post('__ON_POINTER_UP');
+    BUS.__post(__ON_POINTER_UP);
 
     if (QuadSelectorWithKitten.active) {
         if (mouseButtons[0]) {

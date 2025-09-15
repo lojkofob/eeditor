@@ -220,7 +220,7 @@ mergeObj(NodePrototype, {
             var n = t.__childs[i];
             if (n.____visible) {
                 n.__parentScrollVector = scrollVector;
-                if (sciss) n.__parentSciss = sciss;
+                if (sciss) n.__parentSciss = t.__ignoreScissor ? 0 : sciss;
                 n.__updateMatrixWorld(force, scrollUpdate);
             }
         }

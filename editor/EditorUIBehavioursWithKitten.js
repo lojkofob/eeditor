@@ -98,7 +98,7 @@ var EditorUIBehavioursWithKitten = {
                 __onBlur: function () {
                     var t = this;
 
-                    BUS.__addEventListener('__ON_POINTER_UP', function () {
+                    BUS.__addEventListener(__ON_POINTER_UP, function () {
                         if (t.et) {
                             t.et.__removeFromParent();
                             t.et = 0;

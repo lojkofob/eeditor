@@ -362,8 +362,7 @@ mergeObj(Object3DPrototype, {
 
                 object.__parent = this;
                 object.__parentScrollVector = this.__scrollVector || this.__parentScrollVector;
-                object.__parentScissor = this.__selfScissor || this.__parentScissor;
-
+                
                 this.__childs.push(object);
 
                 object.__root = this.__root || this;

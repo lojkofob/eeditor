@@ -98,7 +98,7 @@ var showContextMenu, cmp;
                 }
 
                 //                 BUS.__addEventListener([ 'WINDOW_SHOWED', 'LAYOUT_SAVED', 'FILES_CHANGED', 'LAYOUT_ACTIVATED', 'LAYOUT_DEACTIVATED', 'NO_PROJECT'], hideContextMenu );
-                BUS.__addEventListener('__ON_POINTER_UP', function () {
+                BUS.__addEventListener(__ON_POINTER_UP, function () {
                     if (contextMenuPanel.showTime < TIME_NOW - 0.5) {
                         //                         console.log("contextMenuPanel.__checkedHitTest", contextMenuPanel.__checkedHitTest);
                         if (!contextMenuPanel.__checkedHitTest) {

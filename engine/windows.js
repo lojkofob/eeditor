@@ -129,7 +129,7 @@ function __showWindow__(_window) {
 
     wnd.__showTime = TIME_NOW;
 
-    _window.w(wnd);
+    _window.w ? _window.w(wnd) : 0;
 
     addToScene(wnd);
     //     wnd.__updateShadows();
