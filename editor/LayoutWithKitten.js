@@ -11,7 +11,8 @@ function LayoutWithKitten(opts) {
     this.layoutView = opts.layoutView || newNode(0, opts || 0).__init({
         __hitTest() { },
         __size: { x: 1, y: 1, px: 1, py: 1 },
-        ha: 1, va: 1, __isScene: 1
+        ha: 1, va: 1, __isScene: 1,
+        __selectable: 0
     });
 
     if (!window.NodeEditWithKittenDisabled) {

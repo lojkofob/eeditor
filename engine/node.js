@@ -724,8 +724,9 @@ mergeObj(NodePrototype, {
         bb[0].__multiplyScalar(layoutsResolutionMult).add(__realScreenCenter);
         bb[1].__multiplyScalar(layoutsResolutionMult).add(__realScreenCenter);
         if (needMirror) {
-            bb[0].y = __realScreenSize.y - bb[0].y;
-            bb[1].y = __realScreenSize.y - bb[1].y;
+            var bb1y = __realScreenSize.y - bb[0].y;
+            bb[0].y = __realScreenSize.y - bb[1].y;
+            bb[1].y = bb1y;
         }
         return bb;
     },
@@ -5353,8 +5354,12 @@ var NodeCloneProperties = {
             },
             function (v) {
                 if (v) {
-                    this.____addedProperties = mergeObj(this.____addedProperties || {}, v);
-                    ObjectDefineProperties(this, v);
+                    var ap = this.____addedProperties = this.____addedProperties || {};
+                    $each(v, (p,k) => {
+                        if (!ap[k]) {
+                            ObjectDefineProperty(this, k, p);
+                        }
+                    });
                 }
             }
         ),

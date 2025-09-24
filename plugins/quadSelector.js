@@ -37,8 +37,6 @@ var QuadSelectorWithKitten = (() => {
             n.ymin = mmin(-y1, -y2);
             n.ymax = mmax(-y1, -y2);
 
-            n.__updateSelection();
-
             n.curveData = [
                 x2, y2,
                 x2, y1,
@@ -48,6 +46,13 @@ var QuadSelectorWithKitten = (() => {
             ];
             n.q.__size = [n.xmax - n.xmin, n.ymax - n.ymin];
             n.q.__ofs = [n.xmin, n.ymin, -1];
+
+            n.xmin *= layoutsResolutionMult;
+            n.xmax *= layoutsResolutionMult;
+            n.ymin *= layoutsResolutionMult;
+            n.ymax *= layoutsResolutionMult;
+            n.__updateSelection();
+
         },
 
         reactivate() {
@@ -61,6 +66,9 @@ var QuadSelectorWithKitten = (() => {
             if (!n.active) {
                 n.active = 1;
                 n.selectionType = selectionType;
+
+                n.q.__color = n.selectionType == 0 ? '#bbf' : '#fff';
+
                 addToScene(par);
                 n.reactivate();
 
@@ -97,16 +105,8 @@ var QuadSelectorWithKitten = (() => {
         cachePoses() {
             $each(n.poses, p => { delete p.n.__isQuadSelected; });
             n.poses = $map(n.nodes, n => {
-
-                /*
-                 var p = n.__screenPosition(), sz = n.__size; 
-                  p.n = n;
-                  p.x1 = p.x - sz.x/2;
-                  p.x2 = p.x + sz.x/2;
-                  p.y1 = p.y - sz.y/2;
-                  p.y2 = p.y + sz.y/2;
-                  */
                 var bb = n.__getScreenBoundingBox(1);
+                console.log('bb = ', bb[0].x, bb[0].y, bb[1].x, bb[1].y);
                 return {
                     n: n,
                     x1: bb[0].x,
@@ -121,11 +121,16 @@ var QuadSelectorWithKitten = (() => {
     //         debugger;
     //         
     //     };
-    n.q = n.__addChildBox({
-        __alpha: 0.3, sha: 0, sva: 0,
-        __img: "qbord_8_b",
-        __corner: [4, 4]
-    });
+    BUS.__addEventListener(
+        'PROJECT_OPENED', a => {
+            n.q = n.__addChildBox({
+                __alpha: 0.3,
+                sha: 0, 
+                sva: 0,
+                __img: "qbord_8_w",
+                __corner: [4, 4]
+            });
+        });
 
     return n;
 

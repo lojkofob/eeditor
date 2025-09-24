@@ -8,6 +8,7 @@ $disableCache = 0;
 if (isset($_GET['editorScripts'])){
     $r = editorScripts();
     $r[] = "css/editor.css";
+    $r[] = "tools/unwind.js";
     echo json_encode( $r );
     die();
 }

@@ -60,33 +60,36 @@ var localizationDict,
         });
 
 
-function js_GetLanguage() { /* override me */ }
+var localizationLang
+, __loc_cache = {}
+, __check_lang_o = l => options.__supportedLangs[l] ? __loc_cache[l] = options.__supportedLangs[l] : 0
+, __check_lang_a = l => inArray(l, options.__supportedLangs) ? __loc_cache[l] = l : 0
+, getUserSavedLanguage = a => get1(PlayerState, 'lang') || LocalGetKey('lang')
+, setUserSavedLanguage = a => { set(PlayerState, 'lang', lang); LocalSetKey('lang', lang) }
 
-function getUserBrowserLanguage() {
-    var loc = __window.navigator.languages ? __window.navigator.languages[0] : null;
-    loc = loc || __window.navigator.language || __window.navigator.browserLanguage || __window.navigator.userLanguage;
-    return loc;
-}
+, __checkUserLanguage = l => {
+    if (l) {
+        var __check_lang = isObject(options.__supportedLangs) ? __check_lang_o : __check_lang_a
+            , subs = l.indexOf('_') > 0, defis = l.indexOf('_') > 0;
 
-var localizationLang;
-var __loc_cache = {};
-function getUserLanguage() {
-    var l = ((PlayerState || 0).lang || LocalGetKey('lang') || js_GetLanguage() || getUserBrowserLanguage() || 'en_US')
-        .toLowerCase();
+        l = l.toLowerCase();
         
-    function check_lang(locale){
-        if (inArray(locale, options.__supportedLangs)) {
-            __loc_cache[l] = locale;
-            return locale;
-        }
+        return __loc_cache[l] || __check_lang(l) ||
+            (defis ? __check_lang(l.replace('-', '_')) : 0) ||
+            (subs ? __check_lang(l.replace('_', '-')) : 0) ||
+            (defis ? __check_lang(l.split('-')[0]) : 0) ||
+            (subs ? __check_lang(l.split('_')[0]) : 0);
     }
-    return __loc_cache[l] ||
-        check_lang(l) ||
-        check_lang(l.replace('-', '_')) ||
-        check_lang(l.replace('_', '-')) ||
-        check_lang(l.split('-')[0]) ||
-        check_lang(l.split('_')[0]) ||
-        check_lang('en') || 'en';
+}
+,  __checkUserLanguages = languages => $findResult(languages, __checkUserLanguage)
+
+
+function getUserLanguage() {
+    var nav = __window.navigator;
+    return __checkUserLanguage(getUserSavedLanguage()) ||
+        __checkUserLanguages(get1(nav, 'languages')) ||
+        __checkUserLanguage(get1(nav, 'language') || get1(nav, 'browserLanguage') || get1(nav, 'userLanguage')) ||
+        __checkUserLanguage(options.__defaultLang || 'en');
 }
 
 function setLocalization(l, force) {

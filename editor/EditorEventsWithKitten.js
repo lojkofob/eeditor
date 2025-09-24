@@ -91,7 +91,7 @@ var EditorEventsWithKitten = {
     tapCatchers: new UpdatableProto(),
 
     invokeEvent: function (e, data, params, returnChanges) {
-        var ee = isFunction(e) ? e : EditorEventsWithKitten[e].bind(EditorEventsWithKitten);
+        var ee = isFunction(e) ? e : isFunction(EditorEventsWithKitten[e]) ? EditorEventsWithKitten[e].bind(EditorEventsWithKitten) : 0;
         if (ee) {
             params = params || {};
             var changes = ee(data, params);
@@ -1432,7 +1432,7 @@ gestures.__onPointerUp = function () {
             QuadSelectorWithKitten.reactivate();
         } else {
             var a = $filter(QuadSelectorWithKitten.nodes, n => n.__isQuadSelected);
-
+            
             if (isCtrlPressed) {
                 unselectNodes(a);
             } else {

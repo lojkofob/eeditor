@@ -157,25 +157,22 @@ function TweenSequence(arr) {
 
 makeClass(TweenSequence, {
     __update(time, dt) {
-        var t = this;
-        var current = t.a[t.i];
+        var t = this
+            , current = t.a[t.i];
         if (!current || current.__update(time, dt)) {
             t.i++;
-            if (t.i >= t.a.length)
-                return 1;
-            else
-                return t.__update(time, dt);
+            return t.i >= t.a.length ? 1 : t.__update(time, dt);
         }
         return 0;
     }
 }, {}, Tween);
 
 
-function TweenCallback(cb) { this.cb = cb; }
+function TweenCallback(cb, o) { this.cb = cb; this.o = o; }
 
 makeClass(TweenCallback, {
     __killOf: 0,
-    __update (t, dt) { var r = this.cb(dt); return r == undefined ? 1 : r }
+    __update(t, dt) { this.o = 0; return ifdef(this.cb(dt), 1) }
 }, {}, Tween);
 
 function getEasingFunc(e) {

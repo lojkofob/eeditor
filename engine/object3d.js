@@ -161,7 +161,7 @@ mergeObj(Object3DPrototype, {
             }
         }
         else if (isFunction(to)) {
-            return new TweenCallback(to.bind(t));
+            return new TweenCallback(to.bind(t), t);
         } else {
             //     consoleLog(to, time, repeat, easing, delay );
             return new TweenAction(t, to, time, repeat, easing, delay, agasp).__zeroUpdate()
