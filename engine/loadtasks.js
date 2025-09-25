@@ -274,7 +274,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
             }
         }
 
-    if (cached) {
+    if (isString(cached)) { // like blob:
         texture.__image.src = cached;
     } else {
 
