@@ -87,6 +87,7 @@ var localizationLang
 function getUserLanguage() {
     var nav = __window.navigator;
     return __checkUserLanguage(getUserSavedLanguage()) ||
+        __checkUserLanguage(options.__lang) ||
         __checkUserLanguages(get1(nav, 'languages')) ||
         __checkUserLanguage(get1(nav, 'language') || get1(nav, 'browserLanguage') || get1(nav, 'userLanguage')) ||
         __checkUserLanguage(options.__defaultLang || 'en');
