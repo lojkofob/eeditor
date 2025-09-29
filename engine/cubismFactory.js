@@ -1036,6 +1036,10 @@ var CubismObject = (() => {
             delete this.__armature;
         },
 
+        update(){
+
+        },
+
         __render() {
 
             var t = this, model = t.__model;
@@ -1163,8 +1167,9 @@ var CubismObject = (() => {
 
                 if (!LCCU.hasIsVisibleBit(drawables.dynamicFlags[drawableIndex])) {
                     continue;
-                }
-
+                } 
+                
+                
                 // t.setClippingContextBufferForDraw(this._clippingManager != null ? this._clippingManager.getClippingContextListForDraw().at(drawableIndex) : null);
                 // t.setIsCulling(model.getDrawableCulling(drawableIndex));
 
@@ -1188,6 +1193,9 @@ var CubismObject = (() => {
             }
 
             renderer.__invalidateState();
+
+        },
+        __drawMe(){
 
         },
 
@@ -1342,13 +1350,21 @@ var CubismObject = (() => {
                 drawables.resetDynamicFlags();
 
                 for (var i = 0; i < drawables.count; ++i) {
-                    t.__drawables.push({
+                    
+                    var td = {
                         __verticesBuffer: new MyBufferAttribute('position', Float32Array, 2, GL_ARRAY_BUFFER, drawables.vertexPositions[i], 1),
                         __uvsBuffer: new MyBufferAttribute('uv', Float32Array, 2, GL_ARRAY_BUFFER, drawables.vertexUvs[i], 1),
                         __indecesBuffer: new MyBufferAttribute('', Uint16Array, 1, GL_ELEMENT_ARRAY_BUFFER, drawables.indices[i]),
                         ic: drawables.indexCounts[i],
                         map: Textures[drawables.textureIndices[i]].tex
-                    });
+                    };
+
+                    td.__buffers = [
+                        td.__verticesBuffer,
+                        td.__uvsBuffer
+                    ];
+
+                    t.__drawables.push(td);
                 }
 
 

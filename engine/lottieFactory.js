@@ -87,15 +87,24 @@ var LottieObject = (() => {
                 t.____name = v;
                 t.__reset();
 
-                var o = t.__opts || 0, sz = this.__size;
+                var o = t.__opts || 0, sz = this.__size, html_id = `lottie-${this.id}`;
 
-                t.__htmlElement = html.__createElement("lottie-player", {
-                    src: v, // "https://assets1.lottiefiles.com/packages/lf20_scifkueh.json"
-                    background: o.__background || "transparent",
-                    speed: ifdef(o.__speed, 1),
-                    loop: ifdef(o.__loop, 0),
-                    autoplay: ifdef(o.__autoplay, 1)
-                });
+                
+
+                html.__addHtmlToBody(`<lottie-player
+                                    id="${html_id}"
+                                    src="${v}"
+                                    autoplay="${ifdef(o.__autoplay, 1)}"
+                                    loop="${ifdef(o.__loop, 0)}"
+                                    speed=${ifdef(o.__speed, 1)}
+                                    background="${o.__background||'transparent'}",
+                                ></lottie-player>`);
+
+                t.__htmlElement = html.__getElementById(html_id);
+
+                t.__htmlElement.__parentElement = html.__getBody();
+
+                t.__htmlElement.play();
             }
         )
     }, HTMLNode);

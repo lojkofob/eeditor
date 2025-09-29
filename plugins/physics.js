@@ -66,7 +66,7 @@ function nodeUpdateVertices(){
     var body = node.__ph_body;
     if (body) {
         if (!(node.__needUpdate && node.__needUpdateDeep)) {
-            node.__updateBody();
+            node.__ph_updateBody();
             return node;
         }
         
@@ -93,7 +93,7 @@ function nodeUpdateVertices(){
         newbody.isSleeping = body.isSleeping;
     }
     
-    node.__updateBody();
+    node.__ph_updateBody();
     
 	return node;
 }
@@ -183,25 +183,27 @@ ObjectDefineProperties( NodePrototype, {
 
 mergeObj(NodePrototype,{
     
-    __awakeAfter: function(tm){
-        var t = this;
-        _setTimeout(function(){
-            if (t.__ph_body) {
-                ph_Sleeping.set(t.__ph_body, 0);
-            }
-        }, tm || 1);
-    },
-    
-    __sleep: function(tm){
+    __ph_sleep: function(tm){
          var t = this; 
+         if (t.__sleepTimeout) t.__sleepTimeout = _clearTimeout(t.__sleepTimeout);
          if (t.__ph_body) {
             ph_Sleeping.set(t.__ph_body, 1);
             if (tm){
-                t.__awakeAfter(tm);
+                t.__ph_awake(tm);
             }
          }
     },
-    __updateBody: function(){
+    __ph_awake(delay){
+        var t = this;
+        if (t.__sleepTimeout) t.__sleepTimeout = _clearTimeout(t.__sleepTimeout);
+        if (delay) {
+            t.__sleepTimeout = _setTimeout(a => {  t.__sleepTimeout = 0; t.__ph_awake() }, delay);
+        } else if (t.__ph_body) {
+            ph_Sleeping.set(t.__ph_body, 0);
+        }
+    },
+
+    __ph_updateBody: function(){
         var t = this; 
         if (t.__ph_body) {
             ph_Body.setPosition( t.__ph_body, t.__offset );
@@ -255,10 +257,10 @@ if (typeof EditorEventsWithKitten != undefinedType) {
         __OBJECT_CHANGED_set: function(t, change){
             var node = change.node;
             if (node instanceof Node) {
-                node.__updateBody();
+                node.__ph_updateBody();
                 $each( ph_Engine.world.bodies, function(b){ ph_Sleeping.set(b, 0); } );
                 if (!ph_Engine.__disabled){
-                    node.__sleep(2);
+                    node.__ph_sleep(2);
                 }
             }
             

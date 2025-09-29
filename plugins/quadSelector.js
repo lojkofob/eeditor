@@ -106,7 +106,6 @@ var QuadSelectorWithKitten = (() => {
             $each(n.poses, p => { delete p.n.__isQuadSelected; });
             n.poses = $map(n.nodes, n => {
                 var bb = n.__getScreenBoundingBox(1);
-                console.log('bb = ', bb[0].x, bb[0].y, bb[1].x, bb[1].y);
                 return {
                     n: n,
                     x1: bb[0].x,

@@ -202,6 +202,7 @@ var ComputeShaderFor = (function () {
 
             code = '';
             var main_texture_color, result_color, result_color;
+
             per_texture(opts, d => {
                 line('vec4 tc_' + d + '=texture2D(t_' + d + ',v_' + d + ')');
                 if (!main_texture_color) main_texture_color = 'tc_' + d;
@@ -214,8 +215,8 @@ var ComputeShaderFor = (function () {
                 if (get(opts.__variyng, 'color')) {
                     result_color = 'v_color';
                 }
-                if (result_color && main_texture_color) {
-                    result_color = result_color + '*' + main_texture_color;
+                if (main_texture_color) {
+                    result_color = (result_color ? (result_color + '*') : '') + main_texture_color;
                 }
             }
 
@@ -235,6 +236,7 @@ var ComputeShaderFor = (function () {
             // result_color = 'vec4(0.0,0.0,1.0,1.0)'; // test blue color
 
             line('gl_FragColor=' + result_color);
+
             return code;
         }
 
@@ -280,7 +282,8 @@ var ComputeShaderFor = (function () {
 
             if (get(opts.__variyng, 'gl_Position')) {
                 // line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*(sin(time + 10.0 * sin(gl_Position.x)) + 1.01),0.8)*matrixWorld) * 1.5');
-                line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*matrixWorld)');
+                // line('v_gl_Position=normalize(vec4(abs(gl_Position.xyz)*matrixWorld)');
+                line('v_gl_Position=gl_Position;');
             }
 
             /// \todo: other buffers

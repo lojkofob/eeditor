@@ -124,7 +124,7 @@ let RenderOverTexturePlugin = (() => {
         dropRT = dropRT ? dropRT[0] : 0;
 
         if (node.__img && !node.map3) {
-            node.map3 = globalConfigsData.__frames[node.__img].tex;
+            node.map3 = globalConfigsData.__frames[node.__img.split('.')[0]] || globalConfigsData.__frames[node.__img].tex;
         }
 
         if (dropRT) {

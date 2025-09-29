@@ -5501,8 +5501,8 @@ var NodeTraverseIterator = createNodeIteratorPrototype(function (method, methodN
 
 var HTMLNode = makeClass(function (v) {
     var t = this;
-    t.__size = [1, 1];
     ENode.call(t, v);
+    t.__size = [1, 1];
     t.__validToSave = 0;
     t.__childs = [];
     t.____vis = 1;
@@ -5515,6 +5515,7 @@ var HTMLNode = makeClass(function (v) {
     },
 
     __updateElement(v) {
+        
         var t = this, lp = this.__htmlElement;
         NodePrototype.__updateMatrixWorld.apply(t, arguments);
         if (lp) {
@@ -5523,19 +5524,23 @@ var HTMLNode = makeClass(function (v) {
 
             lp.style = (t.__noEvents ? "pointer-events:none;" : "") +
                 "position:fixed;width:" + abs(sz.x) + "px;height:" + abs(sz.y) + "px;" +
-                "left:" + bb[0].x + "px; top:" + (bb[0].y + sz.y) + "px;" +
-                "display:" + (v ? 'block;' : 'none;');
+                "left:" + bb[0].x + "px; top:" + (bb[0].y) + "px;" +
+                "display:" + (v ? 'block;' : 'none;') + "transform:rotate(" + t.__rotate + "deg)";
         }
     },
 
     __render() {
+        
         var t = this, lp = this.__htmlElement;
         if (lp) {
+            
             t.__updateElement(1);
+            
             if (!lp.__parentElement) {
                 t.__addToBody();
                 t.update();
             }
+            
             t.__lf = __currentFrame;
             var ll = __currentFrame;
             looperPost(f => {
@@ -5543,6 +5548,7 @@ var HTMLNode = makeClass(function (v) {
                     t.__updateElement(0);
                 }
             });
+            
         }
     },
 
@@ -5555,6 +5561,7 @@ var HTMLNode = makeClass(function (v) {
     },
 
     __addToBody() {
+        this.__htmlElement.__parentElement = html.__getBody();
         html.__addHtmlToBody(this.__htmlElement);
     }
 
