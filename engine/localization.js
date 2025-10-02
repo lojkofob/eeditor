@@ -128,33 +128,37 @@ function setTempLocalization(lang, cb) {
 
 }
 
-
-
-
 function __pluralize(d, a, i) { if (a) { d = d + a.t; if (a.a[i]) d = d + a.a[i]; } return d; }
 
-function prepareLocalizationDict(dict) {
-
-
-    dict = plainArrayToObject(dict);
-
-    function autoReplaceLocalsInLocals(str, recursive) {
-        if (dict && str && str.replace) {
-            str = str.replace(/{(\w+)}/gm, function (wordSk, word) {
-                var localized = dict[word];
-                return localized ? recursive ? autoReplaceLocalsInLocals(localized, 1) : localized : wordSk;
-            });
-        }
-        return str;
+function autoReplaceLocalsInLocals(k, dict, str, recursive) {
+    if (dict && str && str.replace) {
+        str = str.replace(/{(\w+[\d_\w]*)}/gm, (wordSk, word) => {
+            var localized = dict[word];
+            if (localized) {
+                localized = localized.replace(/{@}/, (a, b) => {
+                    if (!dict.__autoreplaces) dict.__autoreplaces = {};
+                    if (!dict.__autoreplaces[k]) dict.__autoreplaces[k] = [];
+                    var i = parseInt(b);
+                    dict.__autoreplaces[k].push({ i: i + 1, w: word });
+                    return '{'+  i + '}'
+                });
+                return recursive ? autoReplaceLocalsInLocals(k, dict, localized, 1) : localized
+            }
+            return wordSk;
+        }); 
     }
+    return str;
+}
 
+function prepareLocalizationDict(dict) {
+  
+    dict = plainArrayToObject(dict);
+ 
     if (dict.__plurales)
         return dict;
 
-    var localizationPlurales = {};
-
-    //  dict.ptest = "{0} из {1} сундук{а|ов} содерж{{0}и|a}т";
-    var defb = ['', '', ''];
+    var localizationPlurales = {}
+        , defb = ['', '', ''];
 
     function prepareForms(b) {
         if (b) {
@@ -168,67 +172,51 @@ function prepareLocalizationDict(dict) {
     }
 
     function initPForm(i, num, b, t) {
-
-        if (!localizationPlurales[i]) {
-            localizationPlurales[i] = {};
-            localizationPlurales[i][num] = { t: '', a: defb };
-        } else
-            if (!localizationPlurales[i][num]) {
-                localizationPlurales[i][num] = { t: '', a: defb };
-            }
+        var lpi = localizationPlurales[i];
+        if (!lpi) lpi = localizationPlurales[i] = {};
+        if (!lpi[num]) lpi[num] = { t: '', a: defb };
         b = prepareForms(b);
-        if (b) {
-            localizationPlurales[i][num].a = b;
-        }
-        if (t) {
-            localizationPlurales[i][num].t = t;
-        }
+        if (b) lpi[num].a = b;
+        if (t) lpi[num].t = t;
     }
 
     for (var i in dict) {
-        dict[i] = autoReplaceLocalsInLocals(dict[i])
-            .replace(/{(\d+)\|([^{}]*)}/g, function (match, num, b) {
-                initPForm(i, num, b);
-                return '{' + num + '}';
-            }).replace(/{{(\d+)}([^}]*)}/g, function (match, num, b) {
+        dict[i] = autoReplaceLocalsInLocals(i, dict, dict[i])
+            .replace(/{(\d+)\|([^{}]*)}/g,  (match, num, b) => (initPForm(i, num, b), '{' + num + '}'))
+            .replace(/{{(\d+)}([^}]*)}/g, (match, num, b) => {
                 b = prepareForms(b);
                 if (b) {
-                    if (!localizationPlurales[i]) localizationPlurales[i] = {};
-                    if (!localizationPlurales[i].__variableOrderForms) localizationPlurales[i].__variableOrderForms = [];
-
-                    var index = localizationPlurales[i].__variableOrderForms.length;
-                    localizationPlurales[i].__variableOrderForms.push({ n: Number(num), a: b });
-
+                    var lpi = localizationPlurales[i];
+                    if (!lpi) lpi = localizationPlurales[i] = {};
+                    if (!lpi.__variableOrderForms) lpi.__variableOrderForms = [];
+                    var index = lpi.__variableOrderForms.length;
+                    lpi.__variableOrderForms.push({ n: Number(num), a: b });
                     return '@' + index + '@';
                 }
                 return match;
-
-            }).replace(/{(\d+)}([^{]*){([^\d}]*\|[^{}]*)}/g, function (match, num, txt, b) {
-                initPForm(i, num, b, txt)
-                return '{' + num + '}';
             })
+            .replace(/{(\d+)}([^{]*){([^\d}]*\|[^{}]*)}/g, (match, num, txt, b) => (initPForm(i, num, b, txt), '{' + num + '}'))
     }
 
     dict.__plurales = localizationPlurales;
-
-    //         looperPost(function(){
-    //             consoleLog(dict.ptest);
-    //             consoleLog(localizationPlurales.ptest);
-    //             consoleLog(TR( 'ptest' , 10,10));
-    //             debugger;
-    //         });
-
     return dict;
-
 }
 
-function TR(k) {
-    if (localizationDict) {
-        var t = localizationDict.hasOwnProperty(k) ? localizationDict[k] : k, args = arguments;
-
-        if ((args.length > 1) && t && t.replace) {
-            // Since 1592 Duncan MacLeod kills {0} mans, {1} womans, {2} childs and {3} dogs
-
+function __TR(k) {
+    var t = localizationDict[k], args = arguments;
+    if (t && t.replace) {
+        // Since 1592 Duncan MacLeod kills {0} mans, {1} womans, {2} childs and {3} dogs
+        if (localizationDict.__autoreplaces && localizationDict.__autoreplaces[k]){
+            var aargs = [];
+            for (var i = 0; i < args.length; ++i) {
+                aargs.push(args[i]);
+            }
+            $each(localizationDict.__autoreplaces[k], (vv) => {
+                aargs[vv.i] = ifdef(aargs[vv.i], localizationDict.__autoreplaces[vv.w])
+            });
+            args = aargs;
+        }
+        if (args.length > 1) {
             var keyPlurales = localizationDict.__plurales ? localizationDict.__plurales[k] : 0;
             if (keyPlurales && options.__localization) {
 
@@ -258,14 +246,17 @@ function TR(k) {
                     return r == undefined ? match : r;
                 });
             }
-        };
-        return t;
+        }
+    };
+    return t;    
+}
+
+function TR(k) {
+    if (localizationDict && localizationDict.hasOwnProperty(k)) {
+        return __TR.apply(this, arguments);     
     }
     return k;
-
-
 };
-
 
 function localizeNumberInt(d, thousandSeparator, zeroPadding) {
 
