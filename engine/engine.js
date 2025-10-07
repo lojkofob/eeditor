@@ -702,6 +702,13 @@ function getUIClass(v) {
     return deepclone(c);
 }
 
+function registerClass(j, name1, name2, clearname){
+    name1 ? globalConfigsData.__classes[name1] = j : 0;
+    name2 ? globalConfigsData.__classes[name2] = j : 0;
+    if (clearname) {
+        delete j.name;
+    }
+}
 
 function registerClasses(j) {
     if (!j) return;
@@ -711,24 +718,27 @@ function registerClasses(j) {
     else if (isObject(j)) {
         if (j.name) {
             if (j.name == 'classes') {
+                var storeNames = ((j.__userData||{}).__save_options||{}).__storeClassNames;
                 if (isObject(j.__childs)) {
                     for (var i in j.__childs) {
-                        var cc = j.__childs[i].__childs
+                        var ci = j.__childs[i]
+                            , cc = ci.__childs
                             , _0 = cc._0 || get(cc, '_0');
                         if (_0) {
-                            globalConfigsData.__classes[i] = _0;
+                            registerClass(_0, i, ci.name, storeNames);
                         } else {
                             for (var kk in cc) {
-                                globalConfigsData.__classes[i] = cc[kk];
+                                registerClass(cc[kk], i, ci.name, storeNames);
                                 break;
                             }
                         }
                     }
                 }
-                else
+                else {
                     for (var i in j.__childs) {
                         registerClasses(j.__childs[i]);
                     }
+                }
             } else {
                 if (j.__childs && j.__childs.length) {
                     globalConfigsData.__classes[j.name] = j.__childs[0];

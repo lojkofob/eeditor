@@ -1812,9 +1812,8 @@ mergeObj(NodePrototype, {
         t.__onKey = t.__onTap = t.__drag = 0;
         t.__effect = t.__dragonBones = t.__spine = t.__cubism = t.__shadow = t.__lottie = t.__model3d = undefined;
 
-        //debug
         t.__wheel = t.__contextMenu = 0;
-        //undebug
+        
 
         if (t.__bufferTexture) {
             t.__bufferTexture.__destruct();
@@ -2955,13 +2954,16 @@ mergeObj(NodePrototype, {
                     }
                 });
 
+            var storeNames = options.__storeClassNames;
+            options.__storeClassNames = 0;
+
             t.__eachChild(function (child, i) {
                 var jjj = child.__validToSave && child.__toJson && child.__toJson();
                 if (jjj) {
                     if (options.__storeChildsAsObject) {
                         if (!o.__childs) o.__childs = {};
                         o.__childs[jjj.name || ('_' + i)] = jjj;
-                        if (!jjj.__extract) delete jjj.name;
+                        if (!storeNames && !jjj.__extract) delete jjj.name;
                     } else {
                         if (!o.__childs) o.__childs = [];
                         o.__childs.push(jjj);
@@ -3046,7 +3048,7 @@ var NodeCloneProperties = {
     __shader: 1, __userData: 1, __animatronix: 1,
     __text: 1, __uvsTransform: 1, f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1, f7: 1, f8: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
     __onTap: 1, __uniforms: 1, __tableAlignRows: 1, __tableAlignColumns: 1, __tableAlignColumnWidth: 1, __tableAlignRowHeight: 1,
-    __drag: 1, __useMaxSizeForScale: 1,
+    __drag: 1, __useMaxSizeForScale: 1, 
     //debug
     __description: 1, __selectable: 1, __onKey: 1, __onLoad: 1, __propertyBinding: 1,
     __behaviour: 1, __classesObj: 1, __physics: 1, __numericInputStep: 1, __contextMenu: 1, __wheel: 1,
@@ -3075,11 +3077,12 @@ var NodeCloneProperties = {
             function () { return this.____contextMenu; },
             function (v) { pushNodeHandlerTo(this, v, EDM.____contextMenu); }
         ),
+        //undebug
+
         __wheel: createSomePropertyWithGetterAndSetter(
             function () { return this.____wheel; },
             function (v) { pushNodeHandlerTo(this, v, EDM.____wheel); }
         ),
-        //undebug
 
         __sizeWithFirstAndLastChild: {
             set() {
