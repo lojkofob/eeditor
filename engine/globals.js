@@ -79,23 +79,12 @@ function LocalRemoveKey(key) {
 
 function getAppVersionCode() {
     var pd = options.__projectData;
-    if (pd && pd.vercode) return pd.vercode;
-    return typeof BUILD_VERSION == typeof undefined ? "0" : ("" + BUILD_VERSION);
+    return pd && pd.vercode ? pd.vercode : options.__versionCode
 }
 
 function getAppVersion() {
-
     var pd = options.__projectData;
-    if (pd && pd.version)
-        return pd.version;
-
-    if (typeof __PROJECT_VERSION__ == typeof undefined) {
-        if (typeof __PROJECT_VERSION___IOS == typeof undefined) {
-            return 0;
-        }
-        return __PROJECT_VERSION___IOS;
-    }
-    return __PROJECT_VERSION__;
+    return (pd && pd.version ? pd.version : options.__version) || '0.0.0'
 }
 
 function getDeepFieldFromObject() {
