@@ -57,6 +57,7 @@ $enginescripts = array(
     "3rdparty/fflate.min",
     
     "globals",
+    "clipboard",
     "bus",
     "wfont",
     "basicTypes",
