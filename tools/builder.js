@@ -15,7 +15,34 @@ var fs = require('fs')
     , argv = optimist.argv
     , glob = require('./glob')
     , unwind = require('./unwind.js').unwind
-    , env = {};
+    , __env = {}
+    , proxy = (data, basedata) => {
+        var __copy = {};
+        return new Proxy(data, {
+            get: function (target, prop) {
+                if (__copy.hasOwnProperty(prop)){
+                    return __copy[prop];
+                }
+                var p = target[prop];
+                if (isString(p)) {
+                    var v = unwind(p, __env, spawn, basedata);
+                    if (isString(v) && (v.indexOf('$') >=0) || (v.indexOf('@/') >=0)){
+                        winston.error('not unwinded', '"' + prop + '"', ":", '"' + v + '"');
+                    } else {
+                        __copy[prop] = v;
+                    }
+                    return v;
+                }
+                return p;
+            },
+            set: function (target, prop, value) {
+                target[prop] = value;            
+                delete __copy[prop];
+                return true;
+            }
+        });
+    },
+    env;
 
 winston.setLevels(winston.config.syslog.levels);
 winston.remove(winston.transports.Console);
@@ -199,6 +226,11 @@ function rsync(src, dst, args) {
 
 var subtargetsBuilders = {
 
+    //setup some parameters
+    setup(d){
+        mergeObjectDeep(project_json, d.root);
+    },
+
     // making sound files for howler
     sounds(d) {
         mkdir(d.dst);
@@ -339,11 +371,12 @@ var subtargetsBuilders = {
     zip(d) {
         var src = d.src;
         var zipname = d.dst;
+        var compressionLevel = '-' + (d.compressionLevel || 9);
 
         if (isObject(src)) {
             $each(src, (filename, zipfilename) => {
                 if (filename == zipfilename) {
-                    spawn(['zip', '-r', '-9', zipname, filename])
+                    spawn(['zip', '-r', compressionLevel, zipname, filename])
                 } else {
                     var tmp_path = 'zip_tmp/'
                     mkdir(tmp_path);
@@ -352,7 +385,7 @@ var subtargetsBuilders = {
                         makePath([spawnCwd || '', tmp_path, filename])
                     );
 
-                    spawn(['zip', '-r', '-9', '-m', '../' + zipname, filename], {
+                    spawn(['zip', '-r', compressionLevel, '-m', '../' + zipname, filename], {
                         cwd: path.join(spawnCwd || '', tmp_path)
                     });
 
@@ -362,7 +395,7 @@ var subtargetsBuilders = {
         } else {
             src = $map(collectSources(src, spawnCwd), f => f.replace(spawnCwd, ''));
             $each(src, filename => {
-                spawn(['zip', '-r', '-9', zipname, filename])
+                spawn(['zip', '-r', compressionLevel, zipname, filename])
             });
         }
     },
@@ -678,6 +711,13 @@ function buildTarget(target) {
 
             }
             else if (isObject(subtarget)) {
+                
+                if (subtarget.buildFlags) {
+                    merge_env(env, subtarget.buildFlags);
+                }
+
+                subtarget = proxy(subtarget, project_json);
+                
                 activateLog(subtarget.log);
 
                 spawnCwd = subtarget.cwd;
@@ -733,7 +773,7 @@ function merge_env(env, data) {
             env.VERSION_MAJOR = parseInt(major, 10);
             env.VERSION_MINOR = parseInt(minor, 10);
             env.VERSION_PATCH = parseInt(patch, 10);
-            env.VERSION_BUILD = parseInt(build, 10);
+            env.VERSION_BUILD = parseInt(build, 10) || 0;
         }
     }
     return env;
@@ -744,16 +784,59 @@ function build(data, target_name) {
     var data = deepclone(data);
     // console.log("--------------------------------------------------------- buildFlags = ");
     // console.log(data.buildFlags);
+ 
+    env = proxy(__env, data);
+
+    /*
+
+js
+
+есть функция unwind(data, env)
+которая заменяет в json нужные переменные среды
+например 
+data = {
+    "$KEY": "$VALUE",
+    "user": {
+       "id": "$USER_ID"
+    }
+}
+env = {
+   "KEY": "my_key",
+   "VALUE": "my_value",
+   "USER_ID": "player1"
+}
+
+unwind вернет {
+    "my_key": "my_value",
+    "user": {
+       "id": "player1"
+    }
+}
+
+
+далее есть некая функция 
+function build(data) {
+    data = unwind(data, env);
+    ....
+
+при этом unwind проходит по всему json-у, что не очень бывает хорошо
+
+хотелось бы, чтобы unwind работало только тогда, когда это нужно, т.е. при обращении к значениям ключей в data
+
+можешь обернуть data в такой прокси-объект?
+
+
+    */
 
     env = merge_env(env, data.buildFlags);
+    env = merge_env(env, additionalArguments);
 
     // console.log("--------------------------------------------------------- env = ");
     // console.log(env);
 
-    data = unwind(data, env, spawn);
+    data = unwind(data, env, spawn, data);
 
-    env = merge_env(env, data.buildFlags);
-    env = merge_env(env, additionalArguments);
+    // env = merge_env(env, data.buildFlags);
 
     var build_targets = data.build_targets
 

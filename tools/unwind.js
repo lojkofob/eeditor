@@ -238,7 +238,7 @@ function unwindLinks(data, basedata) {
 }
 
 
-function unwind(data, env, spawnFunction) {
+function unwind(data, env, spawnFunction, basedata) {
     var changed = 0;
     
     _spawnFunction = spawnFunction;
@@ -255,7 +255,7 @@ function unwind(data, env, spawnFunction) {
             changed += tmp.changed;
             //  founded += tmp.founded;
 
-            tmp = unwindLinks(data);
+            tmp = unwindLinks(data, basedata);
             changed += tmp.changed;
 
             // founded += tmp.founded;
