@@ -6,6 +6,8 @@ var globalTextCache = []
         set(v) { this.__color = v; }
     };
     
+// gcc shim
+String.prototype.trimEnd = String.prototype.trimEnd || get1(String.prototype, 'trimEnd');
 
 function TextPParameters() {
     Object.apply(this);
