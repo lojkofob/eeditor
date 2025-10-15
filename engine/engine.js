@@ -1262,9 +1262,10 @@ function setFrameUV(frame, uvscale, rotated, sizeScale) {
 
     uvscale = uvscale || 1;
     var img = (frame.tex || 0).__image;
-    if (!img)
-        return;
-
+    if (!img) {
+        return frame;
+    }
+    
     var r = frame.r
         , ox = img.width
         , oy = img.height
@@ -1285,6 +1286,10 @@ function setFrameUV(frame, uvscale, rotated, sizeScale) {
     if (sizeScale) {
         frame.s.__multiplyScalar(sizeScale); //or divide?
     }
+    if (!frame.__uvsBuffers) {
+        frame.__uvsBuffers = [];
+    }
+    return frame;
 }
 
 function computeAtlasTexture(atlas) {
@@ -1371,7 +1376,6 @@ function computeAtlasTexture(atlas) {
 
             var frame = {
                 r: r.rc || r,
-                __uvsBuffers: [],
                 tex: texture
             };
 
@@ -1415,14 +1419,11 @@ function computeAtlasTexture(atlas) {
     if (data && data.SubTexture) {
         var scale = data.scale || 1;
         for (var i in data.SubTexture) {
-            var frameData = data.SubTexture[i];
-
-            var frame = {
-                __uvsBuffers: [],
-                r: [frameData.x, frameData.y, frameData.width, frameData.height],
-                tex: texture
-            };
-            setFrameUV(frame, scale);
+            var frameData = data.SubTexture[i]
+                , frame = setFrameUV({
+                    r: [frameData.x, frameData.y, frameData.width, frameData.height],
+                    tex: texture
+                }, scale);
             globalConfigsData.__frames[atlas.__atlasFramePrefix + frameData.name] = frame;
         }
     }

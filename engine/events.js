@@ -465,7 +465,7 @@ function _onDocumentMouseUp(e, isout) {
 }
 
 function onDocumentTouchEnd(e) {
-    consoleLog('touchend');
+    //consoleLog('touchend');
     if (gestures.__touchProcess) {
         return gestures.__touchProcess(getTouches(e));
     } else {
@@ -523,9 +523,33 @@ function checkPinchEnd() {
     }
 }
 
-function getTouches(e) {
-    return e.originalEvent ? e.originalEvent.touches : e.touches;
+var getTouches = e => e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches : e.touches ? e.touches : e.targetTouches;
+
+//debug
+// touches simulation for debugging
+
+var ctrlTouch;
+getTouches = (e) => {
+    var touches = e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches : e.touches ? e.touches : e.targetTouches;
+    if (touches && touches.length) {
+        if (isCtrlPressed) {
+            if (!ctrlTouch) {
+                ctrlTouch = touches[0];
+            }
+        } else {
+            ctrlTouch = 0;
+        }
+
+        if (ctrlTouch) {
+            var cloned = [ctrlTouch];
+            for (var i = 0; i < touches.length; i++)
+                cloned.push(touches[i]);
+            return cloned;
+        }
+    }
+    return touches;
 }
+//undebug
 
 function onDocumentTouchMove(e) {
     isTouchEvent = 1;
@@ -552,10 +576,7 @@ function onDocumentTouchMove(e) {
 
             c.__divideScalar(l);
 
-            var d = $count(a, function (p) {
-                var x = (p.x - c.x), y = (p.y - c.y);
-                return sqrt(x * x + y * y);
-            }) / l / layoutsResolutionMult;
+            var x, y, d = $count(a, p => (x = (p.x - c.x), y = (p.y - c.y), sqrt(x * x + y * y))) / l / layoutsResolutionMult;
 
             if (lasttouchesdist == undefined) {
                 lasttouchesdist = d;

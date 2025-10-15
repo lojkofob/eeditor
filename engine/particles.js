@@ -562,7 +562,7 @@ function NormalGeometryBuilder(emitter) {
     var sz = emitter.__particles.length;
 
     if (!sz || !emitter.__uvs) return 1;
-    // if (emitter.__debug) { debugger; }
+    
     var vertices = emitter.__verticesBuffer.__getArrayOfSize(sz * 8)
         , vertofs = 0;
 
