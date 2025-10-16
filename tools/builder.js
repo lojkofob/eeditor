@@ -24,14 +24,29 @@ var fs = require('fs')
                     return __copy[prop];
                 }
                 var p = target[prop];
+                // winston.debug('******** get prop ' + prop + ' = ', JSON.stringify(v));
+
                 if (isString(p)) {
+
                     var v = unwind(p, __env, spawn, basedata);
+                    // winston.debug('******** prop ' + prop + ' = ', JSON.stringify(v));
                     if (isString(v) && ((v.indexOf('$') >=0) || (v.indexOf('@/') >=0))){
-                        winston.error('not unwinded', '"' + prop + '"', ":", '"' + v + '"');
+                        winston.error('******* not unwinded "' + prop + '" : ' + JSON.stringify(v));
                     } else {
-                        __copy[prop] = v;
+                        if (isObject(v) || isArray(v)) {
+                            v = proxy(v, basedata);
+                            __copy[prop] = v;
+                        }
+                        else {
+                            __copy[prop] = v;
+                        }
+                        
                     }
                     return v;
+                } else if (isObject(p) || isArray(p)) {
+                    p = proxy(p, basedata);
+                    // winston.debug('******** prop ' + prop + ' = ', JSON.stringify(p));
+                    __copy[prop] = p;
                 }
                 return p;
             },
@@ -716,7 +731,7 @@ function buildTarget(target) {
                     merge_env(env, subtarget.buildFlags);
                 }
 
-                subtarget = proxy(subtarget, project_json);
+                subtarget = proxy(subtarget, proxy(project_json, project_json));
                 
                 activateLog(subtarget.log);
 
