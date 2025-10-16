@@ -395,17 +395,17 @@ mergeObj(TextPrototype, {
         if (t.__lineWidth > 0) {
             t.__ctx.lineCap = t.__ctx.lineJoin = 'round';
             t.__ctx.miterLimit = 2;
-            t.__ctx.strokeText(text, x * t.__scaleFactor, y * t.__scaleFactor);
+            t.__ctx.strokeText(text, x, y);
         }
 
-        t.__ctx.fillText(text, x * t.__scaleFactor, y * t.__scaleFactor);
+        t.__ctx.fillText(text, x, y);
     },
 
     // find needed texture size and cache lines params for drawing
 
     __calcWidthReturnNum(txt) {
         var t = this;
-        return floor((t.__charw > 0 ? t.__charw * txt.length : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing + 1)
+        return round((t.__charw > 0 ? t.__charw * txt.length * t.__scaleFactor : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing * t.__scaleFactor + 1)
     },
 
     __calcWidthReturnObj(txt) {
@@ -421,7 +421,9 @@ mergeObj(TextPrototype, {
         var t = this
             , tokens = tokenizeText(text)
             , lastDrawToken = 0
-            , charw = t.__charw / t.__scaleFactor;
+            , sf = t.__scaleFactor
+            , fontspacing = t.__fontspacing * sf
+            , charw = t.__charw * sf;
 
         for (var i in tokens) {
             var token = tokens[i];
@@ -433,10 +435,10 @@ mergeObj(TextPrototype, {
                     if (t.__symbol_align == ALIGN_CENTER && charw) {
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
-                            var cw = (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor
-                            t.__fill(c, x + (charw - cw) / 2, y);
+                            var cw = t.__ctx.measureText(c).width
+                            t.__fill(c, x + (charw - cw) / 2, y * sf);
                             //Increment X by wChar + spacing
-                            x += charw;
+                            x += charw + fontspacing;
                         }
                     } else {
                         // todo: ALIGN_RIGHT?
@@ -444,14 +446,14 @@ mergeObj(TextPrototype, {
                             c = text.charAt(k);
                             t.__fill(c, x, y);
                             //Increment X by wChar + spacing
-                            x += charw > 0 ? charw : (t.__ctx.measureText(c).width + t.__fontspacing) / t.__scaleFactor;
+                            x += (charw ? charw : t.__ctx.measureText(c).width) + fontspacing;
                         }
                     }
                 } else {
                     if (i > 0 && lastDrawToken) {
-                        x += t.__calcWidthReturnObj(lastDrawToken.v).w / t.__scaleFactor;
+                        x += t.__calcWidthReturnObj(lastDrawToken.v).w;
                     }
-                    t.__fill(text, x, y);
+                    t.__fill(text, x, y * sf);
                     lastDrawToken = token;
                 }
             }
@@ -574,6 +576,7 @@ mergeObj(TextPrototype, {
                         , rw = 0
                         , h = 0
                         , rh = 0
+                        , sf = t.__scaleFactor
                         , cachedlines = []
                         , startedX = lineWidth
                         , startedY = fs
@@ -610,7 +613,7 @@ mergeObj(TextPrototype, {
                             text = text.t;
                         }
                         else {
-                            textWidth = t.__calcWidthReturnObj(text).w / t.__scaleFactor;
+                            textWidth = t.__calcWidthReturnObj(text).w / sf;
                         }
                         var realTextWidth = textWidth + rwDiff;
 
@@ -633,7 +636,7 @@ mergeObj(TextPrototype, {
 
                         var dots = "..."
                             //, kk = 0
-                            , availableWidth = size.x * t.__scaleFactor
+                            , availableWidth = size.x * sf
                             , cachedMap = new Map()
                             , _clamptext = (text, begin, beginWidth, end, endWidth) => {
                                 
@@ -679,7 +682,7 @@ mergeObj(TextPrototype, {
                                     text = t.__calcWidthReturnObj(text.trimEnd());
                                 }
                                 if (text.w > availableWidth) {
-                                    availableWidth = (size.x - t.__calcWidthReturnNum(dots)) * t.__scaleFactor;
+                                    availableWidth = size.x * sf - t.__calcWidthReturnNum(dots);
                                     cachedMap[text.t.length] = text.w;
                                     _clamptext(text.t, 0, 0, text.t.length, text.w);
                                 } else {
@@ -704,7 +707,7 @@ mergeObj(TextPrototype, {
                             debugger;
                         //undebug
 
-                        var availableWidth = size.x * t.__scaleFactor
+                        var availableWidth = size.x * sf
                             , localizationOptions = options.__localization || 0
                             , autowrapMap = localizationOptions.__autowrapMap || 0
                             //можно перенести на новую строку если есть autowrapMap
@@ -864,7 +867,7 @@ mergeObj(TextPrototype, {
                     }
 
                     for (var i in cachedlines) {
-                        cachedlines[i].x = t.__align * (-cachedlines[i].w + w) / 2;
+                        cachedlines[i].x = t.__align * (-cachedlines[i].w + w) / 2 * sf;
                     }
 
                     var linesCount = cachedlines.length;
@@ -873,8 +876,8 @@ mergeObj(TextPrototype, {
                     rh = floor((linesCount + getFontDescent()) * fs + (linesCount - 1) * linespacing + rhDiff);
                     rw = floor(rw + lineWidth * 2 + (t.__italic ? fs * 0.1 : 0));
 
-                    canvas.width = rw * t.__scaleFactor;
-                    canvas.height = rh * t.__scaleFactor;
+                    canvas.width = rw * sf;
+                    canvas.height = rh * sf;
 
                     var ctx = canvas.getContext('2d');
                     t.__ctx = ctx;
@@ -882,15 +885,15 @@ mergeObj(TextPrototype, {
                     if (shadow) {
                         mergeObj(ctx, {
                             shadowColor: color_to_string(shadow.__color, shadow.__alpha),
-                            shadowOffsetX: shadowX,
-                            shadowOffsetY: shadowY,
-                            shadowBlur: shadowBlur / shadowBlurTextureSizeMultiplier
+                            shadowOffsetX: shadowX * sf,
+                            shadowOffsetY: shadowY * sf,
+                            shadowBlur: shadowBlur / shadowBlurTextureSizeMultiplier * sf
                         });
                     }
 
                     if (lineWidth > 0) {
                         mergeObj(ctx, {
-                            lineWidth: lineWidth,
+                            lineWidth: lineWidth * sf,
                             strokeStyle: color_to_string(t.__lineColor, t.__lineAlpha)
                         });
                     }
@@ -936,15 +939,15 @@ mergeObj(TextPrototype, {
                             map: texture,
                             color: jsonToColor(t.__color)
                         },
-                            'w', rw * t.__scaleFactor,
-                            'h', rh * t.__scaleFactor,
+                            'w', rw * sf,
+                            'h', rh * sf,
                             'fs', fs,
                             'lw', lineWidth);
 
                         looperPost(function () {
                             delete t.__notReady;
                             t.__updateGeometry().__updateMatrixWorld();
-                            var bufferTexture = renderOverTexture(rw * t.__scaleFactor, rh * t.__scaleFactor, shaderOpts);
+                            var bufferTexture = renderOverTexture(rw * sf, rh * sf, shaderOpts);
                             t.__clearTexture();
                             //cheats
                             renderInfo.textsTextures++
