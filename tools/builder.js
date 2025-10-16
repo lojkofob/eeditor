@@ -26,7 +26,7 @@ var fs = require('fs')
                 var p = target[prop];
                 if (isString(p)) {
                     var v = unwind(p, __env, spawn, basedata);
-                    if (isString(v) && (v.indexOf('$') >=0) || (v.indexOf('@/') >=0)){
+                    if (isString(v) && ((v.indexOf('$') >=0) || (v.indexOf('@/') >=0))){
                         winston.error('not unwinded', '"' + prop + '"', ":", '"' + v + '"');
                     } else {
                         __copy[prop] = v;
