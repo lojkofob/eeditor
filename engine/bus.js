@@ -19,8 +19,6 @@ var __ON_GAME_LOADED = '__ON_GAME_LOADED'
     , __ON_BLURED = '__ON_BLURED'
     , __ON_OFFER_STATE_CHANGED = '__ON_OFFER_STATE_CHANGED'
     , __ON_INTERSTITIAL_ADS_STATE_CHANGED = '__ON_INTERSTITIAL_ADS_STATE_CHANGED'
-    , __ON_PLAYER_SAVE = '__ON_PLAYER_SAVE'
-    , __ON_PLAYER_SAVED_SUCCESS = '__ON_PLAYER_SAVED_SUCCESS'
     , __ON_CONTEXT_CHANGED = '__ON_CONTEXT_CHANGED'
     , __ON_KEY_DOWN = '__ON_KEY_DOWN'
     , __ON_KEY_UP = '__ON_KEY_UP'
@@ -40,8 +38,9 @@ var BUS = {
     ____addEventListener: function (type, listener) {
         if (!listener) return;
         if (isFunction(listener)) { listener = { __on: listener } }
-        if (!busEventsListeners[type]) busEventsListeners[type] = [];
-        if (busEventsListeners[type].indexOf(listener) < 0) busEventsListeners[type].push(listener);
+        var listeners = busEventsListeners[type];
+        if (!listeners) listeners = busEventsListeners[type] = [];
+        if (listeners.indexOf(listener) < 0) listeners.push(listener);
         return listener;
     },
 
@@ -81,16 +80,12 @@ var BUS = {
             this.__removeEventListenerByType(i, listener);
     },
 
-
     __post: function () {
-
-        var type = arguments[0];
-        if (busEventsListeners[type]) {
+        var type = arguments[0], listeners = busEventsListeners[type];
+        if (listeners) {
             var args = arguments;
-            busEventsListeners[type] = $filter(
-                busEventsListeners[type],
-                v => !v.__on.apply(v, args)
-            )
+            $each(listeners.slice(), l => l.__needToRemove = l.__on.apply(l, args));
+            busEventsListeners[type] = $filter( listeners, l => !l.__needToRemove );
         }
     },
 

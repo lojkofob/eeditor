@@ -286,13 +286,11 @@ var cheatsAdjustedTimeAdd = 0, cheatsLastTimeNow = 0;
 
 function cheatsAdjustSystemTime() {
 
-    if (typeof PLAYER == undefinedType) return;
-
     cheatsAdjustSystemTime = function () {
 
         if (PlayerState) {
 
-            cheatsAdjustedTimeAdd = PlayerState.cheatsAdjustedTimeAdd || 0;
+            cheatsAdjustedTimeAdd = get1(PlayerState,'_cata') || 0;
 
             cheatsAdjustSystemTime = function () {
 

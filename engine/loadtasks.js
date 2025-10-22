@@ -9,7 +9,6 @@ var tablesCache = {},
     TASKS_CONFIG = 'config',
     TASKS_LOCALIZATION = 'locale',
     TASKS_FONT = 'font',
-    TASKS_PLAYER = 'player',
     TASKS_ATLAS = 'atlas',
     TASKS_SOUND = 'sound',
     TASKS_LAYOUT = 'layout',
@@ -607,14 +606,6 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
 
                     break;
 
-                case TASKS_PLAYER:
-                    if (typeof PLAYER == undefinedType) {
-                        onLoad();
-                    }
-                    return;
-                    PLAYER.__load(onLoad);
-                    break;
-
             }
         return t;
     }
@@ -1029,11 +1020,6 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                         }.bind(opts));
                     }
                     break;
-
-                case TASKS_PLAYER:
-                    t.__loadTaskOne(type, 1);
-                    break;
-
 
                 case TASKS_FONT:
                     // converting old format
