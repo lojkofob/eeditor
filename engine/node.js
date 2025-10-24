@@ -3313,7 +3313,7 @@ var NodeCloneProperties = {
 
 
         },
- 
+        //undebug
         __size: {
             get() {
                 var t = this;
