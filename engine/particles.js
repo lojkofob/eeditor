@@ -1940,7 +1940,7 @@ var ParticleEmitterPrototype =
 
         __isEmitter: 1,
         ____validToSave: 0,
-        __notNormalNode: 1,
+        ____notNormalNode: 1,
 
         __init(parameters) {
 

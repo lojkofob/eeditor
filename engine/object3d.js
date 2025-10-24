@@ -47,9 +47,9 @@ function Object3D() {
 
         __viewable: 1,
         __selfColor: new Color(1, 1, 1),
-        __alphaDeep: 1,
+        ____alphaDeep: 1,
         __opacityDeep: 1,
-        __alpha: 1,
+        ____alpha: 1,
         __cullFace: CullFaceNone
     });
 }
@@ -66,7 +66,7 @@ ObjectDefineProperties(Object3DPrototype,
 
 var Object3dPropertiesObject = {
 
-    opacity: { get() { return this.__alpha * this.__opacityDeep; } },
+    opacity: { get() { return this.____alpha * this.__opacityDeep; } },
 
     __matrixWorld: {
         get() {

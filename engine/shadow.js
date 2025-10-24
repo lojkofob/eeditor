@@ -9,7 +9,7 @@ function Shadow(nodeToUpdate, parentNode) {
         t.__nodeToUpdate = new ENode({
             __isShadow: 1,
             ____validToSave: 0,
-            __notNormalNode: 1
+            ____notNormalNode: 1
         });
         t.__node = 1;
         parentNode.__addChildBox(t.__nodeToUpdate);

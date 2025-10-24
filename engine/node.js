@@ -108,6 +108,7 @@ function ENode(j) {
     var t = this;
 
     t.____uvsTransform = 0;
+    t.__selfProperties = {};
 
     Object3D.call(t);
 
@@ -2695,7 +2696,63 @@ mergeObj(NodePrototype, {
 
         return function () {
 
-            var t = this, o = {}, selfProperties = t.__selfProperties, __options;
+            var t = this
+                , o = {}
+                , __options
+                , selfProperties = mergeObj({
+                
+                    __margin: undefined,
+
+                    __spacing: undefined,
+
+                    __padding: undefined,
+                    __alpha: undefined,
+                    __alphaDeep: undefined,
+                    __size: undefined,
+                    __eWidth: undefined,
+                    __eHeight: undefined,
+                    __img: undefined,
+                    __fitImgX: undefined,
+                    __fitImgY: undefined,
+
+                    __imgRepeatX: undefined,
+                    __imgRepeatY: undefined,
+
+                    ha: undefined,
+                    va: undefined,
+                    sha: undefined,
+                    sva: undefined,
+                    cropx: undefined,
+                    cropy: undefined,
+                    __scale: undefined,
+                    __anchor: undefined,
+
+                    __rotate: undefined,
+                    __centerFill: undefined,
+                    __corner: undefined,
+                    __visible: undefined,
+                    __blending: undefined,
+                    __maxImageSize: undefined,
+                    __maxsize: undefined,
+                    __minsize: undefined,
+
+                    __color: undefined,
+
+                    __text: undefined,
+                    __shader: undefined,
+
+                    __transformAnchor: undefined,
+                    __userData: undefined,
+
+                    __notNormalNode: undefined,
+                    __behaviour: undefined,
+                    __propertyBinding: undefined,
+                    __tooltip: undefined
+
+                }, t.__selfProperties);
+                
+
+
             if (t.__userData && isObject(t.__userData.__save_options)) {
                 __options = deepclone(__options);
                 mergeObjectDeep(options, t.__userData.__save_options);
@@ -3256,69 +3313,7 @@ var NodeCloneProperties = {
 
 
         },
-
-        //undebug
-
-
-        __selfProperties: {
-            set(v) { this.____selfProperties = v || {}; },
-            get(v) {
-                if (!this.____selfProperties) this.____selfProperties = {
-
-                    __margin: undefined,
-
-                    __spacing: undefined,
-
-                    __padding: undefined,
-                    __alpha: undefined,
-                    __alphaDeep: undefined,
-                    __size: undefined,
-                    __eWidth: undefined,
-                    __eHeight: undefined,
-                    __img: undefined,
-                    __fitImgX: undefined,
-                    __fitImgY: undefined,
-
-                    __imgRepeatX: undefined,
-                    __imgRepeatY: undefined,
-
-                    ha: undefined,
-                    va: undefined,
-                    sha: undefined,
-                    sva: undefined,
-                    cropx: undefined,
-                    cropy: undefined,
-                    __scale: undefined,
-                    __anchor: undefined,
-
-                    __rotate: undefined,
-                    __centerFill: undefined,
-                    __corner: undefined,
-                    __visible: undefined,
-                    __blending: undefined,
-                    __maxImageSize: undefined,
-                    __maxsize: undefined,
-                    __minsize: undefined,
-
-                    __color: undefined,
-
-                    __text: undefined,
-                    __shader: undefined,
-
-                    __transformAnchor: undefined,
-                    __userData: undefined,
-
-                    //debug
-                    __notNormalNode: undefined,
-                    __behaviour: undefined,
-                    __propertyBinding: undefined,
-                    __tooltip: undefined
-                    //undebug 
-                };
-                return this.____selfProperties;
-            }
-        },
-        //undebug
+ 
         __size: {
             get() {
                 var t = this;
@@ -4482,16 +4477,17 @@ var NodeCloneProperties = {
 
         __classes: {
             set(v) {
+                var t = this;
 
                 //multiclass
                 if (!__propertiesAppliedByClass) {
-                    this.____classes = v;
+                    t.____classes = v;
                 }
 
                 var tmpClass = __propertiesAppliedByClass;
 
                 // removeClasses ?
-                this.__removeChildsByFilter(function (n) { return n.__nestedByClass; });
+                t.__removeChildsByFilter(n => n.__nestedByClass);
 
                 //unmulticlass
 
@@ -5365,11 +5361,84 @@ var NodeCloneProperties = {
                     });
                 }
             }
-        ),
+        )
 
-        __aliasing: { set(v) { this.__setAliasesData(v); } },
+        , __aliasing: { set(v) { this.__setAliasesData(v); } }
 
-        __aliasing1: { set(v) { this.__setAliasesData(v, 0, 1); } }
+        , __aliasing1: { set(v) { this.__setAliasesData(v, 0, 1); } }
+
+        , __alpha: {
+            get() { return this.____alpha },
+            set(v) {
+                this.____alpha = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__alpha = v;
+                }
+                //unmulticlass
+            }
+        }
+         
+        , __alphaDeep: {
+            get() { return this.____alphaDeep },
+            set(v) {
+                this.____alphaDeep = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__alphaDeep = v;
+                }
+                //unmulticlass
+            }
+        }
+
+        , __transformAnchor: {
+            get() { return this.____transformAnchor },
+            set(v) {
+                this.____transformAnchor = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__transformAnchor = v;
+                }
+                //unmulticlass
+            }
+        }
+
+        , name: {
+            get() { return this.____name },
+            set(v) {
+                this.____name = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.name = v;
+                }
+                //unmulticlass
+            }
+        }
+
+        , __userData: {
+            get() { return this.____userData },
+            set(v) {
+                this.____userData = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__userData = v;
+                }
+                //unmulticlass
+            }
+        }
+        //debug
+        , __notNormalNode: {
+            get() { return this.____notNormalNode },
+            set(v) {
+                this.____notNormalNode = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__notNormalNode = v;
+                }
+                //unmulticlass
+            }
+        }  
+        //undebug
 
     };
 
@@ -5404,32 +5473,8 @@ set(NodePropertiesObject,
     'u_uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
 );
 
+  
 
-//debug
-function NodeSelfProperty(publicName, privateName, g, s) {
-    g = g || function () { return this[privateName] };
-    s = s || function (v) {
-        if (this.__debugProperty == publicName)
-            debugger;
-        this[privateName] = v;
-    };
-
-    NodePropertiesObject[publicName] = createSomePropertyWithGetterAndSetter(g, function (v) {
-        s.call(this, v);
-        if (!__propertiesAppliedByClass) {
-            this.__selfProperties[publicName] = v;
-        }
-    });
-}
-
-NodeSelfProperty('__transformAnchor', '____transformAnchor');
-NodeSelfProperty('name', '____name');
-NodeSelfProperty('__userData', '____userData');
-NodeSelfProperty('__alpha', '____alpha');
-NodeSelfProperty('__alphaDeep', '____alphaDeep');
-NodeSelfProperty('__notNormalNode', '____notNormalNode');
-
-//undebug
 
 ObjectDefineProperties(NodePrototype, NodePropertiesObject);
 

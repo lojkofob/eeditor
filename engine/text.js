@@ -18,6 +18,7 @@ ObjectDefineProperties(TextPParameters.prototype, { __colorString: colorStringPr
 
 function Text() {
     var t = this;
+    t.__selfProperties = {};
     Object3D.call(t);
     t.____anchor = new Vector3(0, 0, 0);
     t.__needUpdate = 1;
@@ -227,7 +228,7 @@ ObjectDefineProperties(TextPrototype,
 
     addProps(__defaultTextProperties,
         {
-            __alpha: { get() { return this.__parent.__alpha }, set() { } },
+            ____alpha: { get() { return this.__parent.____alpha }, set() { } },
             __colorString: colorStringProperty,
             __shadow: ShadowPropertyPrototype(1)
         },
@@ -265,7 +266,7 @@ mergeObj(TextPrototype, {
     constructor: Text,
 
     ____validToSave: 0,
-    __notNormalNode: 1,
+    ____notNormalNode: 1,
 
     __clone() {
         return deepclone(this.__p);

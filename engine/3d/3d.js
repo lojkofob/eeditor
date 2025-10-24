@@ -218,7 +218,7 @@ function ENode3d(a) {
     var t = this;
 
     t.__is3D = 1;
-    // t.__notNormalNode = 1;
+    // t.____notNormalNode = 1;
 
     t.____rotation3d = new Euler();
     t.____quaternion = new Quaternion();
