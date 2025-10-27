@@ -37,6 +37,8 @@ var renderInfo = {
 
 var gl
     , _emptyImage
+    , _texParameteri
+    , gl_mipmap_texture_max_level = 3
     , textureIdCount = 0
     , _texturesCache = {}
     , _depthRenderbuffer
@@ -137,6 +139,8 @@ var gl
     , depthBuffer;
 
 function __setGLGlobals(gl) {
+
+    _texParameteri = gl.texParameteri.bind(gl);
 
     GL_TEXTURE_2D = gl.TEXTURE_2D;
     GL_ELEMENT_ARRAY_BUFFER = gl.ELEMENT_ARRAY_BUFFER;
@@ -294,7 +298,7 @@ function Texture(image, params) {
     
     this.__init(mergeObj({
         __magFilter: GL_LINEAR,
-        __minFilter: (params.__generateMipmaps || params.__manualMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR,
+        __minFilter: (params.__generateMipmaps || params.__manualMipmaps) ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR,
         __flipY: true,
         __wraps: GL_CLAMP_TO_EDGE,
         __wrapt: GL_CLAMP_TO_EDGE,
@@ -1056,11 +1060,11 @@ function WebGLRenderer() {
 
     function __setTextureParameters(texture) {
 
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_WRAP_S, texture.__wraps);
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_WRAP_T, texture.__wrapt);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_WRAP_S, texture.__wraps);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_WRAP_T, texture.__wrapt);
 
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, texture.__magFilter);
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MIN_FILTER, texture.__minFilter);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, texture.__magFilter);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MIN_FILTER, texture.__minFilter);
 
     }
 
@@ -1410,8 +1414,8 @@ function WebGLRenderer() {
 
         _emptyImage = gl.createTexture();
         gl.bindTexture(GL_TEXTURE_2D, _emptyImage);
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         __texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, new Uint8Array(4));
 
         _shader_precision = _shader_precision || __getMaxPrecision('highp');
@@ -1774,6 +1778,7 @@ function WebGLRenderer() {
                 else
                 if (_currentRenderTarget.__generateMipmaps) {
                     __bindTexture(texture.__webglTexture);
+                    _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, gl_mipmap_texture_max_level);
                     gl.generateMipmap(GL_TEXTURE_2D);
                 }
 
