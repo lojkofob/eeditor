@@ -197,7 +197,7 @@ function readableStringify(d, nodeeper, pretty) {
                     r = d;
                 }
             } else
-                if (isNumeric(d)) {
+                if (isNumeric(d) || d === true || d === false) {
                     r = d;
                 } else
                     if (typeof WebGLBuffer != undefinedType && d instanceof WebGLBuffer) { r = '<WebGLBuffer>'; } else
