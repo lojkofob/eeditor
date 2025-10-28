@@ -152,4 +152,41 @@ module.exports = function () {
         return fs.readFileSync(filename, 'utf8')
     }
 
+    
+    this.getDeepFieldFromObject = function() {
+        var r = arguments[0];
+        if (r)
+            for (var i = 1; i < arguments.length; i++) {
+                var a = arguments[i];
+                if (a != undefined) {
+                    r = r[a];
+                    if (r == undefined)
+                        return;
+                }
+            }
+        return r;
+    }
+
+    this.getDeepFieldFromObjectAndSetIfUndefined = function() {
+        var r = arguments[0];
+        if (r)
+            for (var i = 1; i < arguments.length; i++) {
+                var a = arguments[i];
+                if (r[a] == undefined) {
+                    r = r[a] = {};
+                } else {
+                    r = r[a];
+                }
+            }
+        return r;
+    }
+
+    this.get = this.getDeepFieldFromObject;
+    this.get1 = (a, b) => a ? a[b] : _undefined
+    this.get2 = (a, b, c) => a ? this.get1(a[b], c) : _undefined
+    this.get3 = (a, b, c, d) => a ? this.get2(a[b], c, d) : _undefined;
+
+    this.ifdef = (a, b) => a === undefined ? b : a;
+
+
 }

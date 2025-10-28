@@ -1,4 +1,4 @@
-const { exit } = require('process');
+module.exports = (function () {
 
 var fs = require('fs')
     , path = require('path')
@@ -170,20 +170,20 @@ function collectSourcesStr(src, basedir, sep) {
     return collectSources(src, basedir).join(sep || ' ');
 }
 
-function collectSources(src, basedir) {
+function collectSources(src, basedir, opts) {
     var files = [];
     basedir = basedir || '';
     if (isObject(src)) {
         for (var i in src) {
-            files = files.concat(collectSources(src[i], basedir + i));
+            files = files.concat(collectSources(src[i], basedir + i), opts);
         }
     } else if (isArray(src)) {
         for (var i in src) {
-            files = files.concat(collectSources(src[i], basedir))
+            files = files.concat(collectSources(src[i], basedir, opts))
         }
     } else {
         if (src) {
-            files = glob.sync(path.join(basedir, src));
+            files = glob.sync(path.join(basedir, src), opts);
         }
     }
     return files;
@@ -250,7 +250,12 @@ var subtargetsBuilders = {
     sounds(d) {
         mkdir(d.dst);
         mkdir('./tmp/tmp')
-        spawntool('soundsprite', ['-e mp3 -o sounds --array --samplerate ' + (d.samplerate || 44100) + ' -d', d.dst].concat(collectSources(d.src)))
+        var src = collectSources(d.src)
+        if (src.length) {
+            spawntool('soundsprite', ['-e mp3 -o sounds --array --samplerate ' + (d.samplerate || 44100) + ' -d', d.dst].concat(src))
+        } else {
+            winston.debug("No sounds")
+        }
     },
 
     //simple resizing images for icons, previews, thumbnails etc
@@ -888,7 +893,8 @@ if (argv.target) {
     });
 }
 
-mergeObj(exports, {
+
+mergeObj(this, {
 
     activateLog: activateLog,
     spawn: spawn,
@@ -918,3 +924,7 @@ mergeObj(exports, {
     argv: argv,
     glob: glob
 });
+
+return this;
+
+})()
