@@ -460,7 +460,7 @@ var subtargetsBuilders = {
                 header += d.wrapFuncHeader;
             }
 
-            var wrapfile = fs.readFileSync(dst, 'utf8');
+            var wrapfile = readFileSync(dst);
 
             if (d.wrap.noJscomp) {
                 wrapfile = wrapfile.substring(2113);
@@ -550,7 +550,7 @@ var subtargetsBuilders = {
             content = JSON.stringify(d.content);
         }
         if (d.minwrapper) {
-            var wraps = fs.readFileSync(d.minwrapper, 'utf8');
+            var wraps = readFileSync(d.minwrapper);
             if (wraps) {
                 wraps.replace(/(__[^\s]*) --\> (\$[^\s]*)/g, function (M, a, b) {
 
@@ -568,11 +568,11 @@ var subtargetsBuilders = {
     packintoonefile(d) {
 
         var dstFile = makePath([mkdir(d.dst), path.basename(d.dst)]);
-        var content = fs.readFileSync(d.sourceFile, 'utf8');
+        var content = readFileSync(d.sourceFile);
 
         $each(d.src, function (file, rpl) {
             content = content.replace(rpl, function () {
-                return fs.readFileSync(file, 'utf8')
+                return readFileSync(file)
             });
         });
 
@@ -583,7 +583,7 @@ var subtargetsBuilders = {
     rmdebug(d) {
         var arr = d.args.split(',');
         $each(collectSources(d.src), file => {
-            var data = fs.readFileSync(file, 'utf8');
+            var data = readFileSync(file);
             for (var j in arr) {
                 var len = data.length;
                 var s = arr[j].split('/');
@@ -604,7 +604,7 @@ var subtargetsBuilders = {
         var dstFile = makePath([mkdir(d.dst), path.basename(d.dst)]);
         var content = '';
         $each(collectSources(d.src), file => {
-            content = content + '\n\n// ------- ' + file + ' --------' + '\n\n' + fs.readFileSync(file);
+            content = content + '\n\n// ------- ' + file + ' --------' + '\n\n' + readFileSync(file);
         });
         fs.writeFileSync(dstFile, content);
 
@@ -613,7 +613,7 @@ var subtargetsBuilders = {
     replaceinfile(d) {
 
         var dstFile = makePath([mkdir(d.dst), path.basename(d.dst)]);
-        var content = fs.readFileSync(d.sourceFile, 'utf8');
+        var content = readFileSync(d.sourceFile);
         $each(d.src, (rpl, key) => {
             var mode = "regexp";
             if (isObject(rpl)) {
@@ -642,7 +642,7 @@ var subtargetsBuilders = {
     beautify(d) {
         var src = collectSources(d.src);
         $each(src, s => {
-            fs.writeFileSync(s, beautifier.js_beautify(fs.readFileSync(s, 'utf8')));
+            fs.writeFileSync(s, beautifier.js_beautify(readFileSync(s)));
         });
     },
 
@@ -653,7 +653,7 @@ var subtargetsBuilders = {
         }
         if (isFunction(d.process)) {
             $each(src, s => {
-                var content = d.process(s, JSON.parse(fs.readFileSync(s, 'utf8') || "{}"));
+                var content = d.process(s, getJson(s) || "{}");
                 if (d.replaceFile) {
                     fs.writeFileSync(s, JSON.stringify(content, null, d.pretty ? 4 : 0))
                 }
@@ -912,9 +912,9 @@ mergeObj(exports, {
     cp: cp,
     _: _,
     misc: misc,
-    winston: optimist,
-    beautifier: optimist,
+    winston: winston,
+    beautifier: beautifier,
     optimist: optimist,
-    argv: optimist.argv,
+    argv: argv,
     glob: glob
 });

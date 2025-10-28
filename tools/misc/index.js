@@ -1,5 +1,7 @@
 module.exports = function () {
 
+    var fs = require('fs')
+
     this.isNumeric = function (n) { return !isNaN(parseFloat(n)) && isFinite(n) && !isArray(n); }
     this.inArray = function (obj, arr) { return isArray(arr) && (arr.indexOf(obj) != -1); }
     this.removeFromArray = function (obj, arr) { var ax; while ((ax = arr.indexOf(obj)) !== -1) arr.splice(ax, 1); };
@@ -140,6 +142,14 @@ module.exports = function () {
             return merged;
         }
         return data;
+    }
+
+    this.getJson = function(filename){
+        return JSON.parse(fs.readFileSync(filename, 'utf8'));        
+    }
+
+    this.readFileSync = function(filename){
+        return fs.readFileSync(filename, 'utf8')
     }
 
 }
