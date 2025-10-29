@@ -1470,7 +1470,7 @@ function resortSceneChilds(sc) {
 
 function clearXMLHttpRequest(xhr) {
     if (xhr) {
-        xhr.onload = xhr.onloadend = xhr.onerror = undefined;
+        xhr.onload = xhr.onloadend = xhr.onerror = xhr.onabort = undefined;
     }
 }
 

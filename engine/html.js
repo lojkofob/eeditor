@@ -149,21 +149,51 @@ var html = (function () {
             return 1;
         });
     }
+  
 
-
-
-    function addScript(opts) {
+    function html_addScript(opts) {
         if (!opts || !opts.src) return;
-        var script = html_createElement("script");
+        var script = html_createElement("script")
+            , src_url = opts.src + (opts.disableCache ? (opts.src.indexOf('?') > 0 ? '&' : '?') + 'rnd=' + random() : "")
+
         set(script,
             "async", opts.async,
             "onload", opts.onLoad,
-            "onerror", a => { consoleError("loader error while loading " + script.src); opts.onError ? opts.onError() : 0; },
-            "src", opts.src + (opts.disableCache ? (opts.src.indexOf('?') > 0 ? '&' : '?') + 'rnd=' + random() : "")
+            "onerror", a => { 
+                consoleError("loader error while loading " + src_url); 
+                if(opts.xhrFallback) {
+                    var xhr,
+                    XHRRequestScriptExecute = () => {
+                        if(xhr) {
+                            if(xhr.responseText) {
+                                eval(xhr.responseText);
+                                clearXMLHttpRequest(xhr);
+                                callFunction(opts.onLoad);
+
+                            } else {
+                                clearXMLHttpRequest(xhr);
+                                callFunction(opts.onError);
+                            }
+                            xhr = 0;
+                        }
+                    },
+                    xhr = createXHRRequest(src_url, 0, {
+                        onload: XHRRequestScriptExecute,
+                        onerror: XHRRequestScriptExecute,
+                        onabort: XHRRequestScriptExecute,
+                        onloadend: XHRRequestScriptExecute,
+                    }, undefined, a => {
+                        xhr.crossOrigin = script.getAttribute("crossorigin");
+                    })
+                } else {
+                    callFunction(opts.onError); 
+                }
+            },
+            "src", src_url
         );
         $each(opts.attributes, (v, k) => script.setAttribute(k, v));
         html_addHtmlToHead(script);
-        return script;  
+        return script;
     }
 
 
@@ -186,7 +216,7 @@ var html = (function () {
         __getElementById: html_getElementById,
         __init: html_init,
 
-        __addScript: addScript,
+        __addScript: html_addScript,
         __removeElement: function (e) {
             var pn = (e || 0).parentNode;
             if (pn) pn.removeChild(e);
