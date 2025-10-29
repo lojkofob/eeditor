@@ -132,15 +132,15 @@ function __pluralize(d, a, i) { if (a) { d = d + a.t; if (a.a[i]) d = d + a.a[i]
 
 function autoReplaceLocalsInLocals(k, dict, str, recursive) {
     if (dict && str && str.replace) {
+        var i = 0;
         str = str.replace(/{(\w+[\d_\w]*)}/gm, (wordSk, word) => {
             var localized = dict[word];
             if (localized) {
                 localized = localized.replace(/{@}/, (a, b) => {
                     if (!dict.__autoreplaces) dict.__autoreplaces = {};
                     if (!dict.__autoreplaces[k]) dict.__autoreplaces[k] = [];
-                    var i = parseInt(b);
                     dict.__autoreplaces[k].push({ i: i + 1, w: word });
-                    return '{'+  i + '}'
+                    return '{'+ (i++) + '}'
                 });
                 return recursive ? autoReplaceLocalsInLocals(k, dict, localized, 1) : localized
             }
