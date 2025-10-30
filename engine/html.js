@@ -182,7 +182,7 @@ var html = (function () {
                         onerror: XHRRequestScriptExecute,
                         onabort: XHRRequestScriptExecute,
                         onloadend: XHRRequestScriptExecute,
-                    }, undefined, a => {
+                    }, undefined, xhr => {
                         xhr.crossOrigin = script.getAttribute("crossorigin");
                     })
                 } else {
