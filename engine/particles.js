@@ -12,16 +12,19 @@ var PDM = createDeobfuscatingMap({
     __colorEmitterComponent: 1,
     origin: 1
 
-});
+})
 
-var _xy_hz_ = [PDM.x, PDM.y];
-var _rt_hz_ = [PDM.rad, PDM.trans];
-var _xyz_hz_ = [PDM.x, PDM.y, PDM.z];
-var _rgba_hz_ = [PDM.r, PDM.g, PDM.b, PDM.a];
-var _wh_hz_ = [PDM.width, PDM.height];
+, _xy_hz_ = [PDM.x, PDM.y]
+, _rt_hz_ = [PDM.rad, PDM.trans]
+, _xyz_hz_ = [PDM.x, PDM.y, PDM.z]
+, _rgba_hz_ = [PDM.r, PDM.g, PDM.b, PDM.a]
+, _wh_hz_ = [PDM.width, PDM.height];
+ 
 
 function defaultZeroFunction() { return 0 }
 function defaultOneFunction() { return 1 }
+
+var _prtM4_ = new Matrix4(), _prtM4_e = _prtM4_.e;
 
 function addComponentProp(props, obj, p) {
     if (props) {
@@ -1818,6 +1821,7 @@ makeClass(Particle, {
 
     __matrixWorld: {
         get() {
+
             return this // жесть
         }
     },
@@ -2078,10 +2082,28 @@ var ParticleEmitterPrototype =
                 var mw = t.__parent.__matrixWorld;
                 if (mw.e) {
                     t.__projectionMatrix = t.__projectionMatrix.__clone();
-                    t.__projectionMatrix.__multiplyMatrices4(t.__projectionMatrix, mw);
+                    t.__projectionMatrix.__multiply(mw);
+                } else 
+                // particle
+                {
+                    t.__projectionMatrix = t.__projectionMatrix.__clone();
+            
+                    var q = mw.__current_angle,
+                        o = mw.__current_position,
+                        s = sin(q),
+                        c = cos(q);
+
+                        _prtM4_e[0] = c;
+                        _prtM4_e[1] = s;
+                        _prtM4_e[4] = -s;
+                        _prtM4_e[5] = c;
+                        _prtM4_e[12] = o.x;
+                        _prtM4_e[13] = o.y;
+
+                    t.__projectionMatrix.__multiply(_prtM4_);
+
                 }
             }
-
 
             //          t.__drawMode = randomInt(0,3);
             renderer.__draw(t, count);
