@@ -2082,7 +2082,8 @@ var ParticleEmitterPrototype =
                 var mw = t.__parent.__matrixWorld;
                 if (mw.e) {
                     t.__projectionMatrix = t.__projectionMatrix.__clone();
-                    t.__projectionMatrix.__multiply(mw);
+                    // t.__projectionMatrix.__multiply(mw);
+                    t.__projectionMatrix.__multiplyMatrices4(t.__projectionMatrix, mw);
                 } else 
                 // particle
                 {
