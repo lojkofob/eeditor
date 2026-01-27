@@ -7,7 +7,7 @@ var __nodeScrolledByX;
 
 function genMap(w, h) {
     return {
-        __image: { width: w, height: h },
+        __image: { width: w, height: h, __scaled: 0.0000001 },
         __setWrapS() { },
         __setWrapT() { },
         f: {
@@ -788,6 +788,7 @@ mergeObj(NodePrototype, {
             , size
             , corner = t.____corner || 0
 
+        if (t.____shader == 'rc') t.__selfImgSize = 1;
         if (t.__selfImgSize && !imgSize && corner) {
             imgSize = new Vector2(corner[0] * 2, corner[1] * 2);
         }
@@ -1068,7 +1069,6 @@ mergeObj(NodePrototype, {
                         , xm = 0
                         , ym = 0;
 
-
                     x1 += halfpixel_x;
                     x2 -= halfpixel_x;
 
@@ -1079,12 +1079,14 @@ mergeObj(NodePrototype, {
 
                     if (frame) {
 
-                        if (frame.R) {
+                        var uvss = getFrameUv(x1, x2, y1, y2, frame.R, uvt);
+ 
+                        if (frame.R) { 
 
-                            switch (uvt) {
-                                case 2: var tmp = x1; x1 = x2; x2 = tmp; break; // mirrored x
-                                case 1: var tmp = y1; y1 = y2; y2 = tmp; break; // mirrored y
-                            }
+                            x1 = uvss[6]; 
+                            y1 = uvss[1]; 
+                            x2 = uvss[0]; 
+                            y2 = uvss[7];
 
                             if (t.____corner) {
                                 sgny = sign(t.____corner[0] || 0);
@@ -1114,12 +1116,11 @@ mergeObj(NodePrototype, {
                         }
                         else {
 
-
-                            switch (uvt) {
-                                case 1: var tmp = x1; x1 = x2; x2 = tmp; break; // mirrored x
-                                case 2: var tmp = y1; y1 = y2; y2 = tmp; break; // mirrored y
-                            }
-
+                            x1 = uvss[0]; 
+                            y1 = uvss[1]; 
+                            x2 = uvss[6]; 
+                            y2 = uvss[7];
+                            
                             if (t.____corner) {
                                 sgnx = sign(t.____corner[0] || 0);
                                 sgny = sign(t.____corner[1] || 0);

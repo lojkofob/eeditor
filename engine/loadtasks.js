@@ -930,12 +930,19 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
                         t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasImageFile });
                         t.__loadTaskOne(TASKS_CONFIG, atlas.__atlasDataFile);
-                        if (atlas.__atlasAlphaImageFile)
+                        if (atlas.__atlasAlphaImageFile) {
                             t.__loadTaskOne(TASKS_IMAGE, { n: atlas.__atlasAlphaImageFile, c: atlas.__tryToUseLSCache, u: atlas.__atlasAlphaImageFile });
-
-                        t.__addOnCompleted(function () {
+                        }
+                        t.__addOnCompleted(a => {
                             computeAtlasTexture(atlas);
                         }, 1);
+                    } else {
+                        if (!getCachedData(atlas.__atlasDataFile)){
+                            t.__loadTaskOne(TASKS_CONFIG, atlas.__atlasDataFile);
+                            t.__addOnCompleted(a => {
+                                computeAtlasTexture(atlas);
+                            }, 1);
+                        }
                     }
 
                     break;
@@ -975,7 +982,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
                         var dict = getCachedData(lname);
                         setCachedData(lname, prepareLocalizationDict(dict));
-                        setLocalization(lang);
+                        setLocalization(lang, 0, lname);
 
                     };
 

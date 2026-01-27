@@ -1564,7 +1564,7 @@ function WebGLRenderer() {
 
         __projectObject(object, _currentRenderList, _scissStack);
 
-        _currentRenderList.sort(__reversePainterSortStable);
+        _currentRenderList.sort(renderer.__sorting);
 
         __renderObjects(_currentRenderList);
 
@@ -2089,6 +2089,7 @@ function WebGLRenderer() {
         , __invalidateState: __invalidateState
         , __setBlending: __setBlending
         , __generateMipmap: __generateMipmap
+        , __sorting: __reversePainterSortStable
         //cheats
         , __handleGLErrors: __handleGLErrors
         , __disableGLDebug: __disableGLDebug

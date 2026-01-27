@@ -18,6 +18,7 @@ var fs = require('fs')
     , __env = {}
     , proxy = (data, basedata) => {
         var __copy = {};
+        data = ifdef(data, {});
         return new Proxy(data, {
             get: function (target, prop) {
                 if (__copy.hasOwnProperty(prop)){
@@ -242,8 +243,9 @@ function rsync(src, dst, args) {
 var subtargetsBuilders = {
 
     //setup some parameters
-    setup(d){
-        mergeObjectDeep(project_json, d.root);
+    setup(d) {
+        if (!project_json && d.root) project_json = d.root;
+        else mergeObjectDeep(project_json, d.root);
     },
 
     // making sound files for howler
@@ -263,15 +265,16 @@ var subtargetsBuilders = {
         var src = collectSources(d.src);
         mkdir(d.dst);
         for (var i in d.sizes) {
-            var sz = d.sizes[i];
+            var sz = d.sizes[i], w = sz.w || sz.x || sz[0] || sz, h = sz.h || sz.y || sz[1] || sz;
+            
             d.name = d.name || '';
-            var outname = d.name.replace(/\[size\]/g, sz).replace(/\[filename\]/g, '%[filename:fname]');
+            var outname = d.name.replace(/\[size\]/g, w != h ? w + 'x' + h : sz).replace(/\[filename\]/g, '%[filename:fname]');
             if (d.dst) outname = d.dst + (outname || '');
             /* http://www.imagemagick.org/Usage/basics/#mogrify
                 To get the exact original filename the source image came from use "%i", "%d/%f" or "%d/%t.%e". Of course these all have the filename suffix, in the filename setting, whch IM does not use, but that should be okay as it is the same image file format.
             */
             for (var i in src) {
-                spawn([magick_convert(), quotesWrap(src[i]), "-set filename:fname \"%t\"", '-resize ' + sz + 'x' + sz, outname]);
+                spawn([magick_convert(), quotesWrap(src[i]), "-set filename:fname \"%t\"", '-resize ' + w + 'x' + h, outname]);
             }
         }
     },

@@ -114,7 +114,9 @@ function stopSound(sid, fadeOutTime){
             if (fadeOutTime){
                 delete soundsLooper[sid];
                 sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId );
-            _setTimeout(function(){ stopSound(s); }, fadeOutTime);
+                return _setTimeout(a => { 
+                    stopSound(sid);
+                }, fadeOutTime);
             }
             else {
                 sound.howl.stop( soundGroup.__lastPlayedId );
@@ -123,7 +125,4 @@ function stopSound(sid, fadeOutTime){
     }
 }
 
-
-function checkIfMusicOff() {
-    return PlayerState['msc'];
-}
+ 

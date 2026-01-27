@@ -399,14 +399,16 @@ TreeEntry.prototype = {
                             }
                         }, 'toggleVis');
 
-                        ObjectDefineProperty(item.plate.toggleVis, '__alpha', {
-                            get: function () {
-                                var v = entry.node.__visible;
-                                if (v != this.__vvv) {
-                                    this.__vvv = v;
-                                    this.__killAllAnimations().__classModificator = v ? 'checked' : null;
+                        ObjectDefineProperties(item.plate.toggleVis, {
+                            ____alpha: {
+                                get: function () {
+                                    var v = entry.node.__visible;
+                                    if (v != this.__vvv) {
+                                        this.__vvv = v;
+                                        this.__killAllAnimations().__classModificator = v ? 'checked' : null;
+                                    }
+                                    return 1;
                                 }
-                                return 1;
                             }
                         });
                     }

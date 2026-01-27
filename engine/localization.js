@@ -65,7 +65,7 @@ var localizationLang
 , __check_lang_o = l => options.__supportedLangs[l] ? __loc_cache[l] = options.__supportedLangs[l] : 0
 , __check_lang_a = l => inArray(l, options.__supportedLangs) ? __loc_cache[l] = l : 0
 , getUserSavedLanguage = a => get1(PlayerState, 'lang') || LocalGetKey('lang')
-, setUserSavedLanguage = a => { set(PlayerState, 'lang', lang); LocalSetKey('lang', lang) }
+, setUserSavedLanguage = lang => { set(PlayerState, 'lang', lang); LocalSetKey('lang', lang) }
 
 , __checkUserLanguage = l => {
     if (l) {
@@ -93,11 +93,11 @@ function getUserLanguage() {
         __checkUserLanguage(options.__defaultLang || 'en');
 }
 
-function setLocalization(l, force) {
+function setLocalization(l, force, lname) {
 
     localizationLang = l;
 
-    localizationDict = globalConfigsData[options.__localesDir + l + '.json'];
+    localizationDict = getCachedData(lname || (options.__localesDir + l + '.json'));
     //debug
     if (!localizationDict) {
         localizationDict = {};
