@@ -439,7 +439,7 @@ makeClass(TweenAction, {
     }
 }, {}, Tween);
 
-function KeyframesAnimation(o, p, frames, loopTime, easing, loopDisabled, lerpFactor) {
+function KeyframesAnimation(o, p, frames, loopTime, easing, loopDisabled, lerpFactor, speed) {
     var t = this;
     t.o = o;
     t.p = p;
@@ -454,6 +454,7 @@ function KeyframesAnimation(o, p, frames, loopTime, easing, loopDisabled, lerpFa
 
     t.__setFrames(frames);
 
+    t.__speed = ifdef(speed, 1);
 }
 
 //debug
@@ -575,11 +576,20 @@ makeClass(KeyframesAnimation, {
         }
     },
 
+    __speedup (mult) {
+        var t = this;
+        this.__speed = mult;
+        if (t.s) {
+            t.s = t.s / mult;
+        }
+    },
+
     __update (time, dt) {
         var t = this;
         //debug
         if (!__forceAnimDt) return;
         //undebug
+        time = time * t.__speed;
 
         if (t.r) {
             t.s = time;
@@ -715,7 +725,7 @@ makeClass(KeyframesAnimation, {
         }
 
         //debug
-        time = __forceAnimTime;
+        time = __forceAnimTime * t.__speed;
         //undebug
 
         var elapsed = time - t.s;

@@ -4397,7 +4397,7 @@ var NodeCloneProperties = {
                     }
 
                     $each(v, function (vv, p) {
-                        tween.__push(t.____keyframesAnimations[p] = new KeyframesAnimation(t, p, vv, kf.loop, kf.__easing, kf.__loopDisabled, kf.__lerp));
+                        tween.__push(t.____keyframesAnimations[p] = new KeyframesAnimation(t, p, vv, kf.loop, kf.__easing, kf.__loopDisabled, kf.__lerp, kf.__speed));
                     });
                 }
 
