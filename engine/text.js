@@ -445,7 +445,7 @@ mergeObj(TextPrototype, {
                         // todo: ALIGN_RIGHT?
                         for (var k = 0; k < text.length; k++) {
                             c = text.charAt(k);
-                            t.__fill(c, x, y);
+                            t.__fill(c, x, y * sf);
                             //Increment X by wChar + spacing
                             x += (charw ? charw : t.__ctx.measureText(c).width) + fontspacing;
                         }
