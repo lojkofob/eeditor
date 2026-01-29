@@ -24,6 +24,7 @@ var __ON_GAME_LOADED = '__ON_GAME_LOADED'
     , __ON_KEY_UP = '__ON_KEY_UP'
     , __ON_NODE_SELECTED = '__ON_NODE_SELECTED'
     , __ON_NODE_UNSELECTED = '__ON_NODE_UNSELECTED'
+    , __MUTE_SOUND = '__MUTE_SOUND'
     //debug
     , __OBJECT_CHANGED = '__OBJECT_CHANGED'
     , __UNDO = 'UNDO'

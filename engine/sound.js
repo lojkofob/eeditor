@@ -95,9 +95,14 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
             }
 
             if (!howl.soundsEventListenersAdded) {
-                BUS.__addEventListener(__ON_VISIBILITY_CHANGED, (t, visible) => {
-                    howl.mute(!visible);
-                });
+                var visible = 1, muted, _tmp1, _tmp2, chk = a => {
+                    _tmp1 = !(visible && !muted);
+                    if (_tmp1 != _tmp2) howl.mute(_tmp2 = _tmp1);
+                };                
+                BUS.__addEventListeners(
+                    __ON_VISIBILITY_CHANGED, (t, _visible) => chk(visible = _visible),
+                    __MUTE_SOUND, (m, _muted) => chk(muted = _muted)
+                );
                 howl.soundsEventListenersAdded = 1;
             }
         }
