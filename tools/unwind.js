@@ -21,21 +21,30 @@ function unwindMagicVariables(env, data, src, dst, tmp) {
             data = o;
         } else if (isString(data)) {
 
-            var changed = tmp.changed;
+            var changed = tmp.changed, force_use_str;
 
             data = data.replace(new RegExp('\\$' + src + "\\?([^:]*):([^;]*);", 'g'), function (g, a, b) {
                 tmp.changed++;
                 return (isNumeric(dst) ? Number(dst) : dst) ? a : b;
             });
 
-            data = data.replace(new RegExp('\\$' + src, 'g'), function () {
+            data = data.replace(new RegExp('\\$\\$' + src, 'g'), function () {
                 tmp.changed++;
+                force_use_str = 1;
                 return dst;
             });
+
+            if (!force_use_str) {
+                data = data.replace(new RegExp('\\$' + src, 'g'), function () {
+                    tmp.changed++;
+                    return dst;
+                });
+            }
 
             if (tmp.changed != changed) {
                 if (data === "false") data = false;
                 if (data === "true") data = true;
+                if (!force_use_str && isNumeric(data)) data = Number(data);
             }
 
         }

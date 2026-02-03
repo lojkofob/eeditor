@@ -126,6 +126,7 @@ function getJson(filename, onload, onprogress, usePacking, onerror) {
 function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
     tablesCache[t] = {};
     var table = getDataTableSources(t);
+    if (!table) return;    
     var format = table.__format;
     var subformats = table.__subformats;
     if (format) {
