@@ -207,14 +207,15 @@ function updateCamera(w, h, cam, x, y) {
 }
 
 
-function setupWindowOptions(force, w, h, pixelRatio) { }
+var setupWindowOptions = () => { }
 
-function getWindowDocumentSize() {
-    var de = __document.documentElement || 0,
-        w = ((__window.innerWidth && de.clientWidth) ? mmin(__window.innerWidth, de.clientWidth) : (__window.innerWidth || de.clientWidth)) || screen.width,
-        h = ((__window.innerHeight && de.clientHeight) ? mmin(__window.innerHeight, de.clientHeight) : (__window.innerHeight || de.clientHeight)) || screen.height;
-    return [w, h];
-}
+    , getWindowDocumentSize = () => {
+        var de = __document.documentElement || 0,
+            w = ((__window.innerWidth && de.clientWidth) ? mmin(__window.innerWidth, de.clientWidth) : (__window.innerWidth || de.clientWidth)) || screen.width,
+            h = ((__window.innerHeight && de.clientHeight) ? mmin(__window.innerHeight, de.clientHeight) : (__window.innerHeight || de.clientHeight)) || screen.height;
+        return [w, h];
+    }
+
 function onWindowResize(force) {
 
     var wsz = getWindowDocumentSize(),
@@ -223,12 +224,12 @@ function onWindowResize(force) {
     if (!force && (w == _cszw && h == _cszh))
         return;
 
-    var scaleFactorMult = options.__isDeviceQualityLow ? 0.5 : 1;
+    var scaleFactorMult = options.__isDeviceQualityLow ? 0.5 : 1
+        , pixelRatio = options.__scaleFactor ? scaleFactorMult * options.__scaleFactor : clamp(scaleFactorMult * (__window.devicePixelRatio || 1), 1, 2)
+        , a = setupWindowOptions(force, w, h, pixelRatio);
 
-    var pixelRatio = options.__scaleFactor ? scaleFactorMult * options.__scaleFactor : clamp(scaleFactorMult * (__window.devicePixelRatio || 1), 1, 2);
-
-    setupWindowOptions(force, w, h, pixelRatio);
-
+    if (isArray(a)) { w = a[0] || w; h = a[1] || h; }
+    
     _cszw = w;
     _cszh = h;
 
