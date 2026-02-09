@@ -70,7 +70,7 @@ var localizationLang
 , __checkUserLanguage = l => {
     if (l) {
         var __check_lang = isObject(options.__supportedLangs) ? __check_lang_o : __check_lang_a
-            , subs = l.indexOf('_') > 0, defis = l.indexOf('_') > 0;
+            , subs = l.indexOf('_') > 0, defis = l.indexOf('-') > 0;
 
         l = l.toLowerCase();
         

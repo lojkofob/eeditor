@@ -77,12 +77,8 @@ function getCachedData(name, obj) {
                 name = name.slice(options.__projectServerPath.length); j = obj[name];
             }
         }
-
         return j;
     }
-    //debug
-    console.assert('wtf?');
-    //undebug
     return obj[name];
 }
 
@@ -90,13 +86,8 @@ function setCachedData(name, j, obj) {
     var obj = obj || globalConfigsData;
     if (isString(name)) {
         if (name.indexOf('?')) name = name.split('?')[0];
-        obj[name] = j;
-        return j;
     }
-    //debug
-    console.assert('wtf?');
-    //undebug
-    obj[name] = j;
+    if (j == null || j == undefined) delete obj[name]; else obj[name] = j;
     return j;
 }
 
