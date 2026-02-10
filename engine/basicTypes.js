@@ -172,6 +172,10 @@ makeClass(MyBufferAttribute, {
             t.__array, t.__notDestruct,
             t.__instansingDivisor, t.__stride
         );
+    },
+
+    __getSubData(start, count){
+        return this.__array.slice(start * this.__itemSize, (start + count) * this.__itemSize)
     }
 
 });

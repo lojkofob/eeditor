@@ -295,7 +295,7 @@ function showSomeHtml(html) {
 }
 
 
-function showImage(i) {
+function showImage(i, name) {
     setTimeout(function () {
 
         if (globalConfigsData.__frames[i])
@@ -316,7 +316,7 @@ function showImage(i) {
 
                 updateCamera(sz.x, sz.y, cam, lx, ly);
 
-                return showImage(renderNodeToTexture(i, { __camera: cam }));
+                return showImage(renderNodeToTexture(i, { __camera: cam }), i.name || i.id);
             }
             else
                 if (i instanceof HTMLImageElement) {
@@ -334,7 +334,11 @@ function showImage(i) {
                             return;
                         }
 
-        showSomeHtml("<img src='" + i + "'/>");
+        if (i) {
+            showSomeHtml("<img src='" + i + "' id='e_scr_img'/>");
+            downloadHref(i, "image/png", (name ? name : 'screenshot') + '.png' )
+        }
+
     }, 100);
 }
 

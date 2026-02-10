@@ -254,17 +254,28 @@ function onFileContextMenu() {
 }
 
 function downloadString(text, fileType, fileName) {
-    var blob = new Blob([text], { type: fileType });
+    downloadBlob(new Blob([text], { type: fileType }), fileType, fileName);
+}
+
+
+function downloadHref(href, fileType, fileName) {
     var a = document.createElement('a');
     a.download = fileName;
-    a.href = URL.createObjectURL(blob);
+    a.href = href;
     a.dataset.downloadurl = [fileType, a.download, a.href].join(':');
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+}
+ 
+
+function downloadBlob(blob, fileType, fileName) {
+    var o_url = URL.createObjectURL(blob);
+    downloadHref(o_url, fileType, fileName)
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
 }
+ 
 
 function resetImgNode() {
 

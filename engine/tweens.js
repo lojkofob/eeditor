@@ -142,7 +142,7 @@ makeClass(Tween, {
     },
 
     __softkill(){
-        this.__update = a => 1;
+        this.__markedForRemove = this.__update = a => 1;
     }
 
 }, {}, UpdatableProto);
