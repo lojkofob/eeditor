@@ -47,6 +47,22 @@
         renderInfo: function (n) {
             renderInfoPanel = n;
 
+            renderInfoPanel.__traverse( 
+                c => {
+                    // disable panel render calculations
+                    c.__render = function(){
+                        var tmp = {};
+                        for (var i in renderInfoNeedRecalcs) {
+                            tmp[i] = renderInfo[i];
+                        }
+                        NodePrototype.__render.apply(this, arguments);
+                        for (var i in renderInfoNeedRecalcs) {
+                            renderInfo[i] = tmp[i];
+                        }
+                    }
+                }
+            );
+
             _setInterval(function () {
                 if (renderInfoPanel.__deepVisible()) {
                     fillInfo('matrx', ['matrixUpdates', 'matrixWorldUpdates', 'matrixScrollUpdates']),
