@@ -1364,72 +1364,17 @@ makeClass(Vector3, {
         );
     },
 
-    __copy(v) {
+    __copy(v) { this.x = v.x; this.y = v.y; this.z = v.z; return this; },
 
-        this.x = v.x;
-        this.y = v.y;
-        this.z = v.z;
+    add(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; },
+    __add(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; },
+    sub(v) { this.x -= v.x; this.y -= v.y; this.z -= v.z;  return this; },
+    __sub(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; },
 
-        return this;
-
-    },
-
-    add(v) {
-
-        this.x += v.x;
-        this.y += v.y;
-        this.z += v.z;
-
-        return this;
-
-    },
-
-
-    __subVectors(a, b) {
-        this.x = a.x - b.x;
-        this.y = a.y - b.y;
-        this.z = a.z - b.z;
-        return this;
-    },
-
-
-    __addScaledVector(v, s) {
-        this.x += v.x * s;
-        this.y += v.y * s;
-        this.z += v.z * s;
-        return this;
-    },
-
-    sub(v) {
-
-        this.x -= v.x;
-        this.y -= v.y;
-        this.z -= v.z;
-
-        return this;
-
-    },
-
-    __multiply(v) {
-
-
-        this.x *= v.x;
-        this.y *= v.y;
-        this.z *= v.z;
-
-        return this;
-
-    },
-
-    __multiplyScalar(scalar) {
-
-        this.x *= scalar;
-        this.y *= scalar;
-        this.z *= scalar;
-
-        return this;
-
-    },
+    __subVectors(a, b) { this.x = a.x - b.x; this.y = a.y - b.y; this.z = a.z - b.z; return this; },
+    __addScaledVector(v, s) { this.x += v.x * s; this.y += v.y * s; this.z += v.z * s; return this; },
+    __multiply(v) { this.x *= v.x; this.y *= v.y; this.z *= v.z; return this; },
+    __multiplyScalar(scalar) { this.x *= scalar; this.y *= scalar; this.z *= scalar; return this; },
 
 
     __rotateAroundZ0(angle) {
@@ -1631,7 +1576,7 @@ makeClass(Vector4, {
 
     },
 
-    add(v, w) {
+    add(v) {
 
         this.x += v.x;
         this.y += v.y;

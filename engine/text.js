@@ -96,6 +96,7 @@ function parseHexColor(text, k, index, d) {
     var color = new Color(1, 1, 1);
 
     if (d == ';') return color;
+    d = d.toLowerCase();
     if (((d >= 'a') && (d <= 'f')) || ((d >= '0') && (d <= '9'))) {
         var l = 0, c = 0, s = '', ll = index + 8;
         for (; k <= ll; k++) {

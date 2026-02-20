@@ -2578,7 +2578,27 @@ ObjectDefineProperties(ParticleEmitterPrototype, {
 
 
 
-
+function smartToFixedDeep(obj) {
+    if (isNumeric(obj)) {
+        obj = Number(obj);
+        var aobj = abs(obj);
+        if (aobj < 0.1) {
+            obj = Number(obj.toFixed(6));
+        } else
+        if (aobj < 1) {
+            obj = Number(obj.toFixed(4));
+        } else 
+        if (aobj < 10) {
+            obj = Number(obj.toFixed(2));
+        } else {
+            obj = parseInt(obj.toFixed(0));
+        }
+    }
+    else if (typeof obj == 'object') {
+        for (var i in obj) obj[i] = smartToFixedDeep(obj[i]);
+    }
+    return obj;
+} 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -2661,7 +2681,8 @@ makeClass(ParticleEffect, {
             if (!v.__emitters) v.__emitters = [];
             v.__emitters.push(this.__emitters[j].__toJson())
         }
-        return v;
+
+        return smartToFixedDeep(v);
     }
 
 
@@ -2729,6 +2750,7 @@ ParticleEmitterPrototype.__toJson = function () {
     }
 
     v.__componentsList = EffectComponentsFactory.__componentsToJson(this.__components);
+
     return v;
 
 }
