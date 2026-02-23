@@ -533,12 +533,15 @@ mergeObj(TextPrototype, {
 
         if (t.__autoRecalcOnResize) {
 
-            if (!t.__cachedSize) {
-                t.__cachedSize = size;
+            var cachedSize = t.__cachedSize;
+            if (!cachedSize) {
+                cachedSize = t.__cachedSize = size;
             }
 
-            if (t.__cachedSize.x != size.x || t.__cachedSize.y != size.y) {
+            if (cachedSize.x != size.x || cachedSize.y != size.y) {
                 t.__needUpdate = 1;
+                cachedSize.x = size.x;
+                cachedSize.y = size.y;
             }
 
         }
