@@ -615,7 +615,9 @@ function resetAllEngine() {
         __smallCaps: false,
         __fontWeight: 0,
         __gradient: 0,
-        __symbol_align: 0
+        __symbol_align: 1,
+        __bbMult: 0.05,
+        __bb_align: 0
     };
 
 

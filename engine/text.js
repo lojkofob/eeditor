@@ -403,20 +403,41 @@ mergeObj(TextPrototype, {
         t.__ctx.fillText(text, x, y);
     },
 
-    // find needed texture size and cache lines params for drawing
 
-    __calcWidthReturnNum(txt) {
-        var t = this;
-        return round((t.__charw > 0 ? t.__charw * txt.length * t.__scaleFactor : tempCalcCanvasContext.measureText(txt).width) + (txt.length - 1) * t.__fontspacing * t.__scaleFactor + 1)
-    },
-
-    __calcWidthReturnObj(txt) {
-        var t = this;
-        txt = txt.replace(/\\[^;]*;/g, '');
+    __measureText(ctx, txt){
+        var t = this
+            , fallback = t.__fontsize * t.__bbMult
+            , metrics = ctx.measureText(txt)
+            , width = metrics.width
+            , left = ifdef(get1(metrics, 'actualBoundingBoxLeft'), fallback)
+            , right = get1(metrics, 'actualBoundingBoxRight');
+        right = right == undefined ? fallback : right - width;
         return {
-            w: t.__calcWidthReturnNum(txt),
-            t: txt
+            t: txt,
+            w: width, 
+            l: left,
+            r: right
         }
+    },
+    // find needed texture size and cache lines params for drawing
+ 
+    __calcWidthReturnObj(txt) {
+        var t = this, metrics;
+        txt = txt.replace(/\\[^;]*;/g, '');
+
+        if (t.__charw > 0) {
+            var fallback = t.__charw * t.__bbMult;
+            metrics = {
+                w: t.__charw * txt.length * t.__scaleFactor,
+                l: fallback,
+                r: fallback,
+                t: txt
+            };
+        } else {
+            metrics = t.__measureText(tempCalcCanvasContext, txt);
+        }
+        metrics.w = round(metrics.w + (txt.length - 1) * t.__fontspacing * t.__scaleFactor + 1);
+        return metrics;
     },
 
     __drawString(text, x, y, bySymbol) {
@@ -433,23 +454,18 @@ mergeObj(TextPrototype, {
 
             if (text) {
                 if (bySymbol) {
-                    var c = 0
-                    if (t.__symbol_align == ALIGN_CENTER && charw) {
-                        for (var k = 0; k < text.length; k++) {
-                            c = text.charAt(k);
-                            var cw = t.__ctx.measureText(c).width
-                            t.__fill(c, x + (charw - cw) / 2, y * sf);
-                            //Increment X by wChar + spacing
-                            x += charw + fontspacing;
-                        }
-                    } else {
-                        // todo: ALIGN_RIGHT?
-                        for (var k = 0; k < text.length; k++) {
-                            c = text.charAt(k);
-                            t.__fill(c, x, y * sf);
-                            //Increment X by wChar + spacing
-                            x += (charw ? charw : t.__ctx.measureText(c).width) + fontspacing;
-                        }
+                    var metricsCachedMap = new Map(), c
+                        , symbol_align_factor = t.__symbol_align / 2
+                        , bb_align_factor = t.__bb_align;
+                    for (var k = 0; k < text.length; k++) {
+                        c = text.charAt(k);
+                        var metrics = metricsCachedMap[c] || (metricsCachedMap = t.__measureText(t.__ctx, c)),
+                            cw = metrics.w;
+
+                        t.__fill(c, x + (charw ? (charw - cw) * symbol_align_factor : 0) + bb_align_factor * (-metrics.r * symbol_align_factor + metrics.l * (1 - symbol_align_factor)), y * sf);
+
+
+                        x += (charw ? charw : cw) + fontspacing;                        
                     }
                 } else {
                     if (i > 0 && lastDrawToken) {
@@ -607,25 +623,16 @@ mergeObj(TextPrototype, {
 
                     var pushtocache = function (text) {
 
-                        var textWidth;
-
-                        if (isObject(text)) {
-                            textWidth = text.w;
-                            text = text.t;
+                        if (!isObject(text)) {
+                            text = t.__calcWidthReturnObj(text);
                         }
-                        else {
-                            textWidth = t.__calcWidthReturnObj(text).w / sf;
-                        }
-                        var realTextWidth = textWidth + rwDiff;
 
-                        w = mmax(w, textWidth);
-                        rw = mmax(rw, realTextWidth);
+                        text.w /= sf;
+                        w = mmax(w, text.w);
+                        
+                        text.y = (fs + linespacing) * cachedlines.length;
 
-                        cachedlines.push({
-                            t: text,
-                            w: textWidth,
-                            y: (fs + linespacing) * cachedlines.length
-                        });
+                        cachedlines.push(text);
 
                     }
 
@@ -654,7 +661,7 @@ mergeObj(TextPrototype, {
                                     dotted = 1;
 
                                     var ltext = text.substring(0, l).trimEnd()
-                                        , ltextWidth = cachedMap[l] ? cachedMap[l] : (cachedMap[l] = t.__calcWidthReturnNum(ltext));
+                                        , ltextWidth = cachedMap[l] ? cachedMap[l] : (cachedMap[l] = t.__calcWidthReturnObj(ltext).w);
 
                                     l = ltext.length;
 
@@ -667,7 +674,7 @@ mergeObj(TextPrototype, {
                                             var pnextl = clamp(floor((l + end) / 2), l + 1, end)
                                                 , nexttext = text.substring(0, pnextl).trimEnd()
                                                 , nextl = nexttext.length
-                                                , nexttextWidth = cachedMap[nextl]?  cachedMap[nextl] : (cachedMap[nextl] = t.__calcWidthReturnNum(nexttext));
+                                                , nexttextWidth = cachedMap[nextl]?  cachedMap[nextl] : (cachedMap[nextl] = t.__calcWidthReturnObj(nexttext).w);
                                             _clamptext(nexttext, l, ltextWidth, nextl, nexttextWidth)
                                         }
                                     } else {
@@ -683,11 +690,11 @@ mergeObj(TextPrototype, {
                                     text = t.__calcWidthReturnObj(text.trimEnd());
                                 }
                                 if (text.w > availableWidth) {
-                                    availableWidth = size.x * sf - t.__calcWidthReturnNum(dots);
+                                    availableWidth = size.x * sf - t.__calcWidthReturnObj(dots).w;
                                     cachedMap[text.t.length] = text.w;
                                     _clamptext(text.t, 0, 0, text.t.length, text.w);
                                 } else {
-                                    pushtocache(text.t);
+                                    pushtocache(text);
                                 }
                             };
 
@@ -867,52 +874,61 @@ mergeObj(TextPrototype, {
                         }
                     }
 
+                    var left = 0, right = 0, align_factor = t.__align / 2;
+                    
                     for (var i = 0; i < cachedlines.length; i++) {
-                        cachedlines[i].x = t.__align * (-cachedlines[i].w + w) / 2 * sf;
+                        var cl = cachedlines[i];
+                        cl.x = (-cl.w + w) * align_factor * sf 
+                            + t.__bb_align * (-cl.r * align_factor + cl.l * (1 - align_factor));
+
+                        left = mmax(cl.l, left);
+                        right = mmax(cl.r, right);
                     }
 
                     var linesCount = cachedlines.length;
 
                     h = linesCount * fs + (linesCount - 1) * linespacing;
-                    rh = floor((linesCount + getFontDescent()) * fs + (linesCount - 1) * linespacing + rhDiff);
-                    rw = floor(rw + lineWidth * 2 + (t.__italic ? fs * 0.1 : 0));
+                    rh = round((linesCount + getFontDescent()) * fs + (linesCount - 1) * linespacing + rhDiff);
+                    rw = round(w + lineWidth * 2 + (t.__italic ? fs * 0.1 : 0) + rwDiff);
 
-                    canvas.width = rw * sf;
+                    var lwDiff = left + right;
+
+                    canvas.width = rw * sf + lwDiff;
                     canvas.height = rh * sf;
 
                     var ctx = canvas.getContext('2d');
                     t.__ctx = ctx;
 
                     if (shadow) {
-                        mergeObj(ctx, {
-                            shadowColor: color_to_string(shadow.__color, shadow.__alpha),
-                            shadowOffsetX: shadowX * sf,
-                            shadowOffsetY: shadowY * sf,
-                            shadowBlur: shadowBlur / shadowBlurTextureSizeMultiplier * sf
-                        });
+                        set(ctx, 
+                            'shadowColor', color_to_string(shadow.__color, shadow.__alpha),
+                            'shadowOffsetX', shadowX * sf,
+                            'shadowOffsetY', shadowY * sf,
+                            'shadowBlur', shadowBlur / shadowBlurTextureSizeMultiplier * sf
+                        );
                     }
 
                     if (lineWidth > 0) {
-                        mergeObj(ctx, {
-                            lineWidth: lineWidth * sf,
-                            strokeStyle: color_to_string(t.__lineColor, t.__lineAlpha)
-                        });
+                        set(ctx, 
+                            'lineWidth', lineWidth * sf,
+                            'strokeStyle', color_to_string(t.__lineColor, t.__lineAlpha)
+                        );
                     }
 
-                    mergeObj(ctx, {
-                        font: t.__getFont(fs),
-                        fillStyle: t.__gradient ? createTextGradientStyle(t.__gradient, ctx, canvas) : color_to_string(t.__color /* TODO: t.__alpha */)
-                    });
-
+                    set(ctx, 
+                        'font', t.__getFont(fs),
+                        'fillStyle', t.__gradient ? createTextGradientStyle(t.__gradient, ctx, canvas) : color_to_string(t.__color /* TODO: t.__alpha */)
+                    );
 
                     // drawing text
-                    var bySymbol = (t.__fontspacing != 0 || charw != 0);
+                    var bySymbol = (t.__fontspacing != 0 || charw != 0)
+                        , texture_w = rw * sf + lwDiff
+                        , texture_h = rh * sf;
 
+                    startedX += left;
                     for (var i = 0; i < cachedlines.length; i++) {
-
-                        var cachedLine = cachedlines[i];
-                        t.__drawString(cachedLine.t, cachedLine.x + startedX, cachedLine.y + startedY, bySymbol);
-
+                        var cl = cachedlines[i];
+                        t.__drawString(cl.t, cl.x + startedX, cl.y + startedY, bySymbol);
                     }
 
 
@@ -940,15 +956,15 @@ mergeObj(TextPrototype, {
                             map: texture,
                             color: jsonToColor(t.__color)
                         },
-                            'w', rw * sf,
-                            'h', rh * sf,
+                            'w', texture_w,
+                            'h', texture_h,
                             'fs', fs,
                             'lw', lineWidth);
 
                         looperPost(function () {
                             delete t.__notReady;
                             t.__updateGeometry().__updateMatrixWorld();
-                            var bufferTexture = renderOverTexture(rw * sf, rh * sf, shaderOpts);
+                            var bufferTexture = renderOverTexture(texture_w, texture_h, shaderOpts);
                             t.__clearTexture();
                             //cheats
                             renderInfo.textsTextures++
@@ -978,7 +994,7 @@ mergeObj(TextPrototype, {
                         y: -mmax(0, shadowBlur + shadowY) + rh / 2 - fs * getFontDescent()
                     };
 
-                    t.__size = [rw, rh];
+                    t.__size = [rw + lwDiff / sf, rh];
 
                     if (t.__cacheCanvas) {
                         t.__canvas = canvas;
