@@ -1969,7 +1969,7 @@ var ParticleEmitterPrototype =
                 t.__firstInited = 1;
             }
 
-            for (var i in components) {
+            for (var i = 0; i < components.length; i++) {
                 var component = EffectComponentsFactory.__createComponentFromJson(deepclone(components[i]));
 
                 t.__addComponent(component);

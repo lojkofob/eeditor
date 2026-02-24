@@ -414,6 +414,7 @@ override$(ArrayPrototype,
     function (fl, f) { return this.filter(fl).map(f); } // $filterAndMap
 );
 
+    
 override$(ObjectPrototype,
     function (f) { for (var i in this) f(this[i], i); }, // $each
     function (f) { var a = [], i; for (i in this) if (f(this[i], i)) a.push(this[i]); return a; }, // $filter
@@ -442,6 +443,20 @@ function $filterAndMap(a, fl, f) { return $getff(a, 'N$', fl, f); }
 function $filterObject(a, f) { var b = {}; for (var i in a) if (f(a[i], i)) b[i] = a[i]; return b; }
 function $mapArrayToObject(a, f) { var o = {}; if (a) { for (var i = 0; i < a.length; i++) o[f(a[i], i)] = a[i]; } return o; }
 function $mapObjectToArray(o, f) { var a = []; if (o) { for (var i in o) a.push(f(o[i], i)); } return a; }
+
+
+// Array.prototype.flat polifill
+function $flatten(a, r, d) {
+    for (var i = 0; i < a.length; i++) {
+        var element = a[i];
+        isArray(element) && d > 0 ? flatten(element, d - 1, r) : r.push(element);
+    }
+    return r;
+}
+if (!ArrayPrototype.flat) {
+    ArrayPrototype.flat = get1(ArrayPrototype, 'flat') || function(depth) { return $flatten(this, [], ifdef(depth, 1)); };
+}
+
 
 function __$call_args(a, args) {
     if (isFunction(a)) { a.apply(this, args); } else { $each(a, function (f) { __$call_args.call(a, f, args); }); }
@@ -921,7 +936,7 @@ function toFixedDeep(obj, d) {
 function explodeString(str, delimeter, noempty) {
     if (!str) return [];
     str = str.split(delimeter || ',');
-    if (noempty) {
+    if (ifdef(noempty, 1)) {
         var j = 0;
         for (var i = 0; i < str.length; i++) {
             var ss = str[i].trim();
@@ -933,11 +948,10 @@ function explodeString(str, delimeter, noempty) {
             str.length = j;
         }
     } else {
-
-        for (var i in str) str[i] = str[i].trim();
+        for (var i = 0; i < str.length; i++) {
+            str[i] = str[i].trim();
+        }
     }
-
-
     return str;
 }
 

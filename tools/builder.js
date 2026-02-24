@@ -427,24 +427,28 @@ var subtargetsBuilders = {
 
         var compressor = d.compressor || 'gcc';
 
-        function minify(dst, args, advanced, src) {
+        
+        var _myminify = ifdef(d.myminify, d.configuration == 'release')
+            , _advanced = ifdef(d.advanced, d.configuration == 'release')
+            , _pretty = ifdef(d.pretty, d.configuration != 'release')
+            , _wrap = ifdef(d.wrap, d.configuration == 'release')
 
+        function minify(dst, args, advanced, src) {
             spawntool('node-minify', [
                 args || '',
                 '-t', compressor,
                 d.es6 != false ? '--es6' : '',
                 advanced ? '--ADVANCED_OPTIMIZATIONS' : '',
-                d.myminify ? '--myminify' : '',
-                d.pretty ? '--PRETTY' : '',
+                _myminify ? '--myminify' : '',
+                _pretty ? '--PRETTY' : '',
                 d.rmdebug ? '--rmdebug ' + d.rmdebug : '',
                 env.CHEATS ? '' : '--rmcheats',
                 '-o', dst,
                 src || collectSourcesStr(d.src, d.srcdir)
             ]);
-
         }
 
-        if (d.wrap) {
+        if (_wrap) {
 
             var dst = 'min_nowrapped.js';
             var wdst = 'min_wrapped.js';
@@ -459,9 +463,9 @@ var subtargetsBuilders = {
                 header += "'use strict';";
             }
 
-            if (isObject(d.wrap)) {
-                d.wrapFuncName = d.wrap.funcName || d.wrapFuncName;
-                d.wrapFuncHeader = d.wrap.funcHeader || d.wrapFuncHeader;
+            if (isObject(_wrap)) {
+                d.wrapFuncName = ifdef(_wrap.funcName, d.wrapFuncName);
+                d.wrapFuncHeader = ifdef(_wrap.funcHeader, d.wrapFuncHeader);
             }
 
             if (isString(d.wrapFuncHeader)) {
@@ -470,22 +474,22 @@ var subtargetsBuilders = {
 
             var wrapfile = readFileSync(dst);
 
-            if (d.wrap.noJscomp) {
+            if (_wrap.noJscomp) {
                 wrapfile = wrapfile.substring(2113);
             }
 
-            if (!d.wrap.noFunc) {
+            if (!_wrap.noFunc) {
                 wrapfile = "(function" + (d.wrapFuncName ? " " + d.wrapFuncName : "") + "(){" + header + wrapfile + "}).bind(this)()";
             }
 
             fs.writeFileSync(wdst, wrapfile);
 
-            minify(d.dst, d.wrap.args, d.advanced, wdst);
+            minify(d.dst, _wrap.args, _advanced, wdst);
 
         }
         else {
 
-            minify(d.dst, d.args, d.advanced);
+            minify(d.dst, d.args, _advanced);
 
         }
     },

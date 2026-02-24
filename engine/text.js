@@ -867,7 +867,7 @@ mergeObj(TextPrototype, {
                         }
                     }
 
-                    for (var i in cachedlines) {
+                    for (var i = 0; i < cachedlines.length; i++) {
                         cachedlines[i].x = t.__align * (-cachedlines[i].w + w) / 2 * sf;
                     }
 
@@ -908,7 +908,7 @@ mergeObj(TextPrototype, {
                     // drawing text
                     var bySymbol = (t.__fontspacing != 0 || charw != 0);
 
-                    for (var i in cachedlines) {
+                    for (var i = 0; i < cachedlines.length; i++) {
 
                         var cachedLine = cachedlines[i];
                         t.__drawString(cachedLine.t, cachedLine.x + startedX, cachedLine.y + startedY, bySymbol);
