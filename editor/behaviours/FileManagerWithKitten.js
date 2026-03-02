@@ -411,7 +411,7 @@ var Model3dPreviewerWorker = {
                 deactivateProjectOptions();
 
                 imagePreview.set.__onTap = function () {
-                    invokeEventWithKitten('set', { __img: imgNode.__img });
+                    invokeEventWithKitten('set', { __img: getFrameName(imgNode.__img) || imgNode.__img });
                     invokeEventWithKitten('Editor.closePanel', { caller: this });
                     return 1;
                 }

@@ -58,7 +58,7 @@ var AnimationsWithKitten = (function () {
         } else {
 
             if (forceCreate) {
-                kkf = { __keyframes: {} }
+                kkf = { __keyframes: { __loopDisabled: 1, loop: 0 } }
             }
 
         }
@@ -111,7 +111,7 @@ var AnimationsWithKitten = (function () {
             },
 
             get: function () {
-                var v = 0;
+                var v = 1;
                 eachSelected(function (n) {
                     doWithKeyframes(n, function (frames, keyframes) {
                         v = keyframes.__loopDisabled;
@@ -131,10 +131,10 @@ var AnimationsWithKitten = (function () {
             },
 
             get: function () {
-                var loop = 100;
+                var loop = 0;
                 eachSelected(function (n) {
                     doWithKeyframes(n, function (frames, keyframes) {
-                        loop = Number(keyframes.loop == undefined ? 100 : keyframes.loop);
+                        loop = Number(keyframes.loop == undefined ? 0 : keyframes.loop);
                     }, 0, 1);
                 });
                 return loop;
