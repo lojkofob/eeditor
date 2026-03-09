@@ -6,5 +6,5 @@ uniform float opacity;
 void main() {
     vec4 c = texture2D( map, vUv );
     c.rgb *= color;
-    gl_FragColor = c * opacity;    
+    gl_FragColor = c * opacity + vec4(0.1, 0.1, 0.1, 0.1);
 } 

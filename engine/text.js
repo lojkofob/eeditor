@@ -302,16 +302,16 @@ function tokenizeFullText(text) {
     return out;
 }
 
-// Split tokens into lines (ranges). Returns array of { start, end }.
+// Split tokens into lines (ranges). Returns array of { __start, __end }.
 function getLinesFromTokens(tokens) {
     var lines = [], start = 0;
     for (var i = 0; i < tokens.length; i++) {
         if (tokens[i] instanceof NewLineToken) {
-            lines.push({ start: start, end: i });
+            lines.push({ __start: start, __end: i });
             start = i + 1;
         }
     }
-    lines.push({ start: start, end: tokens.length });
+    lines.push({ __start: start, __end: tokens.length });
     return lines;
 }
 
@@ -441,10 +441,16 @@ function trimLineTokensToWidth(t, tokens, start, end, maxWidth, dotsWidth) {
                             */
 
 // Split a line at needWidth. Mutates tokens: replaces split token with prefix, inserts suffix after it.
-// Returns { firstEnd, nextEnd, metrics } — first line = tokens[start..firstEnd), metrics for first part (no extra measureLineTokens).
-function splitLineTokens(t, tokens, start, end, needWidth) {
+// Returns { __start, __end, __metrics [, __trimStart ] } — first line = tokens[start..__start), next line = tokens[__start..__end).
+function splitLineTokens(t, tokens, start, end, needWidth, opts) {
     var ctx = tempCalcCanvasContext;
     if (!ctx) return null;
+    if (opts && opts.__trimStart) {
+        for (var j = start; j < end; j++) {
+            var t0 = tokens[j];
+            if (t0 && t0.v !== undefined) { t0.v = String(t0.v).trimStart(); break; }
+        }
+    }
     var sf = t.__scaleFactor, fs = t.__fontsize, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
     var autowrapMap = (options.__localization||{}).__autowrapMap || 0;
     var totalW = 0, firstL = 0, lastR = 0, firstSet = 0;
@@ -488,7 +494,7 @@ function splitLineTokens(t, tokens, start, end, needWidth) {
                         if (canWrapSymbol && canWrapSymbol(txt, pos)) { suffixStart = pos; break; }
                     }
                 }
-                if (suffixStart < 0) return null;
+            
             } else {
                 textWidth = t.__measureText(ctx, txt).w + (len - 1) * fontspacing + 1;
                 if (textWidth <= need) {
@@ -516,9 +522,14 @@ function splitLineTokens(t, tokens, start, end, needWidth) {
                         if (j > 0 && txt.charAt(j) === ' ') { suffixStart = j + 1; break; }
                     }
                 }
-                if (suffixStart < 0) return null;
+                
             }
-            if (suffixStart <= 0) return null;
+
+            if (suffixStart < 0) return {
+                __start: i + 1, __end: end, __metrics: measureLineTokens(t, tokens, start, i + 1),
+                __trimStart: 1
+            };
+
             var prefix = txt.substring(0, suffixStart);
             var suffix = txt.substring(suffixStart);
             var suffixHadLeadingSpaces = (suffix.length - suffix.trimStart().length > 1);
@@ -609,16 +620,22 @@ function splitLineTokens(t, tokens, start, end, needWidth) {
             prefixTok.v = prefixTok.v.trimEnd();
             if (suffixTok) suffixTok.v = suffixTok.v.trimStart();
             metrics = measureLineTokens(t, tokens, start, firstEndIdx);
-            return { firstEnd: firstEndIdx, nextEnd: nextEndIdx, metrics: metrics };
+            return { __start: firstEndIdx, __end: nextEndIdx, __metrics: metrics };
         }
     }
     return null;
 }
 
 // Measure a line (token range). Returns { w, l, r, h }
-function measureLineTokens(t, tokens, start, end) {
+function measureLineTokens(t, tokens, start, end, opts) {
     var ctx = tempCalcCanvasContext;
     if (!ctx) return { w: 0, l: 0, r: 0, h: t.__fontsize };
+    if (opts && opts.__trimStart) {
+        for (var j = start; j < end; j++) {
+            var t0 = tokens[j];
+            if (t0 && t0.v !== undefined) { t0.v = String(t0.v).trimStart(); break; }
+        }
+    }
     var sf = t.__scaleFactor, fs = t.__fontsize, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
     var totalW = 0, firstL = 0, lastR = 0, firstSet = 0;
     
@@ -1007,42 +1024,43 @@ mergeObj(TextPrototype, {
                         var availableWidth = size.x * sf;
                         for (var i = 0; i < tokenLines.length; i++) {
                             var line = tokenLines[i];
-                            var m = measureLineTokens(t, textTokens, line.start, line.end);
+                            var m = measureLineTokens(t, textTokens, line.__start, line.__end);
                             if (m.w > availableWidth) {
-                                var newEnd = trimLineTokensToWidth(t, textTokens, line.start, line.end, availableWidth);
-                                pushtocache(measureLineTokens(t, textTokens, line.start, newEnd), line.start, newEnd);
+                                var newEnd = trimLineTokensToWidth(t, textTokens, line.__start, line.__end, availableWidth);
+                                pushtocache(measureLineTokens(t, textTokens, line.__start, newEnd), line.__start, newEnd);
                             } else {
-                                pushtocache(m, line.start, line.end);
+                                pushtocache(m, line.__start, line.__end);
                             }
                         }
                     } else if (t.__autowrap) {
                         var availableWidth = size.x * sf;
                         var insertOffset = 0;
-                        var wraptext = function (start, end, availableWidth) {
+                        var wraptext = function (opts) {
+                            var start = opts.__start, end = opts.__end;
                             if (end <= start) return 0;
-                            var m = measureLineTokens(t, textTokens, start, end);
+                            var m = measureLineTokens(t, textTokens, start, end, opts);
                             if (m.w <= availableWidth) {
                                 pushtocache(m, start, end);
                                 return 0;
                             }
-                            var split = splitLineTokens(t, textTokens, start, end, availableWidth);
+                            var split = splitLineTokens(t, textTokens, start, end, availableWidth, opts);
                             if (!split) {
                                 pushtocache(m, start, end);
                                 return 0;
                             }
-                            pushtocache(split.metrics, start, split.firstEnd);
-                            return 1 + wraptext(split.firstEnd, split.nextEnd, availableWidth);
+                            pushtocache(split.__metrics, start, split.__start);
+                            return 1 + wraptext({ __start: split.__start, __end: split.__end, availableWidth: availableWidth, __trimStart: split.__trimStart });
                         };
                         for (var i = 0; i < tokenLines.length; i++) {
                             var line = tokenLines[i];
-                            line.start += insertOffset;
-                            line.end += insertOffset;
-                            insertOffset += wraptext(line.start, line.end, availableWidth);
+                            line.__start += insertOffset;
+                            line.__end += insertOffset;
+                            insertOffset += wraptext({ __start: line.__start, __end: line.__end, availableWidth: availableWidth });
                         }
                     } else {
                         for (var i = 0; i < tokenLines.length; i++) {
                             var line = tokenLines[i];
-                            pushtocache(measureLineTokens(t, textTokens, line.start, line.end), line.start, line.end);
+                            pushtocache(measureLineTokens(t, textTokens, line.__start, line.__end), line.__start, line.__end);
                         }
                     }
 
