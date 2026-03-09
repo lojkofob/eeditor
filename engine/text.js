@@ -177,28 +177,477 @@ function parseTextColor(text, k, index) {
 }
 
 
-function tokenizeText(text) {
+// --- Token types: one flat array, draw via token.__draw(t, x, y, bySymbol) -> newX ---
 
+var TextToken = makeClass(function(value) {
+    this.v = value;
+}, { 
+    __calc(t, ctx) {
+
+    },
+
+    __draw(t, x, y, bySymbol) {
+        var text = this.v;
+        if (!text) return x;
+        var sf = t.__scaleFactor, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
+        if (bySymbol) {
+            var metricsCache = {}, c, symbol_align_factor = t.__symbol_align / 2, bb_align_factor = t.__bb_align;
+            for (var k = 0; k < text.length; k++) {
+                c = text.charAt(k);
+                var metrics = metricsCache[c] || (metricsCache[c] = t.__measureText(t.__ctx, c)), cw = metrics.w;
+                t.__fill(c, x + (charw ? (charw - cw) * symbol_align_factor : 0) + bb_align_factor * (-metrics.r * symbol_align_factor + metrics.l * (1 - symbol_align_factor)), y * sf);
+                x += (charw ? charw : cw) + fontspacing;
+            }
+        } else {
+            t.__fill(text, x, y * sf);
+            var m = t.__measureText(t.__ctx, text);
+            x += round(m.w + (text.length - 1) * t.__fontspacing * sf + 1);
+        }
+        return x;
+    }
+});
+
+var ColorToken = makeClass(function(c, d) {
+    this.c = c;
+    this.d = d;
+}, { 
+    __calc(t, ctx) {
+
+    },
+
+    __draw(t, x, y, bySymbol) {
+        var color = this.c, currentColor;
+        if (color === 0xDEAD) {
+            currentColor = t.__color;
+        } else {
+            if (this.d) {
+                currentColor = t.____color == undefined ? t.__color : t.____color;
+            } else {
+                currentColor = color;
+            }
+        }
+        if (!currentColor.__isColor) currentColor = new Color(currentColor);
+        switch (this.d) {
+            case '+': currentColor.add(color); break;
+            case '-': currentColor.sub(color); break;
+            case '*': currentColor.__multiply(color); break;
+            case '/': currentColor.__divide(color); break;
+        }
+        t.____color = currentColor.__clone();
+        t.__ctx.fillStyle = color_to_string(currentColor);
+        return x;
+}});
+
+var FontSizeToken = makeClass(function(fs) {
+    this.fs = fs;
+}, {
+    __calc(t, ctx) {
+        ctx.font = t.__getFont(this.fs);
+        t.__currentLineHeight = mmax(this.fs, t.__currentLineHeight);
+    },
+
+    __draw(t, x, y, bySymbol) {
+        t.__ctx.font = t.__getFont(this.fs);
+        return x;
+    }
+});
+
+var LineHeightToken = makeClass(function(h) {
+    this.h = h;
+}, {
+    __calc(t, ctx) {
+        t.__currentLineHeight = this.h;
+    },
+
+    __draw(t, x, y, bySymbol) {
+        return x;
+    }
+});
+
+var NewLineToken = makeClass(function() {}, { 
+    __draw(t, x, y, bySymbol) {
+    return x;
+}});
+
+// Full tokenization: one flat array including newline tokens. Used from the start of update().
+function tokenizeFullText(text) {
     var re = /\\([^;]+;)/;
-    return $map(text.split(re), function (tokenText) {
+    var parts = text.split(re);
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+        var tokenText = parts[i];
         if (tokenText.endsWith(';')) {
             switch (tokenText.charAt(0)) {
                 case '#':
                     var c = parseTextColor(tokenText, 1);
-                    if (c) {
-                        return c;
-                    }
+                    if (c) { out.push(new ColorToken(c.c, c.d)); }
                     break;
                 case 's':
                     var fontSize = numeric(tokenText.substr(1));
-                    if (fontSize) {
-                        return { fs: fontSize };
-                    }
+                    if (fontSize) { out.push(new FontSizeToken(fontSize)); }
+                    break;
+                case 'h':
+                    var lineHeight = numeric(tokenText.substr(1));
+                    if (lineHeight) { out.push(new LineHeightToken(lineHeight)); }
                     break;
             }
+        } else {
+            var segments = tokenText.split('\n');
+            for (var j = 0; j < segments.length; j++) {
+                if (j > 0) out.push(new NewLineToken());
+                if (segments[j].length) out.push(new TextToken(segments[j]));
+            }
         }
-        return { v: tokenText };
-    });
+    }
+    return out;
+}
+
+// Split tokens into lines (ranges). Returns array of { start, end }.
+function getLinesFromTokens(tokens) {
+    var lines = [], start = 0;
+    for (var i = 0; i < tokens.length; i++) {
+        if (tokens[i] instanceof NewLineToken) {
+            lines.push({ start: start, end: i });
+            start = i + 1;
+        }
+    }
+    lines.push({ start: start, end: tokens.length });
+    return lines;
+}
+
+// Trim a line (token range) to maxWidth. Mutates the last overflowing text token: trims it and appends "...".
+// Returns newEnd — line is tokens[start..newEnd).
+function trimLineTokensToWidth(t, tokens, start, end, maxWidth, dotsWidth) {
+    var ctx = tempCalcCanvasContext;
+    if (!ctx) return end;
+    var sf = t.__scaleFactor, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
+    dotsWidth = dotsWidth != null ? dotsWidth : measureLineTokens(t, [new TextToken("...")], 0, 1).w;
+    maxWidth -= dotsWidth;
+    var totalW = 0;
+    for (var i = start; i < end; i++) {
+        var tok = tokens[i];
+        if (tok instanceof FontSizeToken) {
+            tok.__calc(t, ctx);
+        } else if (tok instanceof LineHeightToken) {
+            tok.__calc(t, ctx);
+        } else
+        if (tok instanceof TextToken && tok.v) {
+            var txt = tok.v, len = txt.length;
+            var segW = charw ? charw * len : (t.__measureText(ctx, txt).w + (len - 1) * fontspacing + (len ? 1 : 0));
+            if (totalW + segW <= maxWidth) {
+                totalW += segW;
+                continue;
+            }
+            if (charw) {
+                var fitChars = mmin(len, floor((maxWidth - totalW) / charw));
+                tok.v = (fitChars > 0 ? txt.substring(0, fitChars) : "") + "...";
+            } else {
+                var lo = 0, hi = len;
+                while (hi - lo > 1) {
+                    var mid = (lo + hi) >> 1;
+                    var sub = txt.substring(0, mid);
+                    var m = t.__measureText(ctx, sub).w + (mid - 1) * fontspacing + (mid ? 1 : 0);
+                    if (totalW + m <= maxWidth) lo = mid; else hi = mid;
+                }
+                tok.v = (lo > 0 ? txt.substring(0, lo) : "") + "...";
+            }
+            return i + 1;
+        }
+    }
+    return end;
+}
+
+/*
+
+  , wraptext = function (text, availableWidth) {
+
+                                //  consoleLog(text);
+
+                                var newlines = split2(text, availableWidth);
+
+                                if (newlines) {
+                                    var line1 = newlines[0];
+                                    var line2 = newlines[1];
+                                    // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
+
+                                    var width = t.__calcWidthReturnObj(line1).w;
+
+                                    // consoleLog(width , availableWidth);
+
+                                    if (width < availableWidth) {
+
+                                        var findFirstSpace = autowrapMap ? line => {
+                                            for (var i = 1, l = mmax(1, mmin(line.length - 2, 5)); i < l; i++) {
+                                                if (canWrapSymbol(line, i))
+                                                    return i;
+                                            }
+                                        } : line => line.indexOf(' ');
+
+
+                                        var firstSpace = findFirstSpace(line2);
+                                        while (firstSpace > 0) {
+
+                                            var firstWorld = (autowrapMap ? '' : ' ') + line2.substring(0, firstSpace)
+                                                , addedWidth = t.__calcWidthReturnObj(firstWorld).w;
+
+                                            if (width + addedWidth < availableWidth) {
+                                                line1 += firstWorld;
+                                                line2 = line2.substring(firstSpace + (autowrapMap ? 0 : 1));
+                                                width += addedWidth;
+                                            } else {
+                                                break;
+                                            }
+
+                                            var firstSpace = findFirstSpace(line2);
+                                        }
+
+                                    } else {
+
+                                        var findLastSpace = autowrapMap ? line => {
+                                            for (var i = line.length - 1; i > 1; i--) {
+                                                if (canWrapSymbol(line, i))
+                                                    return i;
+                                            }
+                                        } : line => line.lastIndexOf(' ');
+
+                                        var lastSpace = findLastSpace(line1);
+
+                                        while (lastSpace > 0) {
+                                            var lastWorld = line1.substring(lastSpace + (autowrapMap ? 0 : 1)) + (autowrapMap ? '' : ' ');
+                                            var removedWidth = t.__calcWidthReturnObj(lastWorld).w
+
+                                            line2 = lastWorld + line2;
+                                            line1 = line1.substring(0, lastSpace);
+                                            width -= removedWidth;
+
+                                            if (width <= availableWidth)
+                                                break;
+
+                                            lastSpace = findLastSpace(line1);
+                                        }
+
+                                    }
+
+                                    pushtocache(line1);
+
+                                    if (line2.length) {
+                                        wraptext(line2, availableWidth);
+                                    }
+
+                                } else {
+                                    pushtocache(text);
+                                }
+                            };
+                            */
+
+// Split a line at needWidth. Mutates tokens: replaces split token with prefix, inserts suffix after it.
+// Returns { firstEnd, nextEnd, metrics } — first line = tokens[start..firstEnd), metrics for first part (no extra measureLineTokens).
+function splitLineTokens(t, tokens, start, end, needWidth) {
+    var ctx = tempCalcCanvasContext;
+    if (!ctx) return null;
+    var sf = t.__scaleFactor, fs = t.__fontsize, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
+    var autowrapMap = (options.__localization||{}).__autowrapMap || 0;
+    var totalW = 0, firstL = 0, lastR = 0, firstSet = 0;
+    var chks = function (s) { return autowrapMap.ns.indexOf(s) < 0 && autowrapMap.__canWrapSymRegexp.test(s); };
+    var chkse = function (s) { return autowrapMap.ne.indexOf(s) < 0 && autowrapMap.__canWrapSymRegexp.test(s); };
+    var isSmallKana = function (s) { return autowrapMap.__smallKana.indexOf(s) >= 0; };
+    var canWrapSymbol = autowrapMap ? function (txt, idx) {
+        if (idx > 0 && idx < txt.length) {
+            var prev = txt.charAt(idx - 1), cur = txt.charAt(idx), next = txt.charAt(idx + 1);
+            return chks(cur) && chkse(prev) && !isSmallKana(prev) && !isSmallKana(cur) && !isSmallKana(next);
+        }
+    } : 0;
+
+    for (var i = start; i < end; i++) {
+        var tok = tokens[i];
+        
+        tok.__calc(t, ctx);
+
+        if (tok.v) {
+            var txt = tok.v, len = txt.length;
+            var m = charw ? { l: 0, r: 0 } : t.__measureText(ctx, txt);
+            var segW = charw ? charw * len : (m.w + (len - 1) * fontspacing + (len ? 1 : 0));
+            if (totalW + segW <= needWidth) {
+                totalW += segW;
+                if (!firstSet) { firstL = m.l; firstSet = 1; }
+                lastR = charw ? fallback : m.r;
+                continue;
+            }
+            var need = needWidth - totalW;
+            var l = 0, suffixStart = -1, textWidth;
+            if (charw) {
+                l = mmin(len, floor(need / charw));
+                if (l >= len) { totalW += charw * len; if (!firstSet) { firstL = fallback; firstSet = 1; } lastR = fallback; continue; }
+                for (var pos = l; pos >= 0; pos--) {
+                    if (txt.charAt(pos) === ' ') { suffixStart = pos + 1; break; }
+                    if (canWrapSymbol && canWrapSymbol(txt, pos)) { suffixStart = pos; break; }
+                }
+                if (suffixStart < 0) {
+                    for (var pos = l + 1; pos < len; pos++) {
+                        if (txt.charAt(pos) === ' ') { suffixStart = pos + 1; break; }
+                        if (canWrapSymbol && canWrapSymbol(txt, pos)) { suffixStart = pos; break; }
+                    }
+                }
+                if (suffixStart < 0) return null;
+            } else {
+                textWidth = t.__measureText(ctx, txt).w + (len - 1) * fontspacing + 1;
+                if (textWidth <= need) {
+                    totalW += textWidth;
+                    if (!firstSet) { firstL = m.l; firstSet = 1; }
+                    lastR = m.r;
+                    continue;
+                }
+                var koeff = need / textWidth;
+                l = floor(koeff * len);
+                var i0 = l + 1, j = l - 1, lc = txt.charAt(l), kk = 0;
+                suffixStart = -1;
+                if (lc === ' ') suffixStart = l + 1;
+                else if (canWrapSymbol && canWrapSymbol(txt, l)) suffixStart = l;
+                else if (canWrapSymbol) {
+                    for (; kk < 20; kk++, i0++, j--) {
+                        if (canWrapSymbol(txt, i0)) { suffixStart = i0; break; }
+                        if (txt.charAt(i0) === ' ') { suffixStart = i0 + 1; break; }
+                        if (canWrapSymbol(txt, j)) { suffixStart = j; break; }
+                        if (txt.charAt(j) === ' ') { suffixStart = j + 1; break; }
+                    }
+                } else {
+                    for (; kk < 20; kk++, j--, i0++) {
+                        if (i0 < len && txt.charAt(i0) === ' ') { suffixStart = i0 + 1; break; }
+                        if (j > 0 && txt.charAt(j) === ' ') { suffixStart = j + 1; break; }
+                    }
+                }
+                if (suffixStart < 0) return null;
+            }
+            if (suffixStart <= 0) return null;
+            var prefix = txt.substring(0, suffixStart);
+            var suffix = txt.substring(suffixStart);
+            var suffixHadLeadingSpaces = (suffix.length - suffix.trimStart().length > 1);
+            var prefixLen = prefix.length, prefixW, prefixLastR = 0;
+            if (charw) {
+                prefixW = charw * prefixLen;
+            } else {
+                var pm = prefixLen ? t.__measureText(ctx, prefix) : { w: 0, l: 0, r: 0 };
+                prefixW = pm.w + (prefixLen - 1) * fontspacing + (prefixLen ? 1 : 0);
+                prefixLastR = pm.r;
+            }
+            tokens[i] = new TextToken(prefix);
+            var firstEndIdx = i + 1, nextEndIdx = end + 1;
+            var prefixTok = tokens[i], suffixTok;
+            if (suffix.length > 0) {
+                tokens.splice(i + 1, 0, new TextToken(suffix));
+                suffixTok = tokens[firstEndIdx];
+            } else {
+                suffixTok = null;
+                nextEndIdx = end;
+            }
+
+
+            var metrics = { 
+                w: round(totalW + prefixW), 
+                l: firstL, 
+                r: prefixLastR,
+                h: t.__currentLineHeight
+            };
+
+            var findFirstSpace = canWrapSymbol ? line => {
+                    for (var ii = 1, L = mmax(1, mmin(line.length - 2, 5)); ii < L; ii++) {
+                        if (canWrapSymbol(line, ii)) return ii;
+                    }
+                    return -1;
+                } : line => line.indexOf(' ');
+            
+            var findLastSpace = canWrapSymbol ? line => {
+                    for (var ii = line.length - 1; ii > 1; ii--) {
+                        if (canWrapSymbol(line, ii)) return ii;
+                    }
+                    return -1;
+                } : line => line.lastIndexOf(' ');
+
+            var width = metrics.w;
+
+            if (suffixTok && width < needWidth && !suffixHadLeadingSpaces) {
+                var trimmedSuffix = suffix.trimStart();
+                while (trimmedSuffix) {
+                    var firstSpace = findFirstSpace(trimmedSuffix);
+                    if (firstSpace <= 0) break;
+                    var newSuffix = trimmedSuffix.substring(firstSpace + (autowrapMap ? 0 : 1));
+                    if (!newSuffix.trim()) break;
+                    var firstWorld = (autowrapMap ? '' : ' ') + trimmedSuffix.substring(0, firstSpace);
+                    prefix += firstWorld;
+                    suffix = newSuffix;
+                    prefixTok.v = prefix;
+                    suffixTok.v = suffix;
+                    metrics = measureLineTokens(t, tokens, start, firstEndIdx);
+                    width = metrics.w;
+                    if (width > needWidth) {
+                        prefixTok.v = prefix.slice(0, -firstWorld.length);
+                        suffixTok.v = firstWorld.replace(/^\s/, '') + (autowrapMap ? '' : ' ') + suffix;
+                        metrics = measureLineTokens(t, tokens, start, firstEndIdx);
+                        break;
+                    }
+                    if (!suffix.length) {
+                        tokens.splice(firstEndIdx, 1);
+                        nextEndIdx--;
+                        break;
+                    }
+                    trimmedSuffix = suffix.trimStart();
+                }
+            } else if (suffixTok && width > needWidth) {
+                var lastSpace = findLastSpace(prefix);
+                while (lastSpace > 0) {
+                    var lastWorld = prefix.substring(lastSpace);
+                    prefix = prefix.substring(0, lastSpace);
+                    prefixTok.v = prefix;
+                    suffixTok.v = lastWorld + suffix;
+                    suffix = suffixTok.v;
+                    metrics = measureLineTokens(t, tokens, start, firstEndIdx);
+                    width = metrics.w;
+                    if (width <= needWidth) break;
+                    lastSpace = findLastSpace(prefix);
+                }
+            }
+            prefixTok.v = prefixTok.v.trimEnd();
+            if (suffixTok) suffixTok.v = suffixTok.v.trimStart();
+            metrics = measureLineTokens(t, tokens, start, firstEndIdx);
+            return { firstEnd: firstEndIdx, nextEnd: nextEndIdx, metrics: metrics };
+        }
+    }
+    return null;
+}
+
+// Measure a line (token range). Returns { w, l, r, h }
+function measureLineTokens(t, tokens, start, end) {
+    var ctx = tempCalcCanvasContext;
+    if (!ctx) return { w: 0, l: 0, r: 0, h: t.__fontsize };
+    var sf = t.__scaleFactor, fs = t.__fontsize, fontspacing = t.__fontspacing * sf, charw = t.__charw * sf;
+    var totalW = 0, firstL = 0, lastR = 0, firstSet = 0;
+    
+    for (var i = start; i < end; i++) {
+        var tok = tokens[i];
+        tok.__calc(t, ctx);
+
+        if (tok.v) {
+            var txt = tok.v, len = txt.length;
+            var segW;
+            if (charw) {
+                segW = charw * len;
+            } else {
+                var m = t.__measureText(ctx, txt);
+                segW = m.w;
+                if (!firstSet) { firstL = m.l; firstSet = 1; }
+                lastR = m.r;
+            }
+            totalW += segW + (len - 1) * fontspacing + (len ? 1 : 0);
+        }
+    }
+    if (!firstSet) lastR = 0;
+    
+    return { 
+        w: round(totalW), 
+        l: firstL, 
+        r: lastR,
+        h: t.__currentLineHeight
+    };
 }
 
 var tempCalcCanvasContext;
@@ -419,99 +868,17 @@ mergeObj(TextPrototype, {
             r: right
         }
     },
-    // find needed texture size and cache lines params for drawing
- 
-    __calcWidthReturnObj(txt) {
-        var t = this, metrics;
-        txt = txt.replace(/\\[^;]*;/g, '');
-
-        if (t.__charw > 0) {
-            var fallback = t.__charw * t.__bbMult;
-            metrics = {
-                w: t.__charw * txt.length * t.__scaleFactor,
-                l: fallback,
-                r: fallback,
-                t: txt
-            };
-        } else {
-            metrics = t.__measureText(tempCalcCanvasContext, txt);
-        }
-        metrics.w = round(metrics.w + (txt.length - 1) * t.__fontspacing * t.__scaleFactor + 1);
-        return metrics;
-    },
-
-    __drawString(text, x, y, bySymbol) {
-        var t = this
-            , tokens = tokenizeText(text)
-            , lastDrawToken = 0
-            , sf = t.__scaleFactor
-            , fontspacing = t.__fontspacing * sf
-            , charw = t.__charw * sf;
-
-        for (var i in tokens) {
+  
+    
+    __drawString(tokens, begin, end, x, y, bySymbol) {
+        var t = this;
+        for (var i = begin; i < end; i++) {
             var token = tokens[i];
-            text = token.v;
-
-            if (text) {
-                if (bySymbol) {
-                    var metricsCachedMap = new Map(), c
-                        , symbol_align_factor = t.__symbol_align / 2
-                        , bb_align_factor = t.__bb_align;
-                    for (var k = 0; k < text.length; k++) {
-                        c = text.charAt(k);
-                        var metrics = metricsCachedMap[c] || (metricsCachedMap = t.__measureText(t.__ctx, c)),
-                            cw = metrics.w;
-
-                        t.__fill(c, x + (charw ? (charw - cw) * symbol_align_factor : 0) + bb_align_factor * (-metrics.r * symbol_align_factor + metrics.l * (1 - symbol_align_factor)), y * sf);
-
-
-                        x += (charw ? charw : cw) + fontspacing;                        
-                    }
-                } else {
-                    if (i > 0 && lastDrawToken) {
-                        x += t.__calcWidthReturnObj(lastDrawToken.v).w;
-                    }
-                    t.__fill(text, x, y * sf);
-                    lastDrawToken = token;
-                }
-            }
-            else if (token.c) { // color
-
-                var color = token.c;
-                var currentColor;
-                if (color == 0xDEAD) {
-                    currentColor = t.__color;
-                } else {
-                    if (token.d) {
-                        currentColor = t.____color == undefined ? t.__color : t.____color;
-                    } else {
-                        currentColor = color;
-                    }
-                }
-
-                if (!currentColor.__isColor) currentColor = new Color(currentColor);
-
-                switch (token.d) {
-                    case '+': currentColor.add(color); break;
-                    case '-': currentColor.sub(color); break;
-                    case '*': currentColor.__multiply(color); break;
-                    case '/': currentColor.__divide(color); break;
-
-                }
-
-                t.____color = currentColor.__clone();
-
-                t.__ctx.fillStyle = color_to_string(currentColor);
-
-            }
-            else if (token.fs) { // fontsize
-
-                t.__ctx.font = t.__getFont(token.fs);
-
-
+            if (token && token.__draw) {
+                x = token.__draw(t, x, y, bySymbol);
             }
         }
-
+        return x;
     },
 
     update(deep) {
@@ -586,7 +953,8 @@ mergeObj(TextPrototype, {
 
                     var fs = t.__fontsize
                         , linespacing = t.__lineSpacing + t.__addedLineSpacing * t.__addedLineSpacingMultiplier
-                        , textLines = text.split('\n')
+                        , textTokens = tokenizeFullText(text)
+                        , tokenLines = getLinesFromTokens(textTokens)
                         , charw = t.__charw
                         , lineWidth = t.__lineWidth || 0
                         , w = 0
@@ -596,7 +964,7 @@ mergeObj(TextPrototype, {
                         , sf = t.__scaleFactor
                         , cachedlines = []
                         , startedX = lineWidth
-                        , startedY = fs
+                        , startedY = 0
                         , shadow = t.__shadow
                         , shadowBlur = 0
                         , shadowX = 0
@@ -606,6 +974,7 @@ mergeObj(TextPrototype, {
                         , canvas = t.__canvas || __document.createElement('canvas');
 
                     tempCalcCanvasContext.font = t.__getFont(fs);
+                    t.__currentLineHeight = fs;
 
                     if (shadow) {
                         shadowX = shadow.x;
@@ -621,274 +990,78 @@ mergeObj(TextPrototype, {
                     rwDiff += mmax(shadowBlur, abs(shadowX));
                     rhDiff += mmax(shadowBlur, abs(shadowY));
 
-                    var pushtocache = function (text) {
-
-                        if (!isObject(text)) {
-                            text = t.__calcWidthReturnObj(text);
-                        }
-
-                        text.w /= sf;
-                        w = mmax(w, text.w);
-                        
-                        text.y = (fs + linespacing) * cachedlines.length;
-
-                        cachedlines.push(text);
-
-                    }
+                    var pushtocache = function (metrics, tokensStart, tokensEnd) {
+                        var entry = {
+                            start: tokensStart,
+                            end: tokensEnd,
+                            w: metrics.w / sf,
+                            l: metrics.l,
+                            r: metrics.r,
+                            h: metrics.h
+                        };
+                        w = mmax(w, entry.w);
+                        cachedlines.push(entry);
+                    };
 
                     if (t.__autodots && !t.__autowrap) {
-                        //debug
-                        if (t.__parent.__debugDots)
-                            debugger;
-                        //undebug
-
-                        var dots = "..."
-                            //, kk = 0
-                            , availableWidth = size.x * sf
-                            , cachedMap = new Map()
-                            , _clamptext = (text, begin, beginWidth, end, endWidth) => {
-                                
-                                if (begin >= end) {
-                                    pushtocache(text + dots);
-                                } else {
-                                    // kk++;
-                                    var koeff = (availableWidth - beginWidth) / (endWidth - beginWidth)
-                                        , l = floor(begin + koeff * (end - begin));
-
-                                    // \todo: use autowrapMap
-                                    // \todo: remove recursion
-
-                                    dotted = 1;
-
-                                    var ltext = text.substring(0, l).trimEnd()
-                                        , ltextWidth = cachedMap[l] ? cachedMap[l] : (cachedMap[l] = t.__calcWidthReturnObj(ltext).w);
-
-                                    l = ltext.length;
-
-                                    //consoleLog(kk, ltext, ltextWidth, l);
-
-                                    if (ltextWidth <= availableWidth) {
-                                        if (end - l <= 1) {
-                                            pushtocache(ltext + dots);
-                                        } else {
-                                            var pnextl = clamp(floor((l + end) / 2), l + 1, end)
-                                                , nexttext = text.substring(0, pnextl).trimEnd()
-                                                , nextl = nexttext.length
-                                                , nexttextWidth = cachedMap[nextl]?  cachedMap[nextl] : (cachedMap[nextl] = t.__calcWidthReturnObj(nexttext).w);
-                                            _clamptext(nexttext, l, ltextWidth, nextl, nexttextWidth)
-                                        }
-                                    } else {
-                                        _clamptext(text, begin, beginWidth, l, ltextWidth)
-                                    }
-                                }
-
+                        var availableWidth = size.x * sf;
+                        for (var i = 0; i < tokenLines.length; i++) {
+                            var line = tokenLines[i];
+                            var m = measureLineTokens(t, textTokens, line.start, line.end);
+                            if (m.w > availableWidth) {
+                                var newEnd = trimLineTokensToWidth(t, textTokens, line.start, line.end, availableWidth);
+                                pushtocache(measureLineTokens(t, textTokens, line.start, newEnd), line.start, newEnd);
+                            } else {
+                                pushtocache(m, line.start, line.end);
                             }
-
-                            , clamptext = (text) => {
-                                if (!isObject(text)) {
-                                    // kk++;
-                                    text = t.__calcWidthReturnObj(text.trimEnd());
-                                }
-                                if (text.w > availableWidth) {
-                                    availableWidth = size.x * sf - t.__calcWidthReturnObj(dots).w;
-                                    cachedMap[text.t.length] = text.w;
-                                    _clamptext(text.t, 0, 0, text.t.length, text.w);
-                                } else {
-                                    pushtocache(text);
-                                }
-                            };
-
-                        // consoleLog("--------------------------------");
-
-                        for (var i = 0; i < textLines.length; i++) {
-                            clamptext(textLines[i]);
                         }
-
-                        // consoleLog("---- splitted by ", kk, " operations");
-
                     } else if (t.__autowrap) {
-
-                        //TODO: t.__autodots!
-
-                        //debug
-                        if (t.__parent.__debugWrap)
-                            debugger;
-                        //undebug
-
-                        var availableWidth = size.x * sf
-                            , localizationOptions = options.__localization || 0
-                            , autowrapMap = localizationOptions.__autowrapMap || 0
-                            //можно перенести на новую строку если есть autowrapMap
-                            , chks = function (s) {
-                                return autowrapMap.ns.indexOf(s) < 0 && autowrapMap.__canWrapSymRegexp.test(s);
+                        var availableWidth = size.x * sf;
+                        var insertOffset = 0;
+                        var wraptext = function (start, end, availableWidth) {
+                            if (end <= start) return 0;
+                            var m = measureLineTokens(t, textTokens, start, end);
+                            if (m.w <= availableWidth) {
+                                pushtocache(m, start, end);
+                                return 0;
                             }
-                            , chkse = function (s) {
-                                return autowrapMap.ne.indexOf(s) < 0 && autowrapMap.__canWrapSymRegexp.test(s);
+                            var split = splitLineTokens(t, textTokens, start, end, availableWidth);
+                            if (!split) {
+                                pushtocache(m, start, end);
+                                return 0;
                             }
-                            , isSmallKana = function (s) {
-                                return autowrapMap.__smallKana.indexOf(s) >= 0
-                            }
-                            , canWrapSymbol = function (txt, i) {
-                                if (i > 0 && i < txt.length) {
-                                    var prev = txt.charAt(i - 1), cur = txt.charAt(i), next = txt.charAt(i + 1);
-                                    return chks(cur) && chkse(prev) && !isSmallKana(prev) && !isSmallKana(cur) && !isSmallKana(next);
-                                }
-                            }
-
-                            , split2 = function (txt, needWidth) {
-
-                                var textWidth;
-
-                                if (isObject(txt)) {
-                                    textWidth = txt.w;
-                                    txt = txt.t;
-                                }
-                                else {
-                                    textWidth = t.__calcWidthReturnObj(txt).w;
-                                }
-
-                                function rtn(l, k) {
-                                    return [txt.substring(0, l), txt.substring(l + (k || 0))];
-                                }
-
-                                if (textWidth > needWidth) {
-
-                                    var koeff = needWidth / textWidth
-                                        , len = txt.length
-                                        , l = floor(koeff * len)
-                                        , i = l + 1, j = l - 1
-                                        , lc = txt.charAt(l)
-                                        , kk = 0;
-
-                                    if (lc == ' ') return rtn(l, 1);
-
-                                    if (autowrapMap) {
-
-                                        if (canWrapSymbol(txt, l)) { return rtn(l, 0); }
-
-                                        for (; kk < 20; kk++, i++, j--) {
-                                            if (canWrapSymbol(txt, i)) return rtn(i, 0);
-                                            if (txt.charAt(i) == ' ') return rtn(i, 1);
-                                            if (canWrapSymbol(txt, j)) return rtn(j, 0);
-                                            if (txt.charAt(j) == ' ') return rtn(j, 1);
-                                        }
-                                    } else {
-
-                                        for (; kk < 20; kk++, j--, i++) {
-                                            if (i < len && txt.charAt(i) == ' ') return rtn(i, 1);
-                                            if (j > 0 && txt.charAt(j) == ' ') return rtn(j, 1);
-                                        }
-                                    }
-
-                                }
-                            }
-
-                            , wraptext = function (text, availableWidth) {
-
-                                //  consoleLog(text);
-
-                                var newlines = split2(text, availableWidth);
-
-                                if (newlines) {
-                                    var line1 = newlines[0];
-                                    var line2 = newlines[1];
-                                    // consoleLog('splitted to:', '\nline1: ',line1,'\n\nline2: ', line2, '\n\n');
-
-                                    var width = t.__calcWidthReturnObj(line1).w;
-
-                                    // consoleLog(width , availableWidth);
-
-                                    if (width < availableWidth) {
-
-                                        var findFirstSpace = autowrapMap ? line => {
-                                            for (var i = 1, l = mmax(1, mmin(line.length - 2, 5)); i < l; i++) {
-                                                if (canWrapSymbol(line, i))
-                                                    return i;
-                                            }
-                                        } : line => line.indexOf(' ');
-
-
-                                        var firstSpace = findFirstSpace(line2);
-                                        while (firstSpace > 0) {
-
-                                            var firstWorld = (autowrapMap ? '' : ' ') + line2.substring(0, firstSpace)
-                                                , addedWidth = t.__calcWidthReturnObj(firstWorld).w;
-
-                                            if (width + addedWidth < availableWidth) {
-                                                line1 += firstWorld;
-                                                line2 = line2.substring(firstSpace + (autowrapMap ? 0 : 1));
-                                                width += addedWidth;
-                                            } else {
-                                                break;
-                                            }
-
-                                            var firstSpace = findFirstSpace(line2);
-                                        }
-
-                                    } else {
-
-                                        var findLastSpace = autowrapMap ? line => {
-                                            for (var i = line.length - 1; i > 1; i--) {
-                                                if (canWrapSymbol(line, i))
-                                                    return i;
-                                            }
-                                        } : line => line.lastIndexOf(' ');
-
-                                        var lastSpace = findLastSpace(line1);
-
-                                        while (lastSpace > 0) {
-                                            var lastWorld = line1.substring(lastSpace + (autowrapMap ? 0 : 1)) + (autowrapMap ? '' : ' ');
-                                            var removedWidth = t.__calcWidthReturnObj(lastWorld).w
-
-                                            line2 = lastWorld + line2;
-                                            line1 = line1.substring(0, lastSpace);
-                                            width -= removedWidth;
-
-                                            if (width <= availableWidth)
-                                                break;
-
-                                            lastSpace = findLastSpace(line1);
-                                        }
-
-                                    }
-
-                                    pushtocache(line1);
-
-                                    if (line2.length) {
-                                        wraptext(line2, availableWidth);
-                                    }
-
-                                } else {
-                                    pushtocache(text);
-                                }
-                            };
-
-                        for (var i = 0; i < textLines.length; i++) {
-                            wraptext(textLines[i], availableWidth);
+                            pushtocache(split.metrics, start, split.firstEnd);
+                            return 1 + wraptext(split.firstEnd, split.nextEnd, availableWidth);
+                        };
+                        for (var i = 0; i < tokenLines.length; i++) {
+                            var line = tokenLines[i];
+                            line.start += insertOffset;
+                            line.end += insertOffset;
+                            insertOffset += wraptext(line.start, line.end, availableWidth);
                         }
-
-                    }
-                    else {
-                        for (var i = 0; i < textLines.length; i++) {
-                            pushtocache(textLines[i]);
+                    } else {
+                        for (var i = 0; i < tokenLines.length; i++) {
+                            var line = tokenLines[i];
+                            pushtocache(measureLineTokens(t, textTokens, line.start, line.end), line.start, line.end);
                         }
                     }
 
                     var left = 0, right = 0, align_factor = t.__align / 2;
-                    
                     for (var i = 0; i < cachedlines.length; i++) {
                         var cl = cachedlines[i];
-                        cl.x = (-cl.w + w) * align_factor * sf 
+                        cl.x = (-cl.w + w) * align_factor * sf
                             + t.__bb_align * (-cl.r * align_factor + cl.l * (1 - align_factor));
-
                         left = mmax(cl.l, left);
                         right = mmax(cl.r, right);
                     }
 
                     var linesCount = cachedlines.length;
-
-                    h = linesCount * fs + (linesCount - 1) * linespacing;
-                    rh = round((linesCount + getFontDescent()) * fs + (linesCount - 1) * linespacing + rhDiff);
+                    h = 0;
+                    for (var hi = 0; hi < cachedlines.length; hi++) {
+                        h += cachedlines[hi].h + (hi < cachedlines.length - 1 ? linespacing : 0);
+                    }
+                    var lastLineH = linesCount ? cachedlines[linesCount - 1].h : fs;
+                    rh = round(h + getFontDescent() * lastLineH + rhDiff);
                     rw = round(w + lineWidth * 2 + (t.__italic ? fs * 0.1 : 0) + rwDiff);
 
                     var lwDiff = left + right;
@@ -920,15 +1093,20 @@ mergeObj(TextPrototype, {
                         'fillStyle', t.__gradient ? createTextGradientStyle(t.__gradient, ctx, canvas) : color_to_string(t.__color /* TODO: t.__alpha */)
                     );
 
+                    t.__currentLineHeight = fs;
+
                     // drawing text
-                    var bySymbol = (t.__fontspacing != 0 || charw != 0)
+                    var bySymbol = (t.__fontspacing || charw)
                         , texture_w = rw * sf + lwDiff
                         , texture_h = rh * sf;
 
                     startedX += left;
+                    
                     for (var i = 0; i < cachedlines.length; i++) {
                         var cl = cachedlines[i];
-                        t.__drawString(cl.t, cl.x + startedX, cl.y + startedY, bySymbol);
+                        startedY += cl.h;
+                        t.__drawString(textTokens, cl.start, cl.end, cl.x + startedX, startedY, bySymbol);
+                        startedY += linespacing
                     }
 
 

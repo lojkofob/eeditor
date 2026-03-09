@@ -625,7 +625,7 @@ NodeEditWithKitten.prototype = {
                                         if (xmult == 1) newsz.x = (newsz.x + size.x) / 2;
                                         if (ymult == 1) newsz.y = (newsz.y + size.y) / 2;
 
-                                        newsz.x = sign(size.x) * abs(newsz.x);
+                                        newsz.x = (sign(size.x) || 1) * abs(newsz.x);
                                         if (isCtrlPressed) {
                                             if (!node.ratioBY)
                                                 node.ratioBY = size.y / size.x;
@@ -633,7 +633,7 @@ NodeEditWithKitten.prototype = {
                                             newsz.y = node.ratioBY * newsz.x;
                                         }
                                         else {
-                                            newsz.y = sign(size.y) * abs(newsz.y);
+                                            newsz.y = (sign(size.y) || 1) * abs(newsz.y);
                                         }
 
                                         node.__size = newsz;
