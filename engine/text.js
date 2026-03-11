@@ -1052,6 +1052,11 @@ mergeObj(TextPrototype, {
                         , texture_h = rh * sf;
 
                     startedX += left;
+
+                    // invalidate text token properties
+                    t.__token_fontSize = 0;
+                    t.__token_lineHeight = t.__fontsize;
+                    t.__token_color = t.__color;
                     
                     for (var i = 0; i < cachedlines.length; i++) {
                         var cl = cachedlines[i];
