@@ -1891,6 +1891,7 @@ makeClass(Particle, {
 function ParticleEmitter(effect, parent) {
     var t = this;
     t.____visible = 1;
+    t.__alphaDeep = 1;
     t.g = {};
     t.p = {};
     Object3D.call(t);
@@ -2067,6 +2068,10 @@ var ParticleEmitterPrototype =
 
             if (t.__geometryBuilder(t)) {
                 return 1;
+            }
+
+            if (t.__parent) { 
+                t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; 
             }
 
             //cheats
