@@ -203,14 +203,14 @@ var TextToken = makeClass(function(t, value) {
             var metricsCache = {}, c, symbol_align_factor = t.__symbol_align / 2, bb_align_factor = t.__bb_align;
             for (var k = 0; k < len; k++) {
                 c = text.charAt(k);
-                var metrics = metricsCache[c] || (metricsCache[c] = new TextMetrics(t, ctx, c)), cw = metrics.w;
+                var metrics = metricsCache[c] || (metricsCache[c] = new TextMetrics(t, ctx, c, 1)), cw = metrics.w;
                 t.__fill(c, x + (charw ? (charw - cw) * symbol_align_factor : 0) + bb_align_factor * (-metrics.r * symbol_align_factor + metrics.l * (1 - symbol_align_factor)), y * sf);
                 x += (charw ? charw : cw) + fontspacing;
             }
         } else {
             var m = this.__getMetrics(t, ctx);
             t.__fill(text, x, y * sf);
-            x += m.w + (len - 1) * fontspacing;
+            x += m.w * sf + (len - 1) * fontspacing;
         }
         return x;
     },
@@ -231,14 +231,22 @@ var TextToken = makeClass(function(t, value) {
     }
 });
 
-var TextMetrics = makeClass(function(t, ctx, txt) {
+var TextMetrics = makeClass(function(t, ctx, txt, fcw) {
     if (isString(txt)) {
+        var len = txt.length;
         this.t = txt;
-        var fallback = t.__fontsize * t.__bbMult
-            , metrics = ctx.measureText(txt)
-        this.w = get1(metrics, 'width') || 0;
-        this.l = ifdef(get1(metrics, 'actualBoundingBoxLeft'), fallback)
-        this.r = ifdef(get1(metrics, 'actualBoundingBoxRight'), fallback + this.w) - this.w;
+        if (!fcw && t.__charw) {
+            this.w = t.__charw * len;
+            this.l = 0;
+            this.r = 0;
+        } else {
+            var fallback = t.__fontsize * t.__bbMult
+                , metrics = ctx.measureText(txt)
+            this.w = get1(metrics, 'width') || 0;
+            this.l = ifdef(get1(metrics, 'actualBoundingBoxLeft'), fallback)
+            this.r = ifdef(get1(metrics, 'actualBoundingBoxRight'), fallback + this.w) - this.w;
+        }
+        this.w += (len - 1) * t.__fontspacing;
     } else {
         this.l = this.r = this.w = 0;
     }
@@ -341,9 +349,6 @@ function getLinesFromTokens(tokens) {
 // Returns newEnd — line is tokens[start..newEnd).
 function trimLineTokensToWidth(t, tokens, line, dotsWidth) {
     var ctx = t.__ctx
-        , sf = t.__scaleFactor
-        , fontspacing = t.__fontspacing * sf
-        , charw = t.__charw * sf
         , start = line.__start
         , end = line.__end
         , maxWidth = line.__availableWidth;
@@ -356,24 +361,21 @@ function trimLineTokensToWidth(t, tokens, line, dotsWidth) {
         if (!tok) break;
         if (tok.v) {
             var txt = tok.v, len = txt.length;
-            var segW = charw ? charw * len : (tok.__getMetrics(t, ctx).w + (len - 1) * fontspacing + (len ? 1 : 0));
+            var segW = tok.__getMetrics(t, ctx).w;
             if (totalW + segW <= maxWidth) {
                 totalW += segW;
                 continue;
             }
-            if (charw) {
-                var fitChars = mmin(len, floor((maxWidth - totalW) / charw));
-                tok.v = (fitChars > 0 ? txt.substring(0, fitChars) : "") + "...";
-            } else {
-                var lo = 0, hi = len;
-                while (hi - lo > 1) {
-                    var mid = (lo + hi) >> 1;
-                    var sub = txt.substring(0, mid);
-                    var m = new TextMetrics(t, ctx, sub).w + (mid - 1) * fontspacing + (mid ? 1 : 0);
-                    if (totalW + m <= maxWidth) lo = mid; else hi = mid;
-                }
-                tok.v = (lo > 0 ? txt.substring(0, lo) : "") + "...";
+            
+            var lo = 0, hi = len;
+            while (hi - lo > 1) {
+                var mid = (lo + hi) >> 1;
+                var sub = txt.substring(0, mid);
+                var m = new TextMetrics(t, ctx, sub).w;
+                if (totalW + m <= maxWidth) lo = mid; else hi = mid;
             }
+            tok.v = (lo > 0 ? txt.substring(0, lo) : "") + "...";
+        
             return i + 1;
         }
     }
@@ -395,9 +397,6 @@ function splitLineTokens(t, tokens, opts) {
         , start = opts.__start
         , end = opts.__end
         , needWidth = opts.__availableWidth
-        , sf = t.__scaleFactor
-        , fontspacing = t.__fontspacing * sf
-        , charw = t.__charw * sf
         , autowrapMap = (options.__localization||{}).__autowrapMap || 0
         , totalW = 0
         , chks = s => autowrapMap.ns.indexOf(s) < 0 && autowrapMap.__canWrapSymRegexp.test(s)
@@ -422,8 +421,8 @@ function splitLineTokens(t, tokens, opts) {
         if (tok.v) {
             var txt = tok.v
                 , len = txt.length
-                , m = charw ? { l: 0, r: 0, w: charw * len } : tok.__getMetrics(t, ctx)
-                , segW = m.w + (len - 1) * fontspacing + (len ? 1 : 0);
+                , m = tok.__getMetrics(t, ctx)
+                , segW = m.w;
 
             if (totalW + segW <= needWidth) {
                 totalW += segW;
@@ -435,23 +434,14 @@ function splitLineTokens(t, tokens, opts) {
                 , l = 0
                 , suffixStart = -1;
 
-            if (charw) {
-                l = mmin(len, floor(need / charw));
-                if (l >= len) { 
-                    totalW += charw * len;
-                    lastTextTokenIdx = i;
-                    continue; 
-                }
-            } else {
-                if (segW <= need) {
-                    totalW += segW;
-                    lastTextTokenIdx = i;
-                    continue;
-                }
-                var koeff = need / segW;
-                l = floor(koeff * len);
+            if (segW <= need) {
+                totalW += segW;
+                lastTextTokenIdx = i;
+                continue;
             }
-            
+            var koeff = need / segW;
+            l = floor(koeff * len);
+        
             var i0 = l + 1, j = l - 1, lc = txt.charAt(l), kk = 0;
 
             if (lc == ' ') suffixStart = l + 1;
@@ -589,7 +579,6 @@ function measureLineTokens(t, tokens, opts) {
         , start = opts.__start
         , end = opts.__end
         , sf = t.__scaleFactor
-        , fontspacing = t.__fontspacing * sf
         , charw = t.__charw * sf
         , m = new TextMetrics(t, ctx);
 
@@ -604,15 +593,10 @@ function measureLineTokens(t, tokens, opts) {
         if (tok.v) {
             var txt = tok.v, len = txt.length;
             if (len) {
-                if (charw) {
-                    m.w += charw * len;
-                } else {
-                    var tm = tok.__getMetrics(t, ctx);
-                    m.w += tm.w;
-                    m.l = ifdef(m.l, tm.l);
-                    m.r = tm.r;
-                }
-                m.w += (len - 1) * fontspacing;
+                var tm = tok.__getMetrics(t, ctx);
+                m.w += tm.w;
+                m.l = ifdef(m.l, tm.l);
+                m.r = tm.r;
             }
             if (opts.__availableWidth && m.w > opts.__availableWidth) {
                 // dont need more tokens
