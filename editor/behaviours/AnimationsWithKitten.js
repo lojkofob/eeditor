@@ -58,7 +58,7 @@ var AnimationsWithKitten = (function () {
         } else {
 
             if (forceCreate) {
-                kkf = { __keyframes: { __loopDisabled: 1, loop: 0 } }
+                kkf = { __keyframes: {}, loop: 0, __loopDisabled: 1 }
             }
 
         }
