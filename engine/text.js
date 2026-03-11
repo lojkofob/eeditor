@@ -210,7 +210,7 @@ var TextToken = makeClass(function(t, value) {
         } else {
             var m = this.__getMetrics(t, ctx);
             t.__fill(text, x, y * sf);
-            x += m.w * sf + (len - 1) * fontspacing;
+            x += m.w + (len - 1) * fontspacing;
         }
         return x;
     },
@@ -236,7 +236,7 @@ var TextMetrics = makeClass(function(t, ctx, txt, fcw) {
         var len = txt.length;
         this.t = txt;
         if (!fcw && t.__charw) {
-            this.w = t.__charw * len;
+            this.w = t.__charw * len * t.__scaleFactor;
             this.l = 0;
             this.r = 0;
         } else {
@@ -578,8 +578,6 @@ function measureLineTokens(t, tokens, opts) {
     var ctx = t.__ctx
         , start = opts.__start
         , end = opts.__end
-        , sf = t.__scaleFactor
-        , charw = t.__charw * sf
         , m = new TextMetrics(t, ctx);
 
     trimLineTokens(tokens, opts);
@@ -789,7 +787,7 @@ mergeObj(TextPrototype, {
         if (!ff || !globalConfigsData[ff] || globalConfigsData[ff] == 1) {
             ff = __defaultTextProperties.__safeFontFace;
         }
-        return this.__getFontMod() + fs * t.__scaleFactor + "px \"" + ff + '"';
+        return this.__getFontMod() + round(fs * t.__scaleFactor) + "px \"" + ff + '"';
     },
 
     raycast() {
@@ -892,7 +890,7 @@ mergeObj(TextPrototype, {
                         , rh = 0
                         , sf = t.__scaleFactor
                         , cachedlines = []
-                        , startedX = lineWidth
+                        , startedX = lineWidth * sf
                         , startedY = 0
                         , shadow = t.__shadow
                         , shadowBlur = 0
@@ -908,7 +906,7 @@ mergeObj(TextPrototype, {
                         shadowY = shadow.y;
                         shadowBlur = shadow.__blur * shadowBlurTextureSizeMultiplier;
 
-                        startedX += mmax(0, shadowBlur - shadowX);
+                        startedX += mmax(0, shadowBlur - shadowX) * sf;
                         startedY += mmax(0, shadowBlur - shadowY);
                     }
 
@@ -929,17 +927,19 @@ mergeObj(TextPrototype, {
                             r: metrics.r,
                             h: metrics.h
                         };
-                        w = mmax(w, metrics.w);
+                        w = mmax(w, entry.w);
                         cachedlines.push(entry);
-                        /*if (t.__autowrap && t.__last_log_time != TIME_NOW) {
-                            console.clear();
-                            t.__last_log_time = TIME_NOW;
+                        /*if (t.__autowrap) {
+                            if (!(t.__last_log_time > TIME_NOW - 1)) {
+                                console.clear();                          
+                                t.__last_log_time = TIME_NOW;
+                            }  
                             var str = '';
                             for (var i = line.__start; i < line.__end; i++) {
                                 var tok = textTokens[i];
                                 if (tok && tok.v) str += tok.v;
                             }
-                            console.log("'" + str + "'", ' w:', entry.w);
+                            console.log("'" + str + "'", ' w:', round(metrics.w), '/', round(availableWidth));
                         }*/
                     };
 
@@ -1002,8 +1002,7 @@ mergeObj(TextPrototype, {
                     var left = 0, right = 0, align_factor = t.__align / 2;
                     for (var i = 0; i < cachedlines.length; i++) {
                         var cl = cachedlines[i];
-                        cl.x = (-cl.w + w) * align_factor * sf
-                            + t.__bb_align * (-cl.r * align_factor + cl.l * (1 - align_factor));
+                        cl.x = (-cl.w + w) * align_factor * sf + t.__bb_align * (-cl.r * align_factor + cl.l * (1 - align_factor));
                         left = mmax(cl.l, left);
                         right = mmax(cl.r, right);
                     }
