@@ -1,111 +1,123 @@
 
-function getTimeText(t, format) {
-    format = format || "M:S";
-    var h = floor(this.time/60/60);
-    var m = floor(this.time/60);
-    var s = this.time - m*60;
-    format = format.replace('h', h);
-    format = format.replace('m', m);
-    format = format.replace('s', s);
-    if (h<10) h = '0'+h;
-    if (m<10) m = '0'+m;
-    if (s<10) s = '0'+s;
-    format = format.replace('H', h);
-    format = format.replace('M', m);
-    format = format.replace('S', s);
-    return format;
-};
 
-function normalizeTimeWithZero(d){ return (d < 10 ? '0' : '') + d; }
-
-function getTimeTextD(t){ return normalizeTimeWithZero(getTimeD(t)); }; //days
-function getTimeTextH(t){ return normalizeTimeWithZero(getTimeH(t)); };
-function getTimeTextM(t){ return normalizeTimeWithZero(getTimeM(t)); };
-function getTimeTextS(t){ return normalizeTimeWithZero(getTimeS(t)); };
-
-function getTimeTextHH(t){ return normalizeTimeWithZero(mmax(0, floor(t / 3600))); }; //hours include days
-
-function getTimeText1(t) { return getTimeTextM(t) + ':' + getTimeTextS(t); };
-function getTimeText2(t) { return getTimeTextH(t) + ':' + getTimeTextM(t) + ':' + getTimeTextS(t); };
-function getTimeText3(t) { return getTimeTextHH(t) + ':' + getTimeTextM(t) + ':' + getTimeTextS(t); };
-
-function getTimeTextHHMM(t) { return getTimeTextH(t) + ':' + getTimeTextM(t) };
-
-function getTimeD(t){ return mmax(0, floor(t / 86400)); };
-function getTimeH(t){ return mmax(0, floor(t / 3600) % 24); };
-function getTimeM(t){ return mmax(0, floor(t / 60) % 60); };
-function getTimeS(t){ return mmax(0, floor(t) % 60 ); };
-
-
-function getTimeText4(t, maxParamsCount, ignoreSeconds) { //2d 15h 25min
-    var txt = '',
-        d = getTimeD(t),
-        h = getTimeH(t),
-        m = getTimeM(t),
-        s = getTimeS(t);
-    
-    maxParamsCount = maxParamsCount || 4;
-    var paramsCount = 0;
+var normalizeTimeWithZero = (d) => ((d < 10 ? '0' : '') + d)
+    , getTimeD= (t) => mmax(0, floor(t / 86400))
+    , getTimeH= (t) => mmax(0, floor(t / 3600) % 24)
+    , getTimeM= (t) => mmax(0, floor(t / 60) % 60)
+    , getTimeS= (t) => mmax(0, floor(t) % 60 )
+    , getTimeTextD = (t) => normalizeTimeWithZero(getTimeD(t))
+    , getTimeTextH = (t) => normalizeTimeWithZero(getTimeH(t))
+    , getTimeTextM = (t) => normalizeTimeWithZero(getTimeM(t))
+    , getTimeTextS = (t) => normalizeTimeWithZero(getTimeS(t))
+    , getTimeTexth = (t) => getTimeH(t)
+    , getTimeTextm = (t) => getTimeM(t)
+    , getTimeTexts = (t) => getTimeS(t)
+    , getTimeTextHH = (t) => normalizeTimeWithZero(mmax(0, floor(t / 3600)))
+    , getTimeText1 = (t) => getTimeTextM(t) + ':' + getTimeTextS(t)
+    , getTimeText2 = (t) => getTimeTextH(t) + ':' + getTimeTextM(t) + ':' + getTimeTextS(t)
+    , getTimeText3 = (t) => getTimeTextHH(t) + ':' + getTimeTextM(t) + ':' + getTimeTextS(t)
+    , getTimeTextHHMM = (t) => getTimeTextH(t) + ':' + getTimeTextM(t) 
+    , getTimeText4 = (t, maxParamsCount, ignoreSeconds) => { //2d 15h 25min
+        var txt = '',
+            d = getTimeD(t),
+            h = getTimeH(t),
+            m = getTimeM(t),
+            s = getTimeS(t);
         
-    if (d && (paramsCount < maxParamsCount)) {
-        txt += d + TR('d') + ' ';
-        paramsCount++;
+        maxParamsCount = maxParamsCount || 4;
+        var paramsCount = 0;
+            
+        if (d && (paramsCount < maxParamsCount)) {
+            txt += d + TR('d') + ' ';
+            paramsCount++;
+        }
+        
+        if (h && (paramsCount < maxParamsCount)) {
+            txt += h + TR('h') + ' ';
+            paramsCount++;
+        }
+        
+        if (m && (paramsCount < maxParamsCount)) {
+            txt += m + TR('m');
+            paramsCount++;
+        }
+        
+        if (!ignoreSeconds && h == 0 && d == 0 && (paramsCount < maxParamsCount)) {
+            txt += ' ' + s + TR('s') + ' ';
+            paramsCount++;
+        }
+        
+        return txt;
+        
     }
-    
-    if (h && (paramsCount < maxParamsCount)) {
-        txt += h + TR('h') + ' ';
-        paramsCount++;
+    , getTimeText4_1 = (t) => getTimeText4(t, 1)
+    , getTimeText4_2 = (t) => getTimeText4(t, 2)
+    , getTimeText4_3 = (t) => getTimeText4(t, 3)
+    , getTimeText5 = (t) => { //01:15:25
+        var txt = '',
+            h = getTimeTextH(t),
+            m = getTimeTextM(t),
+            s = getTimeTextS(t);
+        
+        if (h != '00') txt = h + ':';
+        txt += m + ':' + s;    
+        return txt;
+    } 
+    , __timer_formats = {
+        '1': getTimeText1,
+        '2': getTimeText2,
+        '3': getTimeText3,
+        '4': getTimeText4,
+        '4_1': getTimeText4_1,
+        '4_2': getTimeText4_2,
+        '4_3': getTimeText4_3,
+        '5': getTimeText5,
+        'H': getTimeTextH,
+        'M': getTimeTextM,
+        'S': getTimeTextS,
+        'h': getTimeTexth,
+        'm': getTimeTextm,
+        's': getTimeTexts
     }
-    
-    if (m && (paramsCount < maxParamsCount)) {
-        txt += m + TR('m');
-        paramsCount++;
+    , getTimeText = (time, format) => {
+        format = __timer_formats[format] || format || "M:S";
+        if (isString(format)) {
+            var h = floor(time/60/60)
+                , m = floor(time/60)
+                , s = time - m * 60;
+            format = format.replace('h', h);
+            format = format.replace('m', m);
+            format = format.replace('s', s);
+            if (h<10) h = '0' + h;
+            if (m<10) m = '0' + m;
+            if (s<10) s = '0' + s;
+            format = format.replace('H', h);
+            format = format.replace('M', m);
+            format = format.replace('S', s);
+            return format;
+        } else if (isFunction(format)){
+            return format(time);
+        }
+    };
+
+var Timer = makeClass(function(parameters) {
+    parameters = parameters || {};
+    var t = this;
+    t.__step = parameters.__step || -1;
+    t.__limit = parameters.__endTime ? 
+        floor( parameters.__endTime - TIME_NOW + 1 ) : 
+        floor( parameters.__limit || 60 );
+    t.__endTime = parameters.__endTime ? parameters.__endTime : ( TIME_NOW + parameters.__limit );
+    t.__time = t.__step > 0 ? 0 : t.__limit;
+    t.__interval = parameters.__interval || 1;
+    t.__onEnd = parameters.__onEnd;
+    t.__onTick = parameters.__onTick;
+    if (!parameters.__disableAutostart) {
+        t.__start();
     }
-    
-    if (!ignoreSeconds && h == 0 && d == 0 && (paramsCount < maxParamsCount)) {
-        txt += ' ' + s + TR('s') + ' ';
-        paramsCount++;
-    }
-    
-    return txt;
-    
-};
-
-function getTimeText5(t) { //01:15:25
-    
-    var txt = '',
-        h = getTimeTextH(t),
-        m = getTimeTextM(t),
-        s = getTimeTextS(t);
-    
-    if (h != '00') txt = h + ':';
-    txt += m + ':' + s;
-    
-    return txt;
-}
-
-
-function Timer(parameters) {
-  
-  parameters = parameters || {};
-  var t = this;
-  t.__step = parameters.__step || -1;
-  t.__limit = parameters.__endTime ? 
-    floor( parameters.__endTime - TIME_NOW + 1 ) : 
-    floor( parameters.__limit || 60 );
-  
-  t.__endTime = parameters.__endTime ? parameters.__endTime : ( TIME_NOW + parameters.__limit );
-  t.__time = t.__step > 0 ? 0 : t.__limit;
-  t.__interval = parameters.__interval || 1;
-  t.__onEnd = parameters.__onEnd;
-  t.__onTick = parameters.__onTick;
-  if (!parameters.__disableAutostart)
-      t.__start();
-}
-
-Timer.prototype = {
-    constructor : Timer,
-    __stop: function(){
+    t.__format = parameters.__format;
+}, {
+    __stop(){
         var t = this;
         if (t.__timer) {
             clearInterval(t.__timer);
@@ -114,13 +126,13 @@ Timer.prototype = {
         t.__started = false;
     },
 
-    __start: function(){
+    __start(){
         this.__stop();
         this.__continue(1);
         this.__started = true;
     },
     
-    __update: function(){
+    __update(){
         var t = this;
         
         //cheats
@@ -149,7 +161,7 @@ Timer.prototype = {
         }
     },
     
-    __continue : function(disableFirstTick){
+    __continue(disableFirstTick){
         var t = this;
         if (!t.__timer) {
             //cheats
@@ -162,48 +174,27 @@ Timer.prototype = {
         }
     },
     
-    __leftTime : function() {
+    __leftTime() {
         var t = this;
         return mmax(0, t.__step>0 ? t.__limit - t.__time : t.__time);
     },
     
-    __reset : function(time) {
+    __reset(time) {
         var t = this;
         t.__stop();
         t.__time = mmax(0, time == undefined ? ( t.__step > 0 ? 0 : t.__limit ) : time);
     },
     
-    __getText : function(format) {
-        format = format || "M:S";
-        var h = floor(this.__time/60/60);
-        var m = floor(this.__time/60);
-        var s = this.__time - m*60;
-        format = format.replace('h', h);
-        format = format.replace('m', m);
-        format = format.replace('s', s);
-        if (h<10) h = '0'+h;
-        if (m<10) m = '0'+m;
-        if (s<10) s = '0'+s;
-        format = format.replace('H', h);
-        format = format.replace('M', m);
-        format = format.replace('S', s);
-        return format;
+    __getText(format, time) {
+        time = ifdef(time, this.__time);
+        format = ifdef(format, this.__format);
+        return getTimeText(time, format);
     },
-    __getText1 : function() { return getTimeText1(this.__time); },
-    __getText2 : function() { return getTimeText2(this.__time); },
-    __getText3 : function() { return getTimeText3(this.__time); },
-    __getText4 : function(maxParamsCount) { return getTimeText4(this.__time, maxParamsCount); },
-    __getText4_1 : function() { return getTimeText4(this.__time, 1); },
-    __getText4_2 : function() { return getTimeText4(this.__time, 2); },
-    __getText4_3 : function() { return getTimeText4(this.__time, 3); },
-    __getText5 : function() { return getTimeText5(this.__time); },
-    __getTextH : function() { return getTimeTextH(this.__time); },
-    __getTextM : function() { return getTimeTextM(this.__time); },
-    __getTextS : function() { return getTimeTextS(this.__time); },
-    __getH : function() { return getTimeH(this.__time); },
-    __getM : function() { return getTimeM(this.__time); },
-    __getS : function() { return getTimeS(this.__time); },
-};
+
+    __getH() { return getTimeH(this.__time); },
+    __getM() { return getTimeM(this.__time); },
+    __getS() { return getTimeS(this.__time); },
+});
  
 
 // TIME_NOW - метка времени UTC
