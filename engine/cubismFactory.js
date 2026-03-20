@@ -1,4 +1,4 @@
-var LCC = Live2DCubismCore,
+var LCC = typeof Live2DCubismCore != undefinedType ? Live2DCubismCore : 0,
     LCCU = LCC.Utils;
 
 var cubismFactory = {
@@ -1617,23 +1617,27 @@ globalConfigsData[options.__baseShadersFolder + 'fragmentShaderSrcPremultipliedA
 globalConfigsData[options.__baseShadersFolder + 'fragmentShaderSrcMaskPremultipliedAlpha.f'] = 'precision mediump float;' + 'varying vec2       v_texCoord;' + 'varying vec4       v_clipPos;' + 'uniform vec4       u_baseColor;' + 'uniform vec4       u_channelFlag;' + 'uniform sampler2D  s_texture0;' + 'uniform sampler2D  s_texture1;' + 'void main()' + '{' + '   vec4 col_formask = texture2D(s_texture0 , v_texCoord) * u_baseColor;' + '   vec4 clipMask = (1.0 - texture2D(s_texture1, v_clipPos.xy / v_clipPos.w)) * u_channelFlag;' + '   float maskVal = clipMask.r + clipMask.g + clipMask.b + clipMask.a;' + '   col_formask = col_formask * maskVal;' + '   gl_FragColor = col_formask;' + '}';
 globalConfigsData[options.__baseShadersFolder + 'fragmentShaderSrcMaskInvertedPremultipliedAlpha.f'] = 'precision mediump float;' + 'varying vec2 v_texCoord;' + 'varying vec4 v_clipPos;' + 'uniform sampler2D s_texture0;' + 'uniform sampler2D s_texture1;' + 'uniform vec4 u_channelFlag;' + 'uniform vec4 u_baseColor;' + 'void main()' + '{' + 'vec4 col_formask = texture2D(s_texture0, v_texCoord) * u_baseColor;' + 'vec4 clipMask = (1.0 - texture2D(s_texture1, v_clipPos.xy / v_clipPos.w)) * u_channelFlag;' + 'float maskVal = clipMask.r + clipMask.g + clipMask.b + clipMask.a;' + 'col_formask = col_formask * (1.0 - maskVal);' + 'gl_FragColor = col_formask;' + '}';
 
-LCC.Logging.csmSetLogFunction(consoleLog);
+if (LCC) {
+    LCC.Logging.csmSetLogFunction(consoleLog);
 
-//cheats
-function printVersion() {
-    var version = LCC.Version.csmGetVersion();
-    var major = (version & 0xff000000) >> 24;
-    var minor = (version & 0x00ff0000) >> 16;
-    var patch = version & 0x0000ffff;
-    var versionNumber = version;
-    consoleLog("Live2D Cubism Core version: ", ('00' + major).slice(-2), ('00' + minor).slice(-2), ('0000' + patch).slice(-4), versionNumber);
+    //cheats
+    function printVersion() {
+        var version = LCC.Version.csmGetVersion();
+        var major = (version & 0xff000000) >> 24;
+        var minor = (version & 0x00ff0000) >> 16;
+        var patch = version & 0x0000ffff;
+        var versionNumber = version;
+        consoleLog("Live2D Cubism Core version: ", ('00' + major).slice(-2), ('00' + minor).slice(-2), ('0000' + patch).slice(-4), versionNumber);
+    }
+
+    printVersion();
+    //endcheats
+
+
+    BUS.__addEventListener(__ON_GAME_LOADED, () => {
+        cubismFactory.__init();
+        return 1;
+    });
+} else {
+    consoleError("Live2DCubismCore not loaded");
 }
-
-printVersion();
-//endcheats
-
-
-BUS.__addEventListener(__ON_GAME_LOADED, () => {
-    cubismFactory.__init();
-    return 1;
-});

@@ -233,10 +233,11 @@ var TextToken = makeClass(function(t, value) {
 
 var TextMetrics = makeClass(function(t, ctx, txt, fcw) {
     if (isString(txt)) {
-        var len = txt.length;
+        var len = txt.length
+            , sf = t.__scaleFactor;
         this.t = txt;
         if (!fcw && t.__charw) {
-            this.w = t.__charw * len * t.__scaleFactor;
+            this.w = t.__charw * len * sf;
             this.l = 0;
             this.r = 0;
         } else {
@@ -246,7 +247,7 @@ var TextMetrics = makeClass(function(t, ctx, txt, fcw) {
             this.l = ifdef(get1(metrics, 'actualBoundingBoxLeft'), fallback)
             this.r = ifdef(get1(metrics, 'actualBoundingBoxRight'), fallback + this.w) - this.w;
         }
-        this.w += (len - 1) * t.__fontspacing;
+        this.w += (len - 1) * t.__fontspacing * sf;
     } else {
         this.l = this.r = this.w = 0;
     }
