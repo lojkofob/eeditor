@@ -436,7 +436,7 @@ function $find(a, f) { return $getf(a, 'F$', f) }
 function $count(a, f) { return $getf(a, 'c$', f) || 0 }
 function $replace(a, f) { return $getf(a, 'r$', f) }
 
-function $findResult(a, f) { for (var i in a) { var r = f(a[i], i); if (r) return r } }
+function $findResult(a, f) { var r; $find(a, (v,i) => r = f(v, i)); return r; }
 function $mapAndFilter(a, f, fl) { return $getff(a, 'M$', f, fl || (a => a)); }
 function $filterAndMap(a, fl, f) { return $getff(a, 'N$', fl, f); }
 
