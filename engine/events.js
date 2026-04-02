@@ -221,7 +221,11 @@ function onDocumentTouchDown(e) {
 
 function _onDocumentMouseDown(e) {
 
-    mouseButtons[e.button || 0] = 1;
+    var button = e.button || 0;
+    if (button != 0) {
+        return;
+    }
+    mouseButtons[button] = 1;
 
     //     consoleWarn('_onDocumentMouseDown', e);
 
@@ -358,12 +362,17 @@ var specialEventHandler;
 
 function _onDocumentMouseUp(e, isout) {
 
-    if (e.button == 2 && !__window.oncm) {
+    var button = e.button || 0;
+    if (button == 2 && !__window.oncm) {
         __window.oncm2 = 1;
         return onContextMenu(e);
     }
 
-    mouseButtons[e.button || 0] = 0;
+    if (button != 0) {
+        return;
+    }
+    
+    mouseButtons[button] = 0;
 
     draggableObjects.__startDragPosition = 0;
 

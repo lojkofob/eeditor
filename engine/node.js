@@ -2863,7 +2863,7 @@ mergeObj(NodePrototype, {
 
             var tm = selfProperties.__text;
             if (tm) {
-                o.__text = tm;
+                o.__text = tm;                 
                 if (o.__text) {
 
                     if (t.name != 'e-__defaultTextProperties')
@@ -2924,6 +2924,8 @@ mergeObj(NodePrototype, {
                     if (o.__text.__autodots) o.__text.__autodots = 1;
 
                     saveShadow(o.__text, t.__textMesh.__shadow);
+
+                    delete o.__text.__colorString;
                 }
             }
 
@@ -4115,7 +4117,6 @@ var NodeCloneProperties = {
         __colorString: {
             get() {
                 return color_to_string(this.__selfColor);
-
             },
             set(v) {
                 this.__color = v;

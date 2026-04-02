@@ -1052,7 +1052,7 @@ var AnimationsWithKitten = (function () {
     addKeyboardMap({
         '<': 'Animation.prevFrame',
         '>': 'Animation.nextFrame',
-        'space': 'Animation.play',
+        'shift+space': 'Animation.play',
         'ctrl+space': 'Animation.playFromStart'
     });
 

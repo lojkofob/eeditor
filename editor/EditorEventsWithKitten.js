@@ -1298,7 +1298,7 @@ gestures.__onKeyDown = function (keyCode, key, ctrl, shift, alt, e) {
     }
 }
 
-function processKey(keyCode, key, ctrl, shift, alt, e) {
+function processKey(key, ctrl, shift, alt, e) {
 
     var eventString = eventStringFromKeys(key, ctrl, shift, alt);
 
@@ -1314,9 +1314,9 @@ function processKey(keyCode, key, ctrl, shift, alt, e) {
 
     } else {
 
-        if (!(ctrl && processKey(keyCode, key, 0, shift, alt, e)))
-            if (!(shift && processKey(keyCode, key, ctrl, 0, alt, e)))
-                if (!(alt && processKey(keyCode, key, ctrl, shift, 0, e)))
+        if (!(ctrl && processKey(key, 0, shift, alt, e)))
+            if (!(shift && processKey(key, ctrl, 0, alt, e)))
+                if (!(alt && processKey(key, ctrl, shift, 0, e)))
                     return;
 
     }
@@ -1335,9 +1335,11 @@ BUS.__addEventListener(__ON_KEY_DOWN, function (t, keyCode, key, ctrl, shift, al
             default: return;
         }
     }
+    processKey(key, ctrl, shift, alt, e);
+});
 
-    processKey(keyCode, key, ctrl, shift, alt, e);
-
+BUS.__addEventListener(__ON_KEY_UP, function (t, keyCode, key, ctrl, shift, alt, e) {
+    processKey('u_' + key, ctrl, shift, alt, e);
 });
 
 
