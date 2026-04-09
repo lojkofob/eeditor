@@ -2638,7 +2638,7 @@ mergeObj(NodePrototype, {
                             }
                         }
                     } else
-                    //no 3d
+                    //no3d
                     {
                         if (sx != 1 || sy != 1) {
                             if (sx == sy) {
