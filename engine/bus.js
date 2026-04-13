@@ -80,6 +80,10 @@ var BUS = {
         for (var i in busEventsListeners)
             this.__removeEventListenerByType(i, listener);
     },
+ 
+    __removeEventListenersByType(type) {
+        if (busEventsListeners[type]) busEventsListeners[type] = [];
+    },
 
     __post: function () {
         var type = arguments[0], listeners = busEventsListeners[type];

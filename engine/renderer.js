@@ -136,7 +136,8 @@ var gl
     , defaultShader = 'base'
     , _shader_precision
     , _shader_defines_str = "#ifdef GL_ES\n#define LOWP lowp\n#define MEDIUMP mediump\n#define HIGHP highp\n#else\n#define LOWP\n#define MEDIUMP\n#define HIGHP\n#endif\n"
-    , depthBuffer;
+    , depthBuffer
+    , setErrorReportingFlagWEBGL = a => {};
 
 function __setGLGlobals(gl) {
 

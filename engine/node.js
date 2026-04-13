@@ -1783,9 +1783,9 @@ mergeObj(NodePrototype, {
             if (this.__imgPropertiesAppliedByClass) {
                 __propertiesAppliedByClass = this.__imgPropertiesAppliedByClass;
             }
-
             //unmulticlass
             this.__img = tex.__src;
+
             //multiclass
             delete this.__imgPropertiesAppliedByClass;
             __propertiesAppliedByClass = tmpClass;
@@ -3812,13 +3812,11 @@ var NodeCloneProperties = {
                             if (isString(filename) && filename) {
                                 t.__notReady = 1;
 
+                                //multiclass
                                 //debug
-                                //                         if (t.__imgPropertiesAppliedByClass)
-                                //                             debugger;
-
                                 t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
-
                                 //undebug
+                                //unmulticlass
 
                                 loadImage(filename, function () {
                                     delete t.__notReady;
