@@ -35,6 +35,7 @@ var windowManager = {
         var queue = __wm__queues__[nameOfQueue];
         if (!queue) queue = __wm__queues__[nameOfQueue] = [];
         queue.push(w);
+        return queue.length;
     },
 
     __pop(w) {
@@ -69,7 +70,7 @@ function closeWindow(windowName) {
     return windowManager.$(windowName, function (w) { return w.__close() });
 }
 
-function __showWindow__(_window) {
+function __showWindow__(_window, qlen) {
     if (!_window)
         return;
 
@@ -119,9 +120,8 @@ function __showWindow__(_window) {
 
         return wnd;
     };
-
-    // TODO: auto z ordering?
-    wnd.__z = -340;
+ 
+    wnd.__z = -340 - qlen;
 
     wnd.__onTap = wnd.__drag = wnd.__blockScroll = 1;
 
@@ -156,12 +156,11 @@ function showWindow(name, onShow, afterShow, params) {
     if (uniqWindow && thisTypeOfWindowExistInQueue)
         return;
 
-    windowManager.__push(nameOfQueue, _window);
+    var qlen = windowManager.__push(nameOfQueue, _window);
 
     if (firstWindow) return;
-
-
-    var wnd = __showWindow__(_window);
+ 
+    var wnd = __showWindow__(_window, qlen);
     if (afterShow) {
         afterShow(wnd);
     }

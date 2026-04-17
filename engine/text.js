@@ -757,7 +757,7 @@ mergeObj(TextPrototype, {
             t.map = 0;
         }
 
-        t.__ctx = undefined;
+        t.__canvas = t.__ctx = undefined;
 
     },
 
@@ -902,6 +902,8 @@ mergeObj(TextPrototype, {
                         , canvas = t.__canvas || __document.createElement('canvas')
                         , ctx = t.__ctx = canvas.getContext('2d');
                     
+                    t.__canvas = canvas;
+
                     if (shadow) {
                         shadowX = shadow.x;
                         shadowY = shadow.y;
@@ -1131,8 +1133,8 @@ mergeObj(TextPrototype, {
 
                     t.__size = [rw + lwDiff / sf, rh];
 
-                    if (t.__cacheCanvas) {
-                        t.__canvas = canvas;
+                    if (!t.__cacheCanvas) {
+                        t.__canvas = 0;
                     }
 
                 }
