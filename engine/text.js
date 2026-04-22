@@ -406,7 +406,7 @@ function splitLineTokens(t, tokens, opts) {
         , canWrapSymbol = autowrapMap ? ((txt, idx) => {
             var prev = txt.charAt(idx - 1);
             if (prev == ' ') return 1;
-            cur = txt.charAt(idx), next = txt.charAt(idx + 1);
+            var cur = txt.charAt(idx), next = txt.charAt(idx + 1);
             return chks(cur) && chkse(prev) && !isSmallKana(prev) && !isSmallKana(cur) && !isSmallKana(next);
         }) :
         ((txt, idx) => {

@@ -21,20 +21,27 @@ function genMap(w, h) {
     }
 }
 
+
 function getFrameName(filename) {
     if (filename != undefined) {
-        if (filename.trim)
+        if (filename.trim) {
             filename = filename.trim();
-        if (filename.replace) {
-            if (filename.indexOf && (filename.indexOf('?') > 0)) { return filename; }
-            var fn1 = filename.replace(/\.\w+$/, '');
-            if (globalConfigsData.__frames.hasOwnProperty(fn1)) { return fn1; }
-            fn1 = fn1.replace(/.*\//, '');
-            if (globalConfigsData.__frames.hasOwnProperty(fn1)) { return fn1; }
         }
 
-        if (globalConfigsData.__frames.hasOwnProperty(options.__atlasFramesPrefix + filename)) {
-            return options.__atlasFramesPrefix + filename;
+        var prefix = options.__atlasFramesPrefix,
+            frames = globalConfigsData.__frames,
+            checkFrame = prefix ? fn => {
+                if (frames.hasOwnProperty(prefix + fn)) return prefix + fn;
+                if (frames.hasOwnProperty(fn)) return fn;
+            } : fn => {
+                if (frames.hasOwnProperty(fn)) return fn;
+            };
+
+        if (filename.indexOf && (filename.indexOf('?') > 0)) { return filename; }
+        
+        if (filename.replace) {
+            var fn1 = filename.replace(/\.\w+$/, '');
+            return checkFrame(filename) || checkFrame(fn1) || checkFrame(fn1.replace(/.*\//, ''));
         }
     }
     return filename;
@@ -776,7 +783,7 @@ mergeObj(NodePrototype, {
         return this.__updateVertices(forcesz).__updateUVS();
     },
 
-    __updateVertices(forcesz, dontTouchGeomSz) {
+    __updateVertices(forcesz, dontTouchGeomSz, hasFit) {
 
         // TODO: flags to need verts update
 
@@ -814,14 +821,16 @@ mergeObj(NodePrototype, {
             size.y -= margin[0] + margin[2];
         }
 
-        if (t.____maxsize) {
-            if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
-            size.min(t.__adjustSmartSize(t.____maxsize, parentSize));
-        }
+        if (!hasFit) {
+            if (t.____maxsize) {
+                if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
+                size.min(t.__adjustSmartSize(t.____maxsize, parentSize));
+            }
 
-        if (t.____minsize) {
-            if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
-            size.max(t.__adjustSmartSize(t.____minsize, parentSize));
+            if (t.____minsize) {
+                if (!parentSize) parentSize = t.__parent ? t.__parent.__contentSize : __screenSize;
+                size.max(t.__adjustSmartSize(t.____minsize, parentSize));
+            }
         }
 
         x = size.x / 2;
@@ -1051,7 +1060,7 @@ mergeObj(NodePrototype, {
                     if (fitx && (!t.____size || !t.____size.py)) szy = mmin(szy, fitx * kx * iszy);
                     if (fity && (!t.____size || !t.____size.px)) szx = mmin(szx, fity * ky * iszx);
 
-                    t.__updateVertices(new Vector2(szx, szy), !t.__useFitGeomSize);
+                    t.__updateVertices(new Vector2(szx, szy), !t.__useFitGeomSize, hasFit);
 
                 }
 

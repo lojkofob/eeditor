@@ -131,7 +131,10 @@ function __showWindow__(_window, qlen) {
 
     _window.w ? _window.w(wnd) : 0;
 
-    addToScene(wnd);
+    if (!wnd.__parent) {
+        addToScene(wnd);
+    }
+    
     //     wnd.__updateShadows();
     wnd.update(1);
 

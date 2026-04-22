@@ -1246,6 +1246,7 @@ var keyboardMap = {
     'shift+s': 'Editor.togglePanel.shaderParamsPanel',
     'shift+k': 'Editor.togglePanel.keyHelperPanel',
     'shift+a': 'Editor.togglePanel.AnimationPanel',
+    'shift+e': 'Editor.togglePanel.ExtendedPanel',
 
 
     'ctrl+]': 'FilePanelWithKitten.nextTab',
