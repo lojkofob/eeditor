@@ -2,8 +2,28 @@
 var __propertiesAppliedByClass;
 //unmulticlass
 
-var __nodeScrolledByY;
-var __nodeScrolledByX;
+var __nodeScrolledByY
+  , __nodeScrolledByX
+  , AnimationParser = {
+    __run(node, s) {
+        // linear rotation
+        if (s.charAt(0) == 'r') {
+            node.__rotate = node.__rotate % 360;
+            var seconds = parseFloat(s.substr(1));
+            if (seconds) {
+                // simple linear rotation
+                var beginRotation = this.____rotation;
+                this.____animatronix = function () {
+                    this.____rotation = (beginRotation + 0.006283185307179587 * __gameTime / seconds);
+                    this.__matrixNeedsUpdate = 1;
+                }
+            }
+        }
+    },
+    __stop(node, s){
+        node.____animatronix = 0;
+    }
+  };
 
 function genMap(w, h) {
     return {
@@ -4416,30 +4436,17 @@ var NodeCloneProperties = {
             get() { return this.____animation; },
             set(v) {
                 var t = this;
+                AnimationParser.__stop(t, t.____animation);
                 t.____animation = v;
                 if (!options.__disableAutoanim) {
                     if (isString(v)) {
-                        var a = v.split('\n');
-                        for (var i in a) {
-                            var s = a[i];
+                        $each(v.split('\n'), s => {
                             if (s.length > 0) {
-                                // linear rotation
-                                if (s[0] == 'r') {
-                                    t.__rotate = t.__rotate % 360;
-                                    var seconds = parseFloat(s.substr(1));
-                                    if (seconds) {
-                                        // simple linear rotation
-                                        var beginRotation = this.____rotation;
-                                        this.____animatronix = function () {
-                                            this.____rotation = (beginRotation + 0.006283185307179587 * __gameTime / seconds);
-                                            this.__matrixNeedsUpdate = 1;
-                                        }
-                                    }
-                                }
+                                AnimationParser.__run(t, s);
                             }
-                        }
+                        });
                     }
-                }
+                } 
             }
         },
 
