@@ -3777,11 +3777,13 @@ var NodeCloneProperties = {
                                 t.__imgPropertiesAppliedByClass = __propertiesAppliedByClass;
                                 //unmulticlass
 
-                                if (map.__nodesWaitingsForThis) {
-                                    map.__nodesWaitingsForThis.push(t);
-                                }
-                                else {
-                                    map.__nodesWaitingsForThis = [t];
+                                if (map) {
+                                    if (map.__nodesWaitingsForThis) {
+                                        map.__nodesWaitingsForThis.push(t);
+                                    }
+                                    else {
+                                        map.__nodesWaitingsForThis = [t];
+                                    }
                                 }
 
                                 t.__notReady = 1;
@@ -3809,11 +3811,13 @@ var NodeCloneProperties = {
                                     t.____imgSize = t.____atlasSize;
                                 }
                                 else {
-                                    if (map.__nodesWaitingsForThis) {
-                                        map.__nodesWaitingsForThis.push(t);
-                                    }
-                                    else {
-                                        map.__nodesWaitingsForThis = [t];
+                                    if (map) {
+                                        if (map.__nodesWaitingsForThis) {
+                                            map.__nodesWaitingsForThis.push(t);
+                                        }
+                                        else {
+                                            map.__nodesWaitingsForThis = [t];
+                                        }
                                     }
                                     //multiclass
                                     applyImgToSelfProperties();

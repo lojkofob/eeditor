@@ -8,6 +8,10 @@ var windowManager = {
         return $find(__wm__queues__, a => a.length);
     },
 
+    __windowsCount() {
+        return $count(__wm__queues__, a => a.length);
+    },
+
     __topWindow() {
         var windows = [];
         for (var i in __wm__queues__) {
@@ -88,7 +92,9 @@ function __showWindow__(_window, qlen) {
 
         // pop and show next
         if (!__showWindow__(windowManager.__pop(_window))) {
-            BUS.__post(__ON_CLOSE_ALL_WINDOWS);
+            if (!windowManager.__hasOpenedWindow()){
+                BUS.__post(__ON_CLOSE_ALL_WINDOWS);
+            }
         }
 
         if (wnd.__afterClose) {
