@@ -605,12 +605,9 @@ var requestAnimFrame = (function () { return __window.requestAnimationFrame || _
 
 function isNumeric(n) { return !isNaN(parseFloat(n)) && isFinite(n) && !isArray(n); }
 function toNumber(n) { var kk = parseFloat(n); return (!isNaN(kk) && isFinite(kk) && !isArray(n)) ? kk : 0; }
-
-function numeric(n) {
-    n = parseFloat(n);
-    if (isFinite(n)) return n;
-    return 0;
-}
+function numeric(n) { n = parseFloat(n); if (isFinite(n)) return n; return 0; }
+function float(n, def) { if (n == undefined || isArray(n)) return def||0; if (isString(n)) n = parseFloat(n); if (!isNaN(n) && isFinite(n)) return n; return def||0; }
+function int(n, def) { if (n == undefined || isArray(n)) return def||0; if (isString(n)) n = parseInt(n, 10); if (!isNaN(n) && isFinite(n)) return n; return def||0; }
 
 function addProp(props, obj, p) {
 

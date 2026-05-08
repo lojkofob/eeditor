@@ -289,7 +289,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
 
 function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     if (!filename) {
-        onError();
+        onError && onError();
         return;
     }
 
@@ -309,30 +309,37 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
             isBase64 = url.indexOf("data:image/") == 0;
 
         if (isBase64 || isBlob) {
-            var tex = new Texture(new Image());
-            tex.__image.src = url;
-            // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
-            var isJPEG = url.indexOf("data:image/jpeg") === 0;
-            tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 });
+            var img = new Image()
+                , tex = new Texture(img);
 
+            tex.__src = "_b64i_" + _b64i;
+            _b64i++; 
+ 
             if (nodeWaitingsForThis) {
                 tex.__nodesWaitingsForThis = [nodeWaitingsForThis];
             }
-            tex.__src = "_b64i_" + _b64i;
-            _b64i++;
-            var w = tex.__image.width, h = tex.__image.height;
-            globalConfigsData.__frames[tex.__src] = {
-                __isSimpleImage: true,
-                tex: tex,
-                __uvsBuffers: [],
-                v: [0, 1, 1, 0],
-                s: new Vector2(w, h),
-                r: [0, 0, w, h],
-                c: defaultHalfVector2
+
+            img.onload = a => {
+                var w = img.width, h = img.height;
+                globalConfigsData.__frames[tex.__src] = {
+                    __isSimpleImage: true,
+                    tex: tex,
+                    __uvsBuffers: [],
+                    v: [0, 1, 1, 0],
+                    s: new Vector2(w, h),
+                    r: [0, 0, w, h],
+                    c: defaultHalfVector2
+                };
+
+                if (onload) onload(tex);
+                onTextureLoaded(tex);
+
             };
 
-            if (onload) onload(tex);
-            onTextureLoaded(tex);
+            img.src = url;
+            // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
+            var isJPEG = url.indexOf("data:image/jpeg") === 0;
+            tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 }); 
             return tex;
         }
     }

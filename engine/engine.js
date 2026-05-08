@@ -383,9 +383,10 @@ function updateFramesRoutine(t) {
         __realLastOnFrameTime = t;
     }
 
-    __currentFrameDeltaTime = clamp(t - __realLastOnFrameTime, 0, 200);
+    __currentFrameDeltaTime = options.__fixedDeltaTimeMs || clamp(t - __realLastOnFrameTime, 0, 200);
+    
     //cheats
-    __currentFrameDeltaTime = (t - __realLastOnFrameTime) * options.__timeMultiplier;
+    __currentFrameDeltaTime *= options.__timeMultiplier;
     //endcheats
 
     if (__currentFrameDeltaTime > 1000 / options.__fpsLimit) {

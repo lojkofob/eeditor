@@ -3763,11 +3763,11 @@ var NodeCloneProperties = {
 
                         //                 __window.__loadImageStack = 'i ' + filename;
 
-                        filename = getFrameName(filename);
+                        var framename = getFrameName(filename);
 
-                        if (globalConfigsData.__frames.hasOwnProperty(filename)) // загружено из атласа или просто кэш картинок
+                        if (globalConfigsData.__frames.hasOwnProperty(framename)) // загружено из атласа или просто кэш картинок
                         {
-                            var frame = globalConfigsData.__frames[filename]
+                            var frame = globalConfigsData.__frames[framename]
                                 , map = frame.tex
                                 , image = map ? map.__image : 0;
 
@@ -3842,7 +3842,7 @@ var NodeCloneProperties = {
 
                         } else {
 
-                            if (isString(filename) && filename) {
+                            if (filename) {
                                 t.__notReady = 1;
 
                                 //multiclass
