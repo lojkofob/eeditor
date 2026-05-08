@@ -468,7 +468,7 @@ function __$call(a) {
 
 
 // рекурсивно обходит массив/объект и вызывает функции в нем до которых дотянется.
-// не совсем понятно зачем это сделано, лучше юзать $mcall и $fcall
+// не совсем понятно зачем это сделано, лучше юзать $fcall
 //DEPRECATED
 function $call(a, args) {
     if (args) {
@@ -484,15 +484,6 @@ function $fcall(a, args) {
         $each(a, function (f) { if (isFunction(f)) f.apply(a, args); });
     } else {
         $each(a, function (f) { if (isFunction(f)) f(); });
-    }
-}
-
-//вызывает метод с именем m у всех объектов из массива/объекта объектов a
-function $mcall(a, m, args) {
-    if (args) {
-        $each(a, function (o) { if (o && o[m] && isFunction(o[m])) o[m].apply(o, args); });
-    } else {
-        $each(a, function (o) { if (o && o[m] && isFunction(o[m])) o[m](); });
     }
 }
 

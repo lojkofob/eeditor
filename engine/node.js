@@ -558,9 +558,9 @@ mergeObj(NodePrototype, {
         var t = this;
         if (!t.____aliasedBy) {
             t.____aliasedBy = {};
-            t.__addOnDestruct(function () {
-                $each(t.____aliasedBy, function (a, nm) {
-                    $mcall(a, '__removeAlias', [t, nm]);
+            t.__addOnDestruct(() => {
+                $each(t.____aliasedBy, (a, nm) => {
+                    $each(a, b => b.__removeAlias && b.__removeAlias(t, nm));
                 });
             });
         }
