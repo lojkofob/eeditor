@@ -2684,6 +2684,10 @@ mergeObj(NodePrototype, {
                 }
             },
 
+            __components(v, o) {
+                return $map(v, c => c.__toJson ? c.__toJson() : c);
+            },
+
             __transformAnchor: undefined
         }
     })(),
@@ -2847,14 +2851,13 @@ mergeObj(NodePrototype, {
 
                     if (val == undefined || val == defVal || $find(defVal, function (vv, i) { return val === vv })) {
                         return;
-                    }
-                    else
-                        if (isFunction(defVal)) {
-                            val = defVal(val, o, t);
-                            if (val == undefined) {
-                                return;
-                            }
+                    } else if (isFunction(defVal)) {
+                        val = defVal(val, o, t);
+                        if (val == undefined) {
+                            return;
                         }
+                    }
+                        
                     needSave = 1;
                     return val;
                 }

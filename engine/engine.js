@@ -716,7 +716,7 @@ function registerClasses(j) {
     if (!j) return;
     if (j.packed) registerClasses(repackJson(j.packed));
     else if (j.pkd) registerClasses(unpackJson(j.pkd));
-    else if (isArray(j)) for (var i in j) registerClasses(j[i]);
+    else if (isArray(j)) $each(j, registerClasses);
     else if (isObject(j)) {
         if (j.name) {
             if (j.name == 'classes') {
