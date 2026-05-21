@@ -12,11 +12,7 @@ var __nodeScrolledByY
             var seconds = parseFloat(s.substr(1));
             if (seconds) {
                 // simple linear rotation
-                var beginRotation = this.____rotation;
-                this.____animatronix = function () {
-                    this.____rotation = (beginRotation + 0.006283185307179587 * __gameTime / seconds);
-                    this.__matrixNeedsUpdate = 1;
-                }
+                node.__animatronix = { r: seconds };
             }
         }
     },
@@ -1239,6 +1235,8 @@ mergeObj(NodePrototype, {
         if (t.__needClassUpdate) {
             consoleLog('class update');
             t.__classes = t.__classes;
+            // t can be deleted with nestedByClass
+            if (t.__destructed) return;
             t.__needClassUpdate = 0;
         }
         //unmulticlass
@@ -2328,7 +2326,41 @@ mergeObj(NodePrototype, {
 
 
     __getTextureProperty(property) { return this['m_' + property] || this['t_' + property]; },
-    __setTextureProperty(property, filename) {
+
+    __setTexturePropertyFrame(property, frame, opts) {
+        var t = this;
+        if (frame) // загружено из атласа или просто кэш картинок
+        {
+            t['f_' + property] = frame;
+            // TODO: normal fix multiply loading errors!
+            if (frame.__loading) {
+                _setTimeout(function () {
+                    t.__setTexturePropertyFrame(property, frame, opts);
+                }, 1);
+                return;
+            }
+
+            var map = t['m_' + property] = frame.tex;
+            if (map && frame.__isSimpleImage) {
+                map.__setWrapS(t.__imgRepeatX);
+                map.__setWrapT(t.__imgRepeatY);
+            }
+
+            if (opts && opts.__uv_buffer_name) {
+                var uv_buffer_name = opts.__uv_buffer_name,
+                    uv_buffer_transform = opts.__uv_buffer_transform || 0;
+                // todo: need to cache this buffers?
+                t.__addAttributeBuffer(uv_buffer_name, 2, getFrameUVS(frame, uv_buffer_transform));
+            }
+        } else {
+            delete t['m_' + property];
+            delete t['f_' + property];
+            if (opts && opts.__uv_buffer_name) {
+                t.__removeAttributeBuffer(opts.__uv_buffer_name);                
+            }
+        }
+    },
+    __setTextureProperty(property, filename, opts, no_load) {
         var t = this;
         if (filename == undefined || isString(filename) || isNumeric(filename)) {
             t['t_' + property] = filename;
@@ -2336,24 +2368,18 @@ mergeObj(NodePrototype, {
             if (filename) {
                 var frame = globalConfigsData.__frames[filename];
                 if (frame) // загружено из атласа или просто кэш картинок
-                {
-                    // TODO: normal fix multiply loading errors!
-                    if (frame.__loading) {
-                        _setTimeout(function () {
-                            t.__setTextureProperty(property, filename);
-                        }, 1);
-                    }
-
-                    var map = t['m_' + property] = frame.tex;
-                    if (map) {
-                        map.__setWrapS(t.__imgRepeatX);
-                        map.__setWrapT(t.__imgRepeatY);
-                    }
-
+                { 
+                    t.__setTexturePropertyFrame(property, frame, opts);
                 } else {
-                    //                     __window.__loadImageStack = 's';
-                    loadImage(filename, function () { t.__setTextureProperty(property, filename) });
+                    // __window.__loadImageStack = 's';
+                    if (!no_load) {
+                        loadImage(filename, a => { 
+                            t.__setTextureProperty(property, filename, opts, 1);
+                        });
+                    }
                 }
+            } else {
+                t.__setTexturePropertyFrame(property, 0, opts);
             }
         }
     }
@@ -3114,9 +3140,7 @@ function spehFunction(node, fname, name) {
 
 function pushNodeHandlerTo(node, v, name, fname) {
     node[name] = v;
-    //debug
-    if ((node.__root || node).__eventsDisabled) return;
-    //undebug
+    
     fname = fname || name;
 
     node[fname] = (v == 1) ? returnsOneFunction : isString(v) ? evalFunction(v) : v;
@@ -5194,7 +5218,7 @@ var NodeCloneProperties = {
 
                         if (v.r) {
                             // simple linear rotation
-                            var beginRotation = this.____rotation, seconds = v.r;
+                            var beginRotation = this.____rotation||0, seconds = v.r;
                             this.____animatronix = function () {
                                 this.____rotation = (beginRotation + 0.006283185307179587 * __gameTime / seconds);
                                 this.__matrixNeedsUpdate = 1;

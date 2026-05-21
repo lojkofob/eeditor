@@ -326,6 +326,9 @@ function parseJson(v, onerror, usePacking) {
 }
 
 function shuffle(a) {
+    if (!a) return [];
+    if (!a.length) return a;
+    
     var j, x, i = a.length - 1;
 
     while (i > 0) {

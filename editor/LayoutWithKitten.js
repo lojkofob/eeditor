@@ -41,8 +41,9 @@ makeClass(LayoutWithKitten, {
 
         this.activateOptions();
 
-        if (!options.__enableEventsOnLayout)
+        if (!options.__enableEventsOnLayout) {
             this.layoutView.__eventsDisabled = 1;
+        }
 
         this.layoutView.init(json);
 

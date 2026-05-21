@@ -1,6 +1,8 @@
 var globalEventObjectsFilter;
 
-var ev_cursor;
+var ev_cursor
+    , hit_test_sorting = (a, b) => (b.__totalZ - a.__totalZ) || (b.id - a.id);
+
 var HitTestObjects = makeClass(function (f, propertyArray) {
     this.__b = [];
     this.f = f;
@@ -9,6 +11,23 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
     {
         __normalize(v) {
             return new Vector2(v.x / layoutsResolutionMult / __screenCenter.x - 1, 1 - v.y / layoutsResolutionMult / __screenCenter.y)
+        },
+
+        __traverse(f, n, a){
+            if (n) {
+                //debug
+                if (n.__eventsDisabled) return;
+                //undebug
+                if (f(n)) {
+                    a.push(n);
+                }
+                var childs = n.__childs;
+                if (childs) {
+                    for (var i = 0; i < childs.length; i++){ 
+                        this.__traverse(f, childs[i], a);
+                    }
+                }
+            }
         },
 
         __traverseObjects: function (checker, f, w) {
@@ -32,10 +51,8 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
                         continue;
 
                     if (!a) {
-                        a = r.$(fltr);
-                        r[t.__propertyArray] = a.sort(function (a, b) {
-                            return (b.__totalZ - a.__totalZ) || (b.id - a.id)
-                        });
+                        t.__traverse(fltr, r, a = []);
+                        r[t.__propertyArray] = a.sort(hit_test_sorting);
                     }
 
                     if (globalEventObjectsFilter) {

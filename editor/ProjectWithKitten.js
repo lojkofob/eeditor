@@ -27,6 +27,8 @@ function ProjectWithKitten(name, onLoad) {
 
             var onPluginsLoaded = function () {
 
+                Editor.__loadingTasks = 0;
+                 
                 serverCommand({ command: 'dirlist' },
                     function (list) {
 
@@ -52,6 +54,9 @@ function ProjectWithKitten(name, onLoad) {
             }
 
             var tasks = new ParallelTasks().__then(onPluginsLoaded);
+
+            Editor.__loadingTasks = tasks;
+
             tasks.__push(() => {
                 Editor.activateOptions();
                 TASKS_RUN(Editor.initPlugins(_this.plugins), () => { looperPost(() => tasks.__inc()) });

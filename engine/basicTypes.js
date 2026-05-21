@@ -194,14 +194,6 @@ function hsv2hsl(a, b, c) { return [a, b * c / ((a = (2 - b) * c) < 1 ? a : 2 - 
 function hsl2hsv(a, b, c) { b *= c < .5 ? c : 1 - c; return [a, 2 * b / (c + b), c + b] }
 
 
-function colorToJson(color, defValue) {
-    return jsonToColor(color, defValue).__toJson(defValue);
-}
-
-function jsonToColor(j, defValue) {
-    return ((defValue && defValue.__isColor) ? defValue : new Color(1, 1, 1)).__fromJson(j);
-}
-
 makeClass(Color, {
 
     __isColor: true,
@@ -1295,6 +1287,15 @@ makeClass(Vector2, {
         this.x = a[o];
         this.y = a[o + 1];
         return this;
+    },
+
+    __toJson(){
+        return [this.x, this.y]
+    },
+    __fromJson(v){
+        return v ?
+            isArray(v) ? this.set(v[0]||0, v[1]||0) : 
+            isObject(v) ? this.set(v.x||0, v.y||0) : this : this;
     }
 
 }, {
@@ -1343,6 +1344,14 @@ makeClass(Vector3, {
         this.y = a[o + 1];
         this.z = a[o + 2];
         return this;
+    },
+    __toJson(){
+        return [this.x, this.y, this.z]
+    },
+    __fromJson(v){
+        return v ?
+             isArray(v) ? this.set(v[0]||0, v[1]||0, v[2]||0) : 
+             isObject(v) ? this.set(v.x||0, v.y||0, v.z||0) : this : this;
     },
     __toVector2() { return new Vector2(this.x, this.y); },
     set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; },
@@ -1537,6 +1546,14 @@ makeClass(Vector4, {
         this.z = a[o + 2];
         this.w = a[o + 3];
         return this;
+    },
+    __toJson(){
+        return [this.x, this.y, this.z, this.w]
+    },    
+    __fromJson(v){
+        return v ?
+             isArray(v) ? this.set(v[0]||0, v[1]||0, v[2]||0, v[3]||0) : 
+             isObject(v) ? this.set(v.x||0, v.y||0, v.z||0, v.w||0) : this : this;
     },
 
     __setScalar(scalar) {
@@ -1748,5 +1765,10 @@ var defaultZeroVector3 = new Vector3(0, 0, 0)
     , defaultOneVector3 = new Vector3(1, 1, 1)
     , defaultOneVector4 = new Vector4(1, 1, 1, 1)
     , default255Vector4 = new Vector4(255, 255, 255, 255)
-
-    , defaultIdentityMatrix = new Matrix4();
+    , defaultIdentityMatrix = new Matrix4()
+    , jsonToColor = v => new Color(1, 1, 1).__fromJson(v)
+    , colorToJson = v => jsonToColor(v).__toJson()
+    , jsonToVector2 = v => new Vector2(0,0).__fromJson(v)
+    , jsonToVector3 = v => new Vector3(0,0,0).__fromJson(v)
+    , jsonToVector4 = v => new Vector4(0,0,0,0).__fromJson(v)
+    , toJson = v => v ? v.__toJson ? v.__toJson() : deepclone(v) : v
