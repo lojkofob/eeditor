@@ -1924,7 +1924,19 @@ mergeObj(NodePrototype, {
             while (d > 1) { d = d / 10; mul++; }
             t.____animTextAction = anim(t, { __animatedText: [from, to] }, time, 0, easing, delay);
 
+            t.____animTextAction.__onCompleted = function() {
+                if (t.____animTextAction == this) {
+                    t.____animTextAction = 0;
+                    t.____animatedTextBlocked = 0;
+                    if (withscaling) {
+                        txt.__scaleF = 1;
+                    }
+                    t.__animatedText = to;
+                }
+            };
+
             if (withscaling) {
+                withscaling = floor(withscaling, 1);
                 mergeObj(tween.to(t, {}, time, 0, easing, delay), {
                     __update(tm) {
                         if (!this.s) this.s = tm;
@@ -1941,7 +1953,9 @@ mergeObj(NodePrototype, {
                             if (tm > this.t) {
                                 t.____animatedTextBlocked = 0;
                                 txt.__scaleF = 1;
-                                txt.__selfColor.__setRGB(1, 1, 1);
+                                if (withcolor) {
+                                    txt.__selfColor.__setRGB(1, 1, 1);
+                                }
                                 return 1;
                             }
                         }
@@ -2464,20 +2478,24 @@ mergeObj(NodePrototype, {
             __extract: [0],
             __selectable: [1],
             __drawMode: [0, 4],
-
-            f1(v) { return Number(v.toFixed(2)) },
-            f2(v) { return Number(v.toFixed(2)) },
-            f3(v) { return Number(v.toFixed(2)) },
-            f4(v) { return Number(v.toFixed(2)) },
-            f5(v) { return Number(v.toFixed(2)) },
-            f6(v) { return Number(v.toFixed(2)) },
-            f7(v) { return Number(v.toFixed(2)) },
-            f8(v) { return Number(v.toFixed(2)) },
-
+ 
             __imgRepeatX: [0],
             __imgRepeatY: [0],
 
-            __uniforms: undefined,
+            __uniforms(list){
+                if ($find(list, (vv) => {
+                    if (vv !== 0 && !vv) {
+                        return 1; // can't save undefined or ''
+                    }
+                    if (!isNumber(vv) && !isString(vv) && !vv.__toJson) {
+                        // can't save textures or something like this
+                        return 1
+                    }
+                })) {
+                    return undefined;
+                }
+                return list;
+            },
 
             __useFitGeomSize: undefined,
 
@@ -3066,8 +3084,8 @@ mergeObj(NodePrototype, {
                             }
                             return -1;
                         } else {
-                            delete parent[key];
                             debugger;
+                            delete parent[key];
                         }
                     }
                 });
@@ -3162,7 +3180,7 @@ var NodeCloneProperties = {
     ha: 1, va: 1, sha: 1, sva: 1, cropx: 1, cropy: 1, __scale: 1, __anchor: 1, __rotate: 1, __centerFill: 1, __transformAnchor: 1,
     __corner: 1, __visible: 1, __blending: 1, __maxImageSize: 1, __maxsize: 1, __minsize: 1, __color: 1,
     __shader: 1, __userData: 1, __animatronix: 1,
-    __text: 1, __uvsTransform: 1, f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1, f7: 1, f8: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
+    __text: 1, __uvsTransform: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
     __onTap: 1, __uniforms: 1, __tableAlignRows: 1, __tableAlignColumns: 1, __tableAlignColumnWidth: 1, __tableAlignRowHeight: 1,
     __drag: 1, __useMaxSizeForScale: 1, 
     //debug

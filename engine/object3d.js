@@ -1,12 +1,21 @@
+function createUniform(obj, name, value) {
+    if (isFunction(value)) {
+        var prop = {}; prop[name] = { get: value };
+        ObjectDefineProperties(obj, prop);
+    }
+    else {
+        obj[name] = value;
+    }
+}
+
 function createUniforms(obj, uniformsList) {
-    for (var name in uniformsList) {
-        var f = uniformsList[name];
-        if (isFunction(f)) {
-            var prop = {}; prop[name] = { get: f };
-            ObjectDefineProperties(obj, prop);
+    if (isObject(uniformsList)) {
+        for (var name in uniformsList) {
+            createUniform(obj, name, uniformsList[name]);
         }
-        else {
-            obj[name] = f;
+    } else if (isArray(uniformsList)) {
+        for (var i = 0; i < uniformsList.length; i+=2) {
+            createUniform(obj, uniformsList[i], uniformsList[i+1]);
         }
     }
     return obj;

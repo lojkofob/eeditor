@@ -91,15 +91,20 @@ var EditorEventsWithKitten = {
     tapCatchers: new UpdatableProto(),
 
     invokeEvent: function (e, data, params, returnChanges) {
-        var ee = isFunction(e) ? e : isFunction(EditorEventsWithKitten[e]) ? EditorEventsWithKitten[e].bind(EditorEventsWithKitten) : 0;
-        if (ee) {
-            params = params || {};
-            var changes = ee(data, params);
-            if (changes) {
-                objectChanged(changes, params);
+        try {
+            var ee = isFunction(e) ? e : isFunction(EditorEventsWithKitten[e]) ? EditorEventsWithKitten[e].bind(EditorEventsWithKitten) : 0;
+            if (ee) {
+                params = params || {};
+                var changes = ee(data, params);
+                if (changes) {
+                    objectChanged(changes, params);
+                }
+                BUS.__post('EVENT_INVOKED', e, changes);
+                return returnChanges ? changes : 1;
             }
-            BUS.__post('EVENT_INVOKED', e, changes);
-            return returnChanges ? changes : 1;
+        } catch(err){
+            consoleDebug(err);
+            BUS.__post('EVENT_INVOKE_ERROR', e, err);
         }
     },
 

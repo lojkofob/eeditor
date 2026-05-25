@@ -34,7 +34,8 @@ var StateWithKitten = (function () {
 
         layoutState(name) {
             var s = StateWithKitten.currentProjectState();
-            if (!s) return;
+            if (StateWithKitten.disableLoadingChangedLayouts) return {};
+            if (!s) return {};
             if (!s.layouts) s.layouts = {};
             if (!s.layouts[name]) s.layouts[name] = { name: name };
             return s.layouts[name];
@@ -330,3 +331,7 @@ var StateWithKitten = (function () {
     }
 
 })();
+
+
+// StateWithKitten.disableLoadingChangedLayouts = 
+//     StateWithKitten.disableSavingChangedLayouts = 1;
