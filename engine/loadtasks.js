@@ -331,7 +331,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                     c: defaultHalfVector2
                 };
 
-                if (onload) onload(tex);
+                onload && onload(tex);
                 onTextureLoaded(tex);
 
             };
@@ -362,11 +362,24 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     var cache = getCachedData(srcurl, globalConfigsData.__images);
     if (cache && cache.tex) {
         if (cache.__isLoading) {
-            cache.__onload.push(onload);
+            cache.__onload.push([onload, onError]);
         } else {
-            onload(cache.tex);
+            onload && onload(cache.tex);
         }
         return cache.tex;
+    }
+
+    var final = result => {
+        var cache = getCachedData(srcurl, globalConfigsData.__images);
+        if (cache && cache.__isLoading) {
+            cache.__isLoading = 0;
+            var _onload = isArray(cache.__onload) ? cache.__onload.slice() : 0;
+            cache.__onload = 0;
+            $each(_onload, a => result ? a[0] && a[0](result) : a[1] && a[1]());
+            if (!result) {
+                setCachedData(srcurl, undefined, globalConfigsData.__images); 
+            }
+        };
     }
 
     var tex = (
@@ -383,16 +396,15 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                     delete frame.__loading;
                 }
 
-                var cache = getCachedData(srcurl, globalConfigsData.__images);
-                if (cache && cache.__isLoading) {
-                    cache.__isLoading = 0;
-                    $each(cache.__onload, a => a(tex));
-                    cache.__onload = 0;
-                };
+                final(tex);
                 onTextureLoaded(tex);
-            }, onProgress, onError, urlGotModUrl, opts);
 
-    setCachedData(srcurl, { tex: tex, __isLoading: 1, __onload: [onload] }, globalConfigsData.__images);
+            }, onProgress, a => {
+                final();
+                tex.__nodesWaitingsForThis = 0;                
+            }, urlGotModUrl, opts);
+
+    setCachedData(srcurl, { tex: tex, __isLoading: 1, __onload: [[onload, onError]] }, globalConfigsData.__images);
 
     tex.__src = filename;
 
