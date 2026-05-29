@@ -96,21 +96,6 @@ $each({
 
     mouse: { get: function () { return toNodeCoords(mouse.__clone()).__divide(__screenSize) } },
 
-    u_texture1: { get: function () { return this.__getTextureProperty('u_texture1'); }, set: function (v) { this.__setTextureProperty('u_texture1', v); } },
-    u_texture2: { get: function () { return this.__getTextureProperty('u_texture2'); }, set: function (v) { this.__setTextureProperty('u_texture2', v); } },
-    u_texture3: { get: function () { return this.__getTextureProperty('u_texture3'); }, set: function (v) { this.__setTextureProperty('u_texture3', v); } },
-    u_texture4: { get: function () { return this.__getTextureProperty('u_texture4'); }, set: function (v) { this.__setTextureProperty('u_texture4', v); } },
-    u_texture5: { get: function () { return this.__getTextureProperty('u_texture5'); }, set: function (v) { this.__setTextureProperty('u_texture5', v); } },
-    u_texture6: { get: function () { return this.__getTextureProperty('u_texture6'); }, set: function (v) { this.__setTextureProperty('u_texture6', v); } },
-    u_texture7: { get: function () { return this.__getTextureProperty('u_texture7'); }, set: function (v) { this.__setTextureProperty('u_texture7', v); } },
-    u_texture8: {
-        get: function () { return this.__getTextureProperty('u_texture8'); }, set: function (v) {
-            activateProjectOptions();
-            this.__setTextureProperty('u_texture8', v);
-            deactivateProjectOptions();
-        }
-    },
-
     u_transform: {
         get: function () {
             if (this.__projectionMatrix)

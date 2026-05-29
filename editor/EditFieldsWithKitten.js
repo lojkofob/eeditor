@@ -181,7 +181,7 @@ var EditFieldsWithKitten = {
         
         var type = node ? stringifyTypeOfObject(node) : 'ENode';
         
-        input = input || this.inputsForProperties[type][property];
+        input = input || this.inputsForProperties[type][property] || this.inputsForProperties['ENode'][property];
 
         if (input && !property && input.__property)
             property = input.__property;
@@ -196,7 +196,7 @@ var EditFieldsWithKitten = {
                 forceParts = 1;
                 property = a[0];
                 val = undefined;
-                input = this.inputsForProperties[type][a[0]];
+                input = this.inputsForProperties[type][a[0]] || this.inputsForProperties['ENode'][a[0]];
             }
         }
 
@@ -220,11 +220,12 @@ var EditFieldsWithKitten = {
 
         val = val == undefined ? getPropVal(node, property) : val;
 
-        if (this.specialUpdators[property]) {
-            return this.specialUpdators[property].call(this, property, input, node, val, forceParts);
-        }
-
         if (input) {
+
+            if (this.specialUpdators[property]) {
+                return this.specialUpdators[property].call(this, property, input, node, val, forceParts);
+            }
+
             if (val && val.getHexString)
                 val = '#' + val.getHexString();
 

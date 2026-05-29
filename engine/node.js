@@ -2338,11 +2338,12 @@ mergeObj(NodePrototype, {
 
     __autoUpdateMatrix() { ObjectDefineProperty(this, '__matrixNeedsUpdate', { get() { return 1 } }); },
 
-
-    __getTextureProperty(property) { return this['m_' + property] || this['t_' + property]; },
+ 
+    __getTextureProperty(property) { return this['t_' + property]; },
 
     __setTexturePropertyFrame(property, frame, opts) {
         var t = this;
+
         if (frame) // загружено из атласа или просто кэш картинок
         {
             t['f_' + property] = frame;
@@ -2359,43 +2360,49 @@ mergeObj(NodePrototype, {
                 map.__setWrapS(t.__imgRepeatX);
                 map.__setWrapT(t.__imgRepeatY);
             }
-
-            if (opts && opts.__uv_buffer_name) {
+            
+            if (opts) {
                 var uv_buffer_name = opts.__uv_buffer_name,
                     uv_buffer_transform = opts.__uv_buffer_transform || 0;
                 // todo: need to cache this buffers?
                 t.__addAttributeBuffer(uv_buffer_name, 2, getFrameUVS(frame, uv_buffer_transform));
             }
+
         } else {
             delete t['m_' + property];
             delete t['f_' + property];
-            if (opts && opts.__uv_buffer_name) {
-                t.__removeAttributeBuffer(opts.__uv_buffer_name);                
+            if (opts) {
+                t.__removeAttributeBuffer(opts.__uv_buffer_name);
             }
         }
     },
-    __setTextureProperty(property, filename, opts, no_load) {
+
+    __setTextureProperty(property, opts, no_load) {
         var t = this;
-        if (filename == undefined || isString(filename) || isNumeric(filename)) {
-            t['t_' + property] = filename;
-            filename = getFrameName(filename);
-            if (filename) {
-                var frame = globalConfigsData.__frames[filename];
-                if (frame) // загружено из атласа или просто кэш картинок
-                { 
-                    t.__setTexturePropertyFrame(property, frame, opts);
-                } else {
-                    // __window.__loadImageStack = 's';
-                    if (!no_load) {
-                        loadImage(filename, a => { 
-                            t.__setTextureProperty(property, filename, opts, 1);
-                        });
+        t['t_' + property] = opts;
+        if (opts) {
+            var filename = isString(opts) ? opts : opts.__frame_name;
+            if (isString(filename)) {
+                filename = getFrameName(filename);
+                if (filename) {                    
+                    var frame = getCachedData(filename, globalConfigsData.__frames);
+                    if (frame) // загружено из атласа или просто кэш картинок
+                    { 
+                        t.__setTexturePropertyFrame(property, frame, opts);
+                        return;
+                    } else {
+                        // __window.__loadImageStack = 's';
+                        if (!no_load) {
+                            loadImage(filename, a => { 
+                                t.__setTextureProperty(property, opts, 1);
+                            });
+                            return;
+                        }
                     }
                 }
-            } else {
-                t.__setTexturePropertyFrame(property, 0, opts);
             }
         }
+        t.__setTexturePropertyFrame(property, 0);
     }
 
     , __setFrame(frame) {
@@ -3192,9 +3199,14 @@ var NodeCloneProperties = {
     __cullFace: 1, __instancesCount: 1,
     __is3D: 1
     //no3d
-},
+}
 
-    NodePropertiesObject = {
+, node_texture_property = (num) => ({ 
+    get() { return this.__getTextureProperty('u_t' + num); }, 
+    set(v) { this.__setTextureProperty('u_t' + num, v); } 
+})
+
+    , NodePropertiesObject = {
 
         __onTap: createSomePropertyWithGetterAndSetter(
             function () { return this.____onTap; },
@@ -5490,7 +5502,18 @@ var NodeCloneProperties = {
                 }
                 //unmulticlass
             }
-        }
+        },
+
+        u_texture1: node_texture_property(1),
+        u_texture2: node_texture_property(2),
+        u_texture3: node_texture_property(3),
+        u_texture4: node_texture_property(4),
+        u_texture5: node_texture_property(5),
+        u_texture6: node_texture_property(6),
+        u_texture7: node_texture_property(7),
+        u_texture8: node_texture_property(8)
+  
+
         //debug
         , __notNormalNode: {
             get() { return this.____notNormalNode },

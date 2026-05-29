@@ -42,7 +42,12 @@ makeClass(LayoutWithKitten, {
         this.activateOptions();
 
         if (!options.__enableEventsOnLayout) {
-            this.layoutView.__eventsDisabled = 1;
+            if (!this.layoutView.hasOwnProperty('__eventsDisabled')){
+                ObjectDefineProperty(this.layoutView, '__eventsDisabled', {
+                    set(){ /* sorry, nope */},
+                    get(){ return Editor.ui.__visible }
+                })
+            }
         }
 
         this.layoutView.init(json);

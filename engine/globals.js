@@ -641,11 +641,12 @@ function addProps(props, obj, cb) {
 
 function stringifyTypeOfObject(o) {
     if (o) {
-        var results = (o.constructor ? o.constructor : o).toString().match(/function (.{1,})\(/);
-        var result = (results && results.length > 1) ? results[1] : "";
+        var constructor = o.constructor;
+        var result = constructor && constructor.name ? o.constructor.name : (
+            (((constructor || o).toString().match(/function (.{1,})\(/))||[])[1] || ""
+        )
         if (result == 'Function') {
-            results = (o).toString().match(/function (.{1,})\(/);
-            result = (results && results.length > 1) ? results[1] : "Function";
+            result = ((o).toString().match(/function (.{1,})\(/)||[]) || "Function";
         }
         return result;
     }

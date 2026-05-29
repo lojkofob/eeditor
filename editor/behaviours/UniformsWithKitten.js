@@ -36,7 +36,17 @@
  
         time: 1,
         u_color: 1,
+
         u_texture: 1,
+        u_texture1: 1,
+        u_texture2: 1,
+        u_texture3: 1,
+        u_texture4: 1,
+        u_texture5: 1,
+        u_texture6: 1,
+        u_texture7: 1,
+        u_texture8: 1,
+
         mouse: 1,
         u_time: 1,
         u_transform: 1,
