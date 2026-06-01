@@ -639,6 +639,7 @@
       self._onseek = "_onseek";
       self._onunlock = "_onunlock";      
       self._onresume = "_onresume";
+      self._onresumeerror = "_onresumeerror";
 
       self[ self._onend ] = o.onend ? [{fn: o.onend}] : [];
       self[ self._onfade ] = o.onfade ? [{fn: o.onfade}] : [];
@@ -654,6 +655,7 @@
       self[ self._onseek ] = o.onseek ? [{fn: o.onseek}] : [];
       self[ self._onunlock ] = o.onunlock ? [{fn: o.onunlock}] : [];
       self[ self._onresume ] = [];
+      self[ self._onresumeerror ] = [];
 
       // Web Audio or HTML5 Audio?
       self._webAudio = Howler.usingWebAudio && !self._html5;
@@ -1928,7 +1930,7 @@
      */
     _emit: function(event, id, msg) {
       var self = this;
-      var events = self['_on' + event];
+      var events = self['_on' + event]||[];
 
       // Loop through event store and fire all functions.
       for (var i=events.length-1; i>=0; i--) {
