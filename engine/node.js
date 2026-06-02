@@ -3802,7 +3802,7 @@ var NodeCloneProperties = {
 
                 function clearSelfImage() {
 
-                    if (t.__frame && t.__uvsBuffer == t.__frame.__uvsBuffers[t.____uvsTransform])
+                    if (t.__frame && t.__frame.__uvsBuffers && t.__uvsBuffer == t.__frame.__uvsBuffers[t.____uvsTransform])
                         delete t.__uvsBuffer;
                     delete t.____imgSize;
                     delete t.__frame;
