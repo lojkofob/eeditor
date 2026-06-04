@@ -7,7 +7,7 @@ var __nodeScrolledByY
   , AnimationParser = {
     __run(node, s) {
         // linear rotation
-        if (s.charAt(0) == 'r') {
+        if (s.charAt && s.charAt(0) == 'r') {
             node.__rotate = node.__rotate % 360;
             var seconds = parseFloat(s.substr(1));
             if (seconds) {
@@ -1325,7 +1325,7 @@ mergeObj(NodePrototype, {
                 , ha = sha == undefined ? parent ? parent.____ha : ALIGN_CENTER : sha
                 , margin = t.____sizeMargin || [0, 0, 0, 0]
                 , spacing = t.____spacing || [0, 0, 0, 0]
-                , updatusObjectTable = updatusObject.__table || 0
+                , updatusObjectTable = updatusObject.__table || {}
                 , ham = (size.x - realParentSize.x) / 2
                 , vam = (size.y - realParentSize.y) / 2;
 
@@ -3039,12 +3039,9 @@ mergeObj(NodePrototype, {
 
             //         saveShadow(o, t.__shadow);
 
-            if (isString(t.__animation)) {
+            if (t.__animation) {
                 o.__animation = t.__animation;
-            } else
-                if (isArray(t.__animation)) {
-                    o.__simpleAnimation = t.__animation;
-                }
+            }
 
 
             var effect = t.__effect;
@@ -3129,20 +3126,7 @@ mergeObj(NodePrototype, {
     //undebug
 
 });
-
-
-
-var NODE_ANIM_PROPS = [
-    '__rotate', // 0
-    '__scaleF', // 1
-    '__scalex', // 2
-    '__scaley', // 3
-    '__x',      // 4
-    '__y',      // 5
-    '__width',  // 6
-    '__height', // 7
-    '__alpha'   // 8
-];
+ 
 
 function returnsOneFunction() {
     return 1;
@@ -4401,24 +4385,7 @@ var NodeCloneProperties = {
                 }
             }
         },
-
-        __simpleAnimation: {
-            get() { return this.____animation; },
-            set(v) {
-                var t = this; t.____animation = v;
-                if (!options.__disableAutoanim) {
-                    if (isArray(v)) {
-                        for (var i in v) {
-                            var a = v[i];
-                            var prop = {};
-                            prop[NODE_ANIM_PROPS[a[0]]] = a[1];
-                            tween.action(t, prop, a[2], a[3], a[4], a[5], a[6]);
-                        }
-                    }
-                }
-            }
-        },
-
+ 
         __transform: {
             get() {
                 var t = this;
@@ -4499,13 +4466,15 @@ var NodeCloneProperties = {
                 var t = this;
                 AnimationParser.__stop(t, t.____animation);
                 t.____animation = v;
-                if (!options.__disableAutoanim) {
+                if (!options.__disableAutoanim && v) {
                     if (isString(v)) {
                         $each(v.split('\n'), s => {
                             if (s.length > 0) {
                                 AnimationParser.__run(t, s);
                             }
                         });
+                    } else {
+                        AnimationParser.__run(t, v);
                     }
                 } 
             }
@@ -4644,14 +4613,16 @@ var NodeCloneProperties = {
                 if (this.__parent) {
                     var childs = this.__parent.__childs;
                     this.____index = childs.indexOf(this);
-                    v = clamp(v, 0, childs.length - 1);
-                    if (v != this.____index) {
-                        var c = childs[v];
-                        c.____index = this.____index;
-                        childs[v] = this;
-                        childs[c.____index] = c;
-                        this.____index = v;
-                        this.__dirty = 3;
+                    if (this.____index >= 0) {
+                        v = clamp(v, 0, childs.length - 1);
+                        if (v != this.____index) {
+                            var c = childs[v];
+                            c.____index = this.____index;
+                            childs[v] = this;
+                            childs[c.____index] = c;
+                            this.____index = v;
+                            this.__dirty = 3;
+                        }
                     }
                 }
             },

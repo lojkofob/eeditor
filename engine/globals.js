@@ -711,7 +711,6 @@ var JsonPackMap = {
     __onTap: 'T',
     __shadow: 'sh',
     __animation: 'd',
-    __simpleAnimation: 'sa',
     __childs: '_',
     __effect: 'e',
     __ofs: 'o',
