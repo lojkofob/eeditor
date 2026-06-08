@@ -1,20 +1,18 @@
 
 function EditorWithKitten(opts) {
 
-    this.opts = {};
-
-    this.opts.uiTheme = this.opts.uiTheme || findGetParameter('theme', 'DarkSimple');
-    this.opts.uiLayout = this.opts.uiLayout || findGetParameter('ui', 'ui');
+    this.opts = mergeObj({
+        uiTheme: findGetParameter('theme', 'DarkSimple'),
+        uiLayout: findGetParameter('ui', 'ui'),
+    }, opts);
 
     this.uiLayout = this.opts.uiLayout;
     this.uiTheme = this.opts.uiTheme;
 
-    this.options = this.opts.options || {};
-    this.opts.options = this.options;
-
-    if (!this.opts.options.__allServerPath) {
-        this.opts.options.__allServerPath = '';
-    }
+    this.options = this.opts.options = mergeObj({
+        __multitouch: 1,
+        __allServerPath: ''
+    }, this.opts.options);
 
 }
 

@@ -164,11 +164,13 @@ var Timer = makeClass(function(parameters) {
     __continue(disableFirstTick){
         var t = this;
         if (!t.__timer) {
+            var tm = 1;
             //cheats
-            t.__startedTimeMult = options.__timeMultiplier;
+            tm = options.__timeMultiplier
+            t.__startedTimeMult = tm;
             t.__cheatsAdjustedTimeAdd = cheatsAdjustedTimeAdd;
             //endcheats
-            t.__timer = setInterval( wrapFunctionInTryCatch( t.__update.bind(t) ), t.__interval * ONE_SECOND / options.__timeMultiplier );
+            t.__timer = setInterval( wrapFunctionInTryCatch( t.__update.bind(t) ), t.__interval * ONE_SECOND / tm );
             if (!disableFirstTick)
                 t.__update();
         }

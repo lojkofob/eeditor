@@ -239,7 +239,8 @@ function onDocumentTouchDown(e) {
 function _onDocumentMouseDown(e) {
 
     var button = e.button || 0;
-    if (button != 0) {
+    
+    if (button != 0 && !options.__multitouch) {
         return;
     }
     mouseButtons[button] = 1;
@@ -385,7 +386,7 @@ function _onDocumentMouseUp(e, isout) {
         return onContextMenu(e);
     }
 
-    if (button != 0) {
+    if (button != 0 && !options.__multitouch) {
         return;
     }
     

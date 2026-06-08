@@ -353,6 +353,7 @@ var subtargetsBuilders = {
             , url = d.url || `https://${server}/`
             , _path = d.path || ''
             , basedir = d.basedir
+            , sftp = d.mode == 'sftp'
             , src = collectSources(d.src, basedir);
 
         if (!src) throw 'ftp_upload: need src'
@@ -360,13 +361,18 @@ var subtargetsBuilders = {
 
         if (src) {
             var num = src.length;
-            if (user && pass) {
+            if (sftp) {
+                // sftp takes user@host; password (if any) is fed via sshpass
+                if (user) server = `${user}@${server}`;
+            } else if (user && pass) {
                 server = `${user}:${pass}@${server}`;
             } else if (user) {
                 server = `${user}@${server}`;
             }
 
             var uploadedFiles = []
+                , sftpBatch = []
+                , sftpDirs = {};
 
             $each(src, s => {
                 var filename = path.basename(s)
@@ -380,8 +386,47 @@ var subtargetsBuilders = {
 
                 uploadedFiles.push(filePath)
 
-                spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${filePath}`])
+                if (sftp) {
+                    var remote = filePath.replace(/\\/g, '/')
+                        , dir = remote.substring(0, remote.lastIndexOf('/'));
+
+                    // recreate remote dirs level by level;
+                    // leading '-' makes sftp ignore "already exists" errors
+                    if (dir) {
+                        var abs = dir[0] == '/'
+                            , acc = '';
+                        $each(dir.split('/'), seg => {
+                            if (!seg) return;
+                            acc = acc ? `${acc}/${seg}` : (abs ? `/${seg}` : seg);
+                            if (!sftpDirs[acc]) {
+                                sftpDirs[acc] = 1;
+                                sftpBatch.push(`-mkdir "${acc}"`)
+                            }
+                        });
+                    }
+
+                    sftpBatch.push(`put "${s}" "${remote}"`)
+                } else {
+                    spawn(['curl', '--ftp-create-dirs', '-T', s, `ftp://${server}/${filePath}`])
+                }
             });
+
+            if (sftp) {
+                var batchFile = makePath([spawnCwd || '', '.sftp_upload_batch']);
+                fs.writeFileSync(batchFile, sftpBatch.join('\n') + '\n', 'utf8');
+
+                if (pass) {
+                    cmd = [ 'sshpass', '-p', quotesWrap(pass), 'sftp', '-oStrictHostKeyChecking=no', '-b', batchFile, server ];
+                } else { 
+                    // no password, use with ssh-key authentication
+                    cmd = ['sftp', '-b', batchFile, server];
+                }
+
+                spawn(cmd);
+                
+                removeFile(batchFile);
+
+            }
 
             winston.info(`${num} files uploaded, check it at:`)
 

@@ -81,6 +81,7 @@ makeClass(MyBufferAttribute, {
             return;
         }
         delete _buffersCache[this.id];
+        this.__needNewBuffer = 1;
         if (this.__webglBuffer) {
             //cheats
             renderInfo.totalBuffersCount--;
@@ -98,7 +99,6 @@ makeClass(MyBufferAttribute, {
             //endcheats
             if (gl) gl.deleteBuffer(this.__webglBuffer);
             this.__webglBuffer = 0;
-            this.__needNewBuffer = 1;
         }
     },
 

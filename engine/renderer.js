@@ -574,7 +574,7 @@ function WebGLRenderer() {
         , _newAttributes
         , _maxVertexAttributes = gl_attributesCount
         , _enabledAttributes
-        , _enabledInstancingdAttributes
+        , _enabledInstancingAttributes
         , _maxTextures
         , _maxTextureSize = 2048
 
@@ -664,13 +664,13 @@ function WebGLRenderer() {
 
         }
 
-        if (_enabledInstancingdAttributes[attribute] !== divisor) {
+        if (_enabledInstancingAttributes[attribute] !== divisor) {
             if (gl_instanced_ext) {
                 gl_instanced_ext.vertexAttribDivisorANGLE(attribute, divisor)
             } else {
                 gl.vertexAttribDivisor(attribute, divisor);
             }
-            _enabledInstancingdAttributes[attribute] = divisor;
+            _enabledInstancingAttributes[attribute] = divisor;
         }
     }
 
@@ -683,7 +683,7 @@ function WebGLRenderer() {
 
                 gl.disableVertexAttribArray(i);
                 _enabledAttributes[i] = 0;
-                _enabledInstancingdAttributes[i] = 0;
+                _enabledInstancingAttributes[i] = 0;
 
             }
 
@@ -1351,8 +1351,13 @@ function WebGLRenderer() {
 
         _enabledGLFlags = {};
         if (_enabledAttributes) {
+            for (var i = 0; i < _enabledAttributes.length; i++) {
+                if (_enabledAttributes[i] === 1) {
+                    gl.disableVertexAttribArray(i);
+                }
+            }            
             _enabledAttributes.fill(0);
-            _enabledInstancingdAttributes.fill(0);
+            _enabledInstancingAttributes.fill(0);
         }
     }
 
@@ -1409,7 +1414,7 @@ function WebGLRenderer() {
         //undebug
         _newAttributes = new Uint8Array(_maxVertexAttributes);
         _enabledAttributes = new Uint8Array(_maxVertexAttributes);
-        _enabledInstancingdAttributes = new Uint8Array(_maxVertexAttributes);
+        _enabledInstancingAttributes = new Uint8Array(_maxVertexAttributes);
         _maxTextures = getGLParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
         _maxTextureSize = getGLParameter(gl.MAX_TEXTURE_SIZE);
 
@@ -1464,22 +1469,8 @@ function WebGLRenderer() {
         _shadersCache = { f: {}, v: {} };
 
         _currentBoundTextures = {};
-
-        if (_enabledAttributes) {
-            for (var i = 0; i < _enabledAttributes.length; i++) {
-
-                if (_enabledAttributes[i] === 1) {
-
-                    gl.disableVertexAttribArray(i);
-                    _enabledAttributes[i] = 0;
-
-                }
-
-            }
-        }
-
+ 
         _colorBuffer.__reset();
-
 
     }
 
