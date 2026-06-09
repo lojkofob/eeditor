@@ -342,21 +342,22 @@ __mraid = (function () {
 
                 var mraid_state = __mraid.__getState()
                 if (mraid_state == loading) {
-                    __mraid.__addEventListener(ready, function () {
-                        __mraid.__removeEventListener(ready);
+                    var readyListener = () => {
+                        __mraid.__removeEventListener(ready, readyListener);
                         callback();
-                    });
-                } else
-                    if (mraid_state == hidden || !__mraid.__isViewable()) {
-                        __mraid.__addEventListener(viewableChange, isViewable => {
-                            if (isViewable) {
-                                __mraid.__removeEventListener(viewableChange);
-                                callback();
-                            }
-                        })
-                    } else {
-                        callback();
-                    }
+                    };
+                    __mraid.__addEventListener(ready, readyListener);
+                } else if (mraid_state == hidden || !__mraid.__isViewable()) {
+                    var viewableListener = isViewable => {
+                        if (isViewable) {
+                            __mraid.__removeEventListener(viewableChange, viewableListener);
+                            callback();
+                        }
+                    };
+                    __mraid.__addEventListener(viewableChange, viewableListener);
+                } else {
+                    callback();
+                }
 
             }
         });
