@@ -28,22 +28,25 @@ var normalizeTimeWithZero = (d) => ((d < 10 ? '0' : '') + d)
         var paramsCount = 0;
             
         if (d && (paramsCount < maxParamsCount)) {
-            txt += d + TR('d') + ' ';
+            txt += d + TR('d');
             paramsCount++;
         }
         
         if (h && (paramsCount < maxParamsCount)) {
-            txt += h + TR('h') + ' ';
+            if (txt) txt += ' ';
+            txt += h + TR('h');
             paramsCount++;
         }
         
         if (m && (paramsCount < maxParamsCount)) {
+            if (txt) txt += ' ';
             txt += m + TR('m');
             paramsCount++;
         }
         
         if (!ignoreSeconds && h == 0 && d == 0 && (paramsCount < maxParamsCount)) {
-            txt += ' ' + s + TR('s') + ' ';
+            if (txt) txt += ' ';
+            txt += s + TR('s');
             paramsCount++;
         }
         
