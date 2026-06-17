@@ -347,14 +347,15 @@ var subtargetsBuilders = {
     },
 
     ftp_upload(d) {
-        var pass = d.password
-            , user = d.user
-            , server = d.server
-            , url = d.url || `https://${server}/`
-            , _path = d.path || ''
-            , basedir = d.basedir
+        var pass = isString(d.password) ? d.password.trim() : ''
+            , user = isString(d.user) ? d.user.trim() : ''
+            , server = isString(d.server) ? d.server.trim() : ''
+            , url = isString(d.url) ? d.url.trim() : `https://${server}/`
+            , _path = isString(d.path) ? d.path.trim() : ''
+            , basedir = isString(d.basedir) ? d.basedir.trim() : ''
             , sftp = d.mode == 'sftp'
-            , src = collectSources(d.src, basedir);
+            , src = collectSources(d.src, basedir)
+            , verbose = d.verbose;
 
         if (!src) throw 'ftp_upload: need src'
         if (!server) throw 'ftp_upload: need server'
@@ -419,7 +420,7 @@ var subtargetsBuilders = {
                     cmd = [ 'sshpass', '-p', quotesWrap(pass), 'sftp', '-oStrictHostKeyChecking=no', '-b', batchFile, server ];
                 } else { 
                     // no password, use with ssh-key authentication
-                    cmd = ['sftp', '-b', batchFile, server];
+                    cmd = ['sftp', verbose ? '-v' : '', '-b', batchFile, server];
                 }
 
                 spawn(cmd);
