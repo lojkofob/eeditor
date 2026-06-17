@@ -3,7 +3,7 @@ var globalTextCache = []
 
     , colorStringProperty = {
         get() { return color_to_string(this.__color); },
-        set(v) { this.__color = v; }
+        set(v) { this.__color = jsonToColor(v); }
     };
     
 // gcc shim
@@ -63,8 +63,6 @@ function color_to_string(c, alpha) {
     }
 
     return '#000000';
-
-
 }
 
 function getFontAscent() { return (options.__defaultTextProperties || 0).__fontAscent || 0.7; }

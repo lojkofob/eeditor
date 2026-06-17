@@ -298,24 +298,32 @@ function brightColor(c, v) {
 
 function highlightTargetColor(subobj, a) {
     a *= (subobj.__highlightMult || 1);
-    var color = subobj.__baseColor || subobj.__color;
-    return subobj.__shader == 'colorize' ?
-        { r: color.r + 0.015 * a, g: color.g + 0.015 * a, b: color.b + 0.015 * a } :
-        subobj.__shader == 'hsv' ?
-            { g: color.g - 0.2 * a, b: color.b + 0.1 * a, r: color.r } :
-            { r: color.r + 0.2 * a, g: color.g + 0.2 * a, b: color.b + 0.2 * a }
+    var color = subobj.__baseColor || subobj.__selfColor || subobj.__color;
+    if (color) {
+        return subobj.__shader == 'colorize' ?
+            { r: color.r + 0.015 * a, g: color.g + 0.015 * a, b: color.b + 0.015 * a } :
+            subobj.__shader == 'hsv' ?
+                { g: color.g - 0.2 * a, b: color.b + 0.1 * a, r: color.r } :
+                { r: color.r + 0.2 * a, g: color.g + 0.2 * a, b: color.b + 0.2 * a }
+    }
 }
 
 function highlightSubobj(subobj, a, t) {
-    killAnim(subobj.__color);
-    if (!subobj.__baseColor) {
-        subobj.__baseColor = brightColor(subobj.__color, 0);
-    }
-    t = t || 0.1;
-    if (averageFPS > 30) {
-        anim(subobj.__color, highlightTargetColor(subobj, a), t);
-    } else {
-        subobj.__color.__copy(highlightTargetColor(subobj, a));
+    var color = subobj.__selfColor || subobj.__color;
+    if (color && color.__isColor) {
+        killAnim(color);
+        if (!subobj.__baseColor) {
+            subobj.__baseColor = brightColor(color, 0);
+        }
+        t = t || 0.1;        
+        var targetColor = highlightTargetColor(subobj, a);
+        if (targetColor) {
+            if (averageFPS > 30) {
+                anim(color, targetColor, t);
+            } else {
+                color.__copy(targetColor);
+            }
+        }
     }
 }
 
