@@ -2361,17 +2361,18 @@ mergeObj(NodePrototype, {
                 map.__setWrapT(t.__imgRepeatY);
             }
             
-            if (opts) {
-                var uv_buffer_name = opts.__uv_buffer_name,
-                    uv_buffer_transform = opts.__uv_buffer_transform || 0;
-                // todo: need to cache this buffers?
-                t.__addAttributeBuffer(uv_buffer_name, 2, getFrameUVS(frame, uv_buffer_transform));
+            if (isObject(opts)) {
+                var uv_buffer_name = opts.__uv_buffer_name;
+                if (uv_buffer_name) {
+                    // todo: need to cache this buffers?
+                    t.__addAttributeBuffer(uv_buffer_name, 2, getFrameUVS(frame, opts.__uv_buffer_transform || 0));
+                }
             }
 
         } else {
             delete t['m_' + property];
             delete t['f_' + property];
-            if (opts) {
+            if (isObject(opts)) {
                 t.__removeAttributeBuffer(opts.__uv_buffer_name);
             }
         }
