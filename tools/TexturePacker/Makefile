@@ -2,4 +2,4 @@ ALL:
 	mkdir -p ./build && \
 	cd ./build && \
 	cmake ../ && \
-	make
+	cmake --build . --config Release

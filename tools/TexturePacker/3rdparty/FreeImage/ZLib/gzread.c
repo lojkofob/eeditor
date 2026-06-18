@@ -5,6 +5,19 @@
 
 #include "gzguts.h"
 
+
+ #if defined(_WIN32) && !defined(__BORLANDC__)
+
+#else
+#if defined(_LARGEFILE64_SOURCE) && _LFS64_LARGEFILE-0
+
+#else
+
+#include <unistd.h>
+#endif
+#endif
+
+
 /* Local functions */
 local int gz_load OF((gz_statep, unsigned char *, unsigned, unsigned *));
 local int gz_avail OF((gz_statep));

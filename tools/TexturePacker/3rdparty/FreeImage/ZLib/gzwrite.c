@@ -4,6 +4,16 @@
  */
 
 #include "gzguts.h"
+ #if defined(_WIN32) && !defined(__BORLANDC__)
+
+#else
+#if defined(_LARGEFILE64_SOURCE) && _LFS64_LARGEFILE-0
+
+#else
+
+#include <unistd.h>
+#endif
+#endif
 
 /* Local functions */
 local int gz_init OF((gz_statep));
