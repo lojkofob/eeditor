@@ -519,7 +519,7 @@ try_print:
     }
     wcs = (u_int32_t*)alloca((cnt+1) * sizeof(u_int32_t));
     cnt = u8_toucs(wcs, cnt+1, buf, cnt);
-    printf("%ls", (u_int32_t*)wcs);
+    printf("%ls", (wchar_t*)wcs);
     return cnt;
 }
 

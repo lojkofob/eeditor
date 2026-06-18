@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 3.2...4.3.3)
 ##########################################################################################
 # Process subdirectories
 
+
+set(ZLIB_BUILD_TESTING OFF)
+set(ZLIB_BUILD_SHARED OFF)
+set(ZLIB_BUILD_STATIC ON)
+set(ZLIB_INSTALL OFF)
+
+
 add_subdirectory(ZLib)
 add_subdirectory(LibJPEG)
 add_subdirectory(LibPNG)
@@ -138,5 +145,5 @@ endif()
 
 add_library(FreeImage STATIC ${SRCS} ${HDRS})
 
-target_link_libraries(FreeImage PRIVATE jpeg png)
-# add_dependencies(FreeImage LibJPEG LibPNG)
+target_link_libraries(FreeImage PRIVATE ZLIB::ZLIBSTATIC jpeg png)
+add_dependencies(FreeImage ZLIB::ZLIBSTATIC jpeg png)

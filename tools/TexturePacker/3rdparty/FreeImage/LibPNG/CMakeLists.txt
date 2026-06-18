@@ -24,4 +24,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ZLib)
 
 add_library(png STATIC ${SRCS})
 
-target_link_libraries(png z)
+target_link_libraries(png PRIVATE ZLIB::ZLIBSTATIC)
+add_dependencies(png ZLIB::ZLIBSTATIC)
