@@ -164,6 +164,7 @@ function spawntool(t, opts) {
 }
 
 function quotesWrap(s) {
+    if (s.indexOf && s.indexOf('"') == 0) return s;
     return '"' + s + '"';
 }
 
@@ -213,9 +214,9 @@ function mkdir(d) {
         }
         if (!fs.existsSync(dir)) {
             try {
-                spawn(['mkdir', dir]);
+                spawn(['mkdir', quotesWrap(dir)]);
             } catch (ex) {
-                spawn(['mkdir', '-p', dir]);
+                spawn(['mkdir', '-p', quotesWrap(dir)]);
             }
         }
     }
@@ -445,7 +446,7 @@ var subtargetsBuilders = {
         if (isObject(src)) {
             $each(src, (filename, zipfilename) => {
                 if (filename == zipfilename) {
-                    spawn(['zip', '-r', compressionLevel, zipname, filename])
+                    spawn(['zip', '-r', compressionLevel, quotesWrap(zipname), quotesWrap(filename)])
                 } else {
                     var tmp_path = 'zip_tmp/'
                     mkdir(tmp_path);
@@ -454,7 +455,7 @@ var subtargetsBuilders = {
                         makePath([spawnCwd || '', tmp_path, filename])
                     );
 
-                    spawn(['zip', '-r', compressionLevel, '-m', '../' + zipname, filename], {
+                    spawn(['zip', '-r', compressionLevel, '-m', quotesWrap('../' + zipname), quotesWrap(filename)], {
                         cwd: path.join(spawnCwd || '', tmp_path)
                     });
 
@@ -464,7 +465,7 @@ var subtargetsBuilders = {
         } else {
             src = $map(collectSources(src, spawnCwd), f => f.replace(spawnCwd, ''));
             $each(src, filename => {
-                spawn(['zip', '-r', compressionLevel, zipname, filename])
+                spawn(['zip', '-r', compressionLevel, quotesWrap(zipname), quotesWrap(filename)])
             });
         }
     },
@@ -559,7 +560,7 @@ var subtargetsBuilders = {
             dir = makePath([mkdir(d.dst), d.name]);
         }
         $each(src, function (s) {
-            spawn(["cp -rfv", s, dir]);
+            spawn(["cp -rfv", quotesWrap(s), quotesWrap(dir)]);
         });
 
     },
@@ -666,6 +667,19 @@ var subtargetsBuilders = {
         });
         fs.writeFileSync(dstFile, content);
 
+    },
+
+    configure(d){
+        var src = collectSources(d.src)
+            , spawnFunc = d.spawn;
+
+        $each(src, filename => {
+            var content = readFileSync(filename);
+            var new_content = unwind(content, env, spawnFunc ? spawn : 0, project_json);
+            if (new_content != content) {
+                fs.writeFileSync(filename, new_content);
+            }
+        });
     },
 
     replaceinfile(d) {

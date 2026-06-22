@@ -1,0 +1,16 @@
+version: "3.1"
+services:
+  server:
+    image: "eeditor-server"
+    container_name: "eeditor-server"
+    restart: "no"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "../../:/var/www/html"
+    command: "service apache2 start"
+      
