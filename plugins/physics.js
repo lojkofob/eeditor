@@ -1,5 +1,5 @@
 
-var ph_Engine, ph_Bodies, ph_World, ph_Body, ph_Vertices, ph_Sleeping;
+var ph_Engine, ph_Bodies, ph_World, ph_Body, ph_Vertices, ph_Sleeping, ph_Events;
  
 
 var PH_B_RECTANGLE = 0
@@ -7,7 +7,8 @@ var PH_B_RECTANGLE = 0
 
 function initPhysics() {
     if (!ph_Engine) {
-        var Engine = Matter.Engine;
+        var Matter = __window.Matter
+            , Engine = Matter.Engine;
 
         // create an engine
         ph_Engine = Engine.create();
@@ -26,7 +27,8 @@ function initPhysics() {
             }
             
         };
-        
+
+        ph_Events = Matter.Events;
         ph_Bodies = Matter.Bodies;
         ph_World = Matter.World;
         ph_Body = Matter.Body;
@@ -34,17 +36,19 @@ function initPhysics() {
         ph_Sleeping = Matter.Sleeping;
         
         updatable.push(ph_Engine);
-        
+        return 1;
     }
+    
 }
 
 
 function nodeRender(){
-	var node = this;
-	var body = node.__ph_body;
+	var node = this
+	    , body = node.__ph_body;
+
 	if (body && !body.isSleeping && !ph_Engine.__disabled){
 		
-        node.____rotation = -body.angle; 
+        node.____rotation = -body.angle;
         node.__offset.x = body.position.x;
         node.__offset.y = body.position.y;
         
@@ -76,13 +80,17 @@ function nodeUpdateVertices(){
     var ofs = node.__offset, sz = node.__size, x = sz.x/2, y = sz.y/2;
     
     var newbody;
-    //TODO:
-//     switch ( node.__physics.__bodyType ){
-//         
-//         
-//     }
+    //TODO: other types
+    switch ( node.__physics.__bodyType ){
+        case PH_B_CIRCLE:
+            newbody = ph_Bodies.circle( ofs.x, ofs.y, mmin(sz.x, sz.y) / 2, node.__physicsBodyOpts );
+            break;
+        default:
+            newbody = ph_Bodies.rectangle( ofs.x, ofs.y, sz.x, sz.y, node.__physicsBodyOpts );
+            break;
+    }
      
-    newbody = ph_Bodies.rectangle( ofs.x, ofs.y, sz.x, sz.y, node.__physicsBodyOpts );
+    
     
     newbody.lsx = x;
     newbody.lsy = y;
@@ -106,7 +114,7 @@ ObjectDefineProperties( NodePrototype, {
             var t = this;
             t.__dirty = 3;
             if (v) {
-                console.log(v);
+                // console.log(v);
                 
                 /*
                  var defaults = {
@@ -214,12 +222,9 @@ mergeObj(NodePrototype,{
 });
 
 
-BUS.__addEventListener({
-    __ON_GAME_LOADED: function(){
-        initPhysics();
-        return 1;
-    }
-});
+BUS.__addEventListeners(
+    __ON_GAME_LOADED, initPhysics
+);
 
 
 //debug

@@ -126,7 +126,7 @@ EditorWithKitten.prototype = {
                 }
 
                 var plugins = concatArraysWithUniqueItems(explodeString(findGetParameter('plugins')), [
-                    'matter.min',
+                    'matter',
                     'physics',
                     'qrcode',
                     'combiner',
