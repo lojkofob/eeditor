@@ -193,53 +193,52 @@ var html = (function () {
         html_addHtmlToHead(script);
         return script;
     }
-
-    function html_addCSS(url) {
-        return html_addHtmlToHead(html_createElement('link', {
-            rel: 'stylesheet', 
-            href: url
-        }));
-    }
-
-    function html_setClass(el, className) {
-        el.className = (className || '').trim().replace(/\s+/g, ' ');
-    }
-
-    function html_addClass(el, className) {
-        if (el.classList) {
-            el.classList.add(className);
-        } else {
-            el.className += ' ' + className;
-        }
-    }
-
-    function html_removeClass(el, className) {
-        if (el.classList) {
-            el.classList.remove(className);
-        } else if (el.className) {
-            var elClasses = el.className.split(' ');
-            removeFromArray(className, elClasses);
-            el.className = elClasses.join(' ');
-        }
-    }
-
-
-    function html_hasClass(el, className) {
-        if (el.classList) {
-            return el.classList.contains(className);
-        } else if (el.className) {
-            return el.className.split(' ').indexOf(className) >= 0;
-        }
-    }
-
+ 
     return makeSingleton({
 
     }, {
-        __addCSS: html_addCSS,
-        __setClass: html_setClass,
-        __hasClass: html_hasClass,
-        __addClass: html_addClass,
-        __removeClass: html_removeClass,
+        __addCSS: () => html_addHtmlToHead(html_createElement('link', {
+            rel: 'stylesheet', 
+            href: url
+        }))
+
+        , __setClass: (el, className) => el.className = (className || '').trim().replace(/\s+/g, ' ')
+    
+        , __hasClass: (el, className) => {
+            el.classList ? el.classList.contains(className) : 
+                el.className && inArray(className, el.className.split(' '));
+        }
+        
+        , __addClass: (el, className) => el.classList ? el.classList.add(className) : el.className += ' ' + className
+
+        , __removeClass: (el, className) => {
+            if (el.classList) {
+                el.classList.remove(className);
+            } else if (el.className) {
+                var elClasses = el.className.split(' ');
+                removeFromArray(className, elClasses);
+                el.className = elClasses.join(' ');
+            }
+        },
+
+        __isVisible(el){
+            if (el) {
+                var checkVisibility = get1(el, 'checkVisibility');
+                if (checkVisibility) {
+                    return checkVisibility.call(el, set({}, 
+                        'visibilityProperty', true, 'opacityProperty', true));
+                } else if (el.offsetParent != null) {
+                    var style = __window.getComputedStyle(el);
+                    return !(
+                        (style.display == 'none') || 
+                        (style.opacity == '0') || 
+                        (style.visibility == 'hidden') || 
+                        (style.visibility == 'collapse')
+                    )
+                }
+            }
+        },
+
         __getHead: html_getHead,
         __getBody: html_getBody,
         __setText: html_setText,
