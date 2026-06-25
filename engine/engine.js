@@ -218,18 +218,18 @@ var setupWindowOptions = () => { }
 
 function onWindowResize(force) {
 
-    var wsz = getWindowDocumentSize(),
-        w = wsz[0], h = wsz[1];
-
-    if (!force && (w == _cszw && h == _cszh))
-        return;
-
-    var scaleFactorMult = options.__isDeviceQualityLow ? 0.5 : 1
+    var wsz = getWindowDocumentSize()
+        , w = wsz[0]
+        , h = wsz[1]
+        , scaleFactorMult = options.__isDeviceQualityLow ? 0.5 : 1
         , pixelRatio = options.__scaleFactor ? scaleFactorMult * options.__scaleFactor : clamp(scaleFactorMult * (__window.devicePixelRatio || 1), 1, 2)
         , a = setupWindowOptions(force, w, h, pixelRatio);
 
     if (isArray(a)) { w = a[0] || w; h = a[1] || h; }
     
+    if (!force && (w == _cszw && h == _cszh))
+        return;
+
     _cszw = w;
     _cszh = h;
 

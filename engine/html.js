@@ -89,23 +89,21 @@ var html = (function () {
         );
     }
 
-    function html_init(e, j) {
+    var html_special = {
+        __attributes(e, v){ mergeObj(e, v); },
+        __onTap(e, v, j) {
+            html_addClickHandler(e, v, j.__preventDefault == undefined ? true : j.__preventDefault);
+        },
+        __class(e, v) { html_setClass(e, v); }
+    };
 
-        if (j.__attributes) {
-            //TODO: modify j is bad
-            mergeObj(e, j);
-            delete j.__attributes;
-        }
-
-        if (j.__onTap) {
-            //TODO: modify j is bad
-            html_addClickHandler(e, j.__onTap, j.__preventDefault == undefined ? true : j.__preventDefault);
-            delete j.__onTap;
-        }
-
-        $each(j, function (subj, i) {
+    function html_init(e, j) { 
+        $each(j, (subj, i) => {
+            if (html_special[i]) {
+                html_special[i](e, subj, i);
+            } else
             if (isObject(subj)) {
-                $each(([]).slice.call(e.querySelectorAll(i)), function (el) {
+                $each(([]).slice.call(e.querySelectorAll(i)), (el) => {
                     html_init(el, subj);
                 });
             } else if (isFunction(subj)) {
@@ -196,12 +194,52 @@ var html = (function () {
         return script;
     }
 
+    function html_addCSS(url) {
+        return html_addHtmlToHead(html_createElement('link', {
+            rel: 'stylesheet', 
+            href: url
+        }));
+    }
 
+    function html_setClass(el, className) {
+        el.className = (className || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function html_addClass(el, className) {
+        if (el.classList) {
+            el.classList.add(className);
+        } else {
+            el.className += ' ' + className;
+        }
+    }
+
+    function html_removeClass(el, className) {
+        if (el.classList) {
+            el.classList.remove(className);
+        } else if (el.className) {
+            var elClasses = el.className.split(' ');
+            removeFromArray(className, elClasses);
+            el.className = elClasses.join(' ');
+        }
+    }
+
+
+    function html_hasClass(el, className) {
+        if (el.classList) {
+            return el.classList.contains(className);
+        } else if (el.className) {
+            return el.className.split(' ').indexOf(className) >= 0;
+        }
+    }
 
     return makeSingleton({
 
     }, {
-
+        __addCSS: html_addCSS,
+        __setClass: html_setClass,
+        __hasClass: html_hasClass,
+        __addClass: html_addClass,
+        __removeClass: html_removeClass,
         __getHead: html_getHead,
         __getBody: html_getBody,
         __setText: html_setText,

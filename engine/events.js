@@ -916,9 +916,12 @@ function onDocumentKeyUp(e) {
 };
 
 
-function addEventListenerToElement(i, elem, listener) {
+function addEventListenerToElement(i, elem, listener, useCapture) {
     listener = wrapFunctionInTryCatch(listener);
-    return elem.addEventListener ? elem.addEventListener(i, listener, false) : elem.attachEvent ? elem.attachEvent(i, listener, false) : 0;
+    var cap = !!useCapture;
+    return elem.addEventListener ? elem.addEventListener(i, listener, cap) : 
+           elem.attachEvent ? elem.attachEvent(i, listener, cap) : 0;
+
 }
 
 function addEventListenersToElement(elem, listeners) {
