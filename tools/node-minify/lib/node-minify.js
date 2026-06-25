@@ -8,6 +8,7 @@ var minify = (function (undefined) {
   var glob = require('glob');
   var uuid = require('node-uuid');
   var mkdirp = require('mkdirp');
+  var path = require('path');
 
   var minify = function (options) {
     this.type = options.type;
@@ -101,9 +102,19 @@ var minify = (function (undefined) {
       var dirToScan = isNPMv2 ? nodeModulesV2 : '';
       var getPath = function (bin) {
         var binPath = glob.sync(dirToScan + '**/.bin/' + bin +
-          ((platform === 'win32') ? '.cmd' : ''), { realpath: true })[0];
+          ((platform === 'win32') ? '.cmd' : ''), { realpath: false })[0];
         if (!binPath) {
           throw new Error(bin + ' not found !');
+        }
+        // resolve symbolic links
+        var dirpath = path.dirname(binPath);
+        var content = _fs.readFileSync(binPath, 'utf8');
+        if (!content) {
+          throw new Error('cant read "' + bin + '"');
+        }
+        binPath = dirpath + '/' + content;
+        if (!glob.sync(binPath, { realpath: true })[0]) {
+          throw new Error(binPath + ' not found !');
         }
         return binPath;
       };
