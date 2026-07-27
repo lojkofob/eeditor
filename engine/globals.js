@@ -371,7 +371,7 @@ function randomize(_min, _max, _round) {
     return random() * (_max - _min) + _min;
 }
 
-function isFunction(o) { return Object.prototype.toString.call(o) == '[object Function]'; }
+function isFunction(o) { var t = Object.prototype.toString.call(o); return t == '[object Function]' || t == '[object AsyncFunction]'; }
 function callFunction(f) { if (isFunction(f)) return f(); }
 
 var isArray = Array.isArray;
@@ -417,7 +417,7 @@ override$(ArrayPrototype,
     function (fl, f) { return this.filter(fl).map(f); } // $filterAndMap
 );
 
-    
+
 override$(ObjectPrototype,
     function (f) { for (var i in this) f(this[i], i); }, // $each
     function (f) { var a = [], i; for (i in this) if (f(this[i], i)) a.push(this[i]); return a; }, // $filter
@@ -439,7 +439,7 @@ function $find(a, f) { return $getf(a, 'F$', f) }
 function $count(a, f) { return $getf(a, 'c$', f) || 0 }
 function $replace(a, f) { return $getf(a, 'r$', f) }
 
-function $findResult(a, f) { var r; $find(a, (v,i) => r = f(v, i)); return r; }
+function $findResult(a, f) { var r; $find(a, (v, i) => r = f(v, i)); return r; }
 function $mapAndFilter(a, f, fl) { return $getff(a, 'M$', f, fl || (a => a)); }
 function $filterAndMap(a, fl, f) { return $getff(a, 'N$', fl, f); }
 
@@ -457,7 +457,7 @@ function $flatten(a, r, d) {
     return r;
 }
 if (!ArrayPrototype.flat) {
-    ArrayPrototype.flat = get1(ArrayPrototype, 'flat') || function(depth) { return $flatten(this, [], ifdef(depth, 1)); };
+    ArrayPrototype.flat = get1(ArrayPrototype, 'flat') || function (depth) { return $flatten(this, [], ifdef(depth, 1)); };
 }
 
 
@@ -600,8 +600,8 @@ var requestAnimFrame = (function () { return __window.requestAnimationFrame || _
 function isNumeric(n) { return !isNaN(parseFloat(n)) && isFinite(n) && !isArray(n); }
 function toNumber(n) { var kk = parseFloat(n); return (!isNaN(kk) && isFinite(kk) && !isArray(n)) ? kk : 0; }
 function numeric(n) { n = parseFloat(n); if (isFinite(n)) return n; return 0; }
-function float(n, def) { if (n == undefined || isArray(n)) return def||0; if (isString(n)) n = parseFloat(n); if (!isNaN(n) && isFinite(n)) return n; return def||0; }
-function int(n, def) { if (n == undefined || isArray(n)) return def||0; if (isString(n)) n = parseInt(n, 10); if (!isNaN(n) && isFinite(n)) return n; return def||0; }
+function float(n, def) { if (n == undefined || isArray(n)) return def || 0; if (isString(n)) n = parseFloat(n); if (!isNaN(n) && isFinite(n)) return n; return def || 0; }
+function int(n, def) { if (n == undefined || isArray(n)) return def || 0; if (isString(n)) n = parseInt(n, 10); if (!isNaN(n) && isFinite(n)) return n; return def || 0; }
 
 function addProp(props, obj, p) {
 
@@ -643,10 +643,10 @@ function stringifyTypeOfObject(o) {
     if (o) {
         var constructor = o.constructor;
         var result = constructor && constructor.name ? o.constructor.name : (
-            (((constructor || o).toString().match(/function (.{1,})\(/))||[])[1] || ""
+            (((constructor || o).toString().match(/function (.{1,})\(/)) || [])[1] || ""
         )
         if (result == 'Function') {
-            result = ((o).toString().match(/function (.{1,})\(/)||[]) || "Function";
+            result = ((o).toString().match(/function (.{1,})\(/) || []) || "Function";
         }
         return result;
     }
