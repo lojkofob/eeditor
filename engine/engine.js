@@ -1461,7 +1461,6 @@ function destroyImage(imgName) {
 
     var cachedImage = getCachedData(imgName, globalConfigsData.__images);
     if (cachedImage) {
-        debugger;
         destroyFrame(cachedImage);
         setCachedData(imgName, null, globalConfigsData.__images);
     }

@@ -2022,11 +2022,6 @@ var ParticleEmitterPrototype =
             renderInfo.particles -= this.__particles.length;
             //endcheats
 
-            //debug
-            if (this.__destructed) throw 'this already destructed';
-            this.__destructed = 1;
-            //undebug
-
             for (var i = 0; i < this.__components.length; i++)
                 this.__components[i].__destruct(this);
 

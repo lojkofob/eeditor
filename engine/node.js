@@ -3,23 +3,23 @@ var __propertiesAppliedByClass;
 //unmulticlass
 
 var __nodeScrolledByY
-  , __nodeScrolledByX
-  , AnimationParser = {
-    __run(node, s) {
-        // linear rotation
-        if (s.charAt && s.charAt(0) == 'r') {
-            node.__rotate = node.__rotate % 360;
-            var seconds = parseFloat(s.substr(1));
-            if (seconds) {
-                // simple linear rotation
-                node.__animatronix = { r: seconds };
+    , __nodeScrolledByX
+    , AnimationParser = {
+        __run(node, s) {
+            // linear rotation
+            if (s.charAt && s.charAt(0) == 'r') {
+                node.__rotate = node.__rotate % 360;
+                var seconds = parseFloat(s.substr(1));
+                if (seconds) {
+                    // simple linear rotation
+                    node.__animatronix = { r: seconds };
+                }
             }
+        },
+        __stop(node, s) {
+            node.____animatronix = 0;
         }
-    },
-    __stop(node, s){
-        node.____animatronix = 0;
-    }
-  };
+    };
 
 function genMap(w, h) {
     return {
@@ -54,7 +54,7 @@ function getFrameName(filename) {
             };
 
         if (filename.indexOf && (filename.indexOf('?') > 0)) { return filename; }
-        
+
         if (filename.replace) {
             var fn1 = filename.replace(/\.\w+$/, '');
             return checkFrame(filename) || checkFrame(fn1) || checkFrame(fn1.replace(/.*\//, ''));
@@ -1105,12 +1105,12 @@ mergeObj(NodePrototype, {
                     if (frame) {
 
                         var uvss = getFrameUv(x1, x2, y1, y2, frame.R, uvt);
- 
-                        if (frame.R) { 
 
-                            x1 = uvss[6]; 
-                            y1 = uvss[1]; 
-                            x2 = uvss[0]; 
+                        if (frame.R) {
+
+                            x1 = uvss[6];
+                            y1 = uvss[1];
+                            x2 = uvss[0];
                             y2 = uvss[7];
 
                             if (t.____corner) {
@@ -1141,11 +1141,11 @@ mergeObj(NodePrototype, {
                         }
                         else {
 
-                            x1 = uvss[0]; 
-                            y1 = uvss[1]; 
-                            x2 = uvss[6]; 
+                            x1 = uvss[0];
+                            y1 = uvss[1];
+                            x2 = uvss[6];
                             y2 = uvss[7];
-                            
+
                             if (t.____corner) {
                                 sgnx = sign(t.____corner[0] || 0);
                                 sgny = sign(t.____corner[1] || 0);
@@ -1842,7 +1842,6 @@ mergeObj(NodePrototype, {
         t.__effect = t.__dragonBones = t.__spine = t.__cubism = t.__shadow = t.__lottie = t.__model3d = undefined;
 
         t.__wheel = t.__contextMenu = 0;
-        
 
         if (t.__bufferTexture) {
             t.__bufferTexture.__destruct();
@@ -1924,7 +1923,7 @@ mergeObj(NodePrototype, {
             while (d > 1) { d = d / 10; mul++; }
             t.____animTextAction = anim(t, { __animatedText: [from, to] }, time, 0, easing, delay);
 
-            t.____animTextAction.__onCompleted = function() {
+            t.____animTextAction.__onCompleted = function () {
                 if (t.____animTextAction == this) {
                     t.____animTextAction = 0;
                     t.____animatedTextBlocked = 0;
@@ -2338,7 +2337,7 @@ mergeObj(NodePrototype, {
 
     __autoUpdateMatrix() { ObjectDefineProperty(this, '__matrixNeedsUpdate', { get() { return 1 } }); },
 
- 
+
     __getTextureProperty(property) { return this['t_' + property]; },
 
     __setTexturePropertyFrame(property, frame, opts) {
@@ -2360,7 +2359,7 @@ mergeObj(NodePrototype, {
                 map.__setWrapS(t.__imgRepeatX);
                 map.__setWrapT(t.__imgRepeatY);
             }
-            
+
             if (isObject(opts)) {
                 var uv_buffer_name = opts.__uv_buffer_name;
                 if (uv_buffer_name) {
@@ -2385,16 +2384,16 @@ mergeObj(NodePrototype, {
             var filename = isString(opts) ? opts : opts.__frame_name;
             if (isString(filename)) {
                 filename = getFrameName(filename);
-                if (filename) {                    
+                if (filename) {
                     var frame = getCachedData(filename, globalConfigsData.__frames);
                     if (frame) // загружено из атласа или просто кэш картинок
-                    { 
+                    {
                         t.__setTexturePropertyFrame(property, frame, opts);
                         return;
                     } else {
                         // __window.__loadImageStack = 's';
                         if (!no_load) {
-                            loadImage(filename, a => { 
+                            loadImage(filename, a => {
                                 t.__setTextureProperty(property, opts, 1);
                             });
                             return;
@@ -2486,11 +2485,11 @@ mergeObj(NodePrototype, {
             __extract: [0],
             __selectable: [1],
             __drawMode: [0, 4],
- 
+
             __imgRepeatX: [0],
             __imgRepeatY: [0],
 
-            __uniforms(list){
+            __uniforms(list) {
                 if ($find(list, (vv) => {
                     if (vv !== 0 && !vv) {
                         return 1; // can't save undefined or ''
@@ -2786,7 +2785,7 @@ mergeObj(NodePrototype, {
                 , o = {}
                 , __options
                 , selfProperties = mergeObj({
-                
+
                     __margin: undefined,
 
                     __spacing: undefined,
@@ -2836,7 +2835,7 @@ mergeObj(NodePrototype, {
                     __tooltip: undefined
 
                 }, t.__selfProperties);
-                
+
 
 
             if (t.__userData && isObject(t.__userData.__save_options)) {
@@ -2909,7 +2908,7 @@ mergeObj(NodePrototype, {
                             return;
                         }
                     }
-                        
+
                     needSave = 1;
                     return val;
                 }
@@ -2947,7 +2946,7 @@ mergeObj(NodePrototype, {
 
             var tm = selfProperties.__text;
             if (tm) {
-                o.__text = tm;                 
+                o.__text = tm;
                 if (o.__text) {
 
                     if (t.name != 'e-__defaultTextProperties')
@@ -3127,7 +3126,7 @@ mergeObj(NodePrototype, {
     //undebug
 
 });
- 
+
 
 function returnsOneFunction() {
     return 1;
@@ -3150,7 +3149,7 @@ function spehFunction(node, fname, name) {
 
 function pushNodeHandlerTo(node, v, name, fname) {
     node[name] = v;
-    
+
     fname = fname || name;
 
     node[fname] = (v == 1) ? returnsOneFunction : isString(v) ? evalFunction(v) : v;
@@ -3174,7 +3173,7 @@ var NodeCloneProperties = {
     __shader: 1, __userData: 1, __animatronix: 1,
     __text: 1, __uvsTransform: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
     __onTap: 1, __uniforms: 1, __tableAlignRows: 1, __tableAlignColumns: 1, __tableAlignColumnWidth: 1, __tableAlignRowHeight: 1,
-    __drag: 1, __useMaxSizeForScale: 1, 
+    __drag: 1, __useMaxSizeForScale: 1,
     //debug
     __description: 1, __selectable: 1, __onKey: 1, __onLoad: 1, __propertyBinding: 1,
     __behaviour: 1, __classesObj: 1, __physics: 1, __numericInputStep: 1, __contextMenu: 1, __wheel: 1,
@@ -3186,10 +3185,10 @@ var NodeCloneProperties = {
     //no3d
 }
 
-, node_texture_property = (num) => ({ 
-    get() { return this.__getTextureProperty('u_t' + num); }, 
-    set(v) { this.__setTextureProperty('u_t' + num, v); } 
-})
+    , node_texture_property = (num) => ({
+        get() { return this.__getTextureProperty('u_t' + num); },
+        set(v) { this.__setTextureProperty('u_t' + num, v); }
+    })
 
     , NodePropertiesObject = {
 
@@ -4386,7 +4385,7 @@ var NodeCloneProperties = {
                 }
             }
         },
- 
+
         __transform: {
             get() {
                 var t = this;
@@ -4477,7 +4476,7 @@ var NodeCloneProperties = {
                     } else {
                         AnimationParser.__run(t, v);
                     }
-                } 
+                }
             }
         },
 
@@ -5220,7 +5219,7 @@ var NodeCloneProperties = {
 
                         if (v.r) {
                             // simple linear rotation
-                            var beginRotation = this.____rotation||0, seconds = v.r;
+                            var beginRotation = this.____rotation || 0, seconds = v.r;
                             this.____animatronix = function () {
                                 this.____rotation = (beginRotation + 0.006283185307179587 * __gameTime / seconds);
                                 this.__matrixNeedsUpdate = 1;
@@ -5403,7 +5402,7 @@ var NodeCloneProperties = {
             function (v) {
                 if (v) {
                     var ap = this.____addedProperties = this.____addedProperties || {};
-                    $each(v, (p,k) => {
+                    $each(v, (p, k) => {
                         if (!ap[k]) {
                             ObjectDefineProperty(this, k, p);
                         }
@@ -5427,7 +5426,7 @@ var NodeCloneProperties = {
                 //unmulticlass
             }
         }
-         
+
         , __alphaDeep: {
             get() { return this.____alphaDeep },
             set(v) {
@@ -5484,7 +5483,7 @@ var NodeCloneProperties = {
         u_texture6: node_texture_property(6),
         u_texture7: node_texture_property(7),
         u_texture8: node_texture_property(8)
-  
+
 
         //debug
         , __notNormalNode: {
@@ -5497,7 +5496,7 @@ var NodeCloneProperties = {
                 }
                 //unmulticlass
             }
-        }  
+        }
         //undebug
 
     };
@@ -5533,7 +5532,7 @@ set(NodePropertiesObject,
     'u_uviy', createSomePropertyWithGetterAndSetter(function () { return this.____imgSize ? this.____atlasSize.y / this.____imgSize.y : 0 })
 );
 
-  
+
 
 
 ObjectDefineProperties(NodePrototype, NodePropertiesObject);
@@ -5623,7 +5622,7 @@ var HTMLNode = makeClass(function (v) {
     },
 
     __updateElement(v) {
-        
+
         var t = this, lp = this.__htmlElement;
         NodePrototype.__updateMatrixWorld.apply(t, arguments);
         if (lp) {
@@ -5638,17 +5637,17 @@ var HTMLNode = makeClass(function (v) {
     },
 
     __render() {
-        
+
         var t = this, lp = this.__htmlElement;
         if (lp) {
-            
+
             t.__updateElement(1);
-            
+
             if (!lp.__parentElement) {
                 t.__addToBody();
                 t.update();
             }
-            
+
             t.__lf = __currentFrame;
             var ll = __currentFrame;
             looperPost(f => {
@@ -5656,7 +5655,7 @@ var HTMLNode = makeClass(function (v) {
                     t.__updateElement(0);
                 }
             });
-            
+
         }
     },
 

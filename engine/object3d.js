@@ -14,8 +14,8 @@ function createUniforms(obj, uniformsList) {
             createUniform(obj, name, uniformsList[name]);
         }
     } else if (isArray(uniformsList)) {
-        for (var i = 0; i < uniformsList.length; i+=2) {
-            createUniform(obj, uniformsList[i], uniformsList[i+1]);
+        for (var i = 0; i < uniformsList.length; i += 2) {
+            createUniform(obj, uniformsList[i], uniformsList[i + 1]);
         }
     }
     return obj;
@@ -224,11 +224,18 @@ mergeObj(Object3DPrototype, {
 
     __destruct() {
         var t = this;
+
+        //debug
+        if (t.__destructed) {
+            consoleDebug("double object destructing", t);
+        }
+        //undebug
+
         if (t.__onDestruct) {
             if (isArray(t.__onDestruct)) {
                 $mfcall(t, t.__onDestruct)
             } else
-                //DEPRECATED
+                // legacy
                 if (isFunction(t.__onDestruct)) {
                     t.__onDestruct();
                 }
@@ -371,7 +378,7 @@ mergeObj(Object3DPrototype, {
 
                 object.__parent = this;
                 object.__parentScrollVector = this.__scrollVector || this.__parentScrollVector;
-                
+
                 this.__childs.push(object);
 
                 object.__root = this.__root || this;
@@ -611,7 +618,7 @@ mergeObj(Object3DPrototype, {
 
         return r;
     },
- 
+
     __removeAttributeBuffer(name) {
         var t = this;
         if (t.__buffers) {
@@ -633,7 +640,7 @@ mergeObj(Object3DPrototype, {
     },
 
     __addAttributeBuffer(name, itemSize, data) {
-        return this.____addAttributeBuffer( 
+        return this.____addAttributeBuffer(
             name,
             new MyBufferAttribute(name, Float32Array, itemSize, GL_ARRAY_BUFFER, data)
         );
