@@ -38,6 +38,9 @@ using namespace std;
 // options from line arguments
 static int atlasWidth = 0;
 static int atlasHeight = 0;
+static int atlasMaxWidth = 0;
+static int atlasMaxHeight = 0;
+static bool atlasSizeIsCalculated = false;
 static int borderWidth = 1;
 static int packerType = 0;
 static int packerMethod = 2;
@@ -52,22 +55,35 @@ static bool verbose = false;
 static bool extrude = false;
 static bool forceSquare = false;
 static bool recursive = true;
-static bool needJson = true;
-static bool needPlist = true;
 static std::string mask;
 static std::string fileList;
+static std::string fileListDelimiters;
 static bool beauty = true;
 static bool useShortNames = false;
 static bool arrayFormat = false; // if true out frames list is array else it's object
 static bool noAliasesByString = false;
 static bool frameArrayFormat = false; // if true one frame is array else it's object
 static bool storeOriginalOffset = true;
+static bool npotAtlas = false;
+static bool cropImages = true;
 
 #ifdef _MSC_VER
 static std::string outputDirectorySeparator = "\\";
 #else
 static std::string outputDirectorySeparator = "/";
 #endif
+
+#define LOGE(...)                                                                                                      \
+    {                                                                                                                  \
+        fflush(stdout);                                                                                                \
+        fprintf(stderr, "ERROR:" __VA_ARGS__);                                                                         \
+    }
+#define LOGV(...)                                                                                                      \
+    if (verbose)                                                                                                       \
+    {                                                                                                                  \
+        fflush(stderr);                                                                                                \
+        fprintf(stdout, "- " __VA_ARGS__);                                                                             \
+    }
 
 //-----------------------------------------------------------------------------
 // Constants.
@@ -77,6 +93,7 @@ static std::string outputDirectorySeparator = "/";
 //-----------------------------------------------------------------------------
 // Types.
 //-----------------------------------------------------------------------------
+
 struct FiBitmapPtr
 {
     FIBITMAP *ptr;
@@ -84,7 +101,6 @@ struct FiBitmapPtr
 
     FiBitmapPtr(FIBITMAP *p) : ptr(p)
     {
-        // if (!p) fprintf (stderr, "Unable to open PNG file\n");
         cnt = new int;
         *cnt = 0;
     }
@@ -126,6 +142,23 @@ struct FiBitmapPtr
         cnt = v.cnt;
         (*cnt)++;
 
+        return *this;
+    }
+
+    FiBitmapPtr &operator=(FIBITMAP *p)
+    {
+        if (p == ptr)
+            return *this;
+
+        if (--(*cnt) == 0)
+        {
+            delete cnt;
+            if (ptr)
+                FreeImage_Unload(ptr);
+        }
+
+        ptr = p;
+        (*cnt)++;
         return *this;
     }
 
@@ -198,9 +231,9 @@ struct InputImage
 
     int x;
     int y;
-    bool rotate;
+    bool rotate = false;
 
-    void cropImage()
+    bool cropImage()
     {
         int top = 0;
         int left = 0;
@@ -218,7 +251,7 @@ struct InputImage
         }
 
         width = height = 0;
-        return;
+        return false;
 
     topFound:
         for (; bottom >= 0; --bottom)
@@ -230,9 +263,9 @@ struct InputImage
         }
 
         // картинка полностью пустая
-        fprintf(stderr, "cropImage: Absolute Empty Image\n");
+        LOGE("cropImage: absolute empty image\n");
         width = height = offsetY = offsetX = 0;
-        return;
+        return false;
 
     bottomFound:
         for (; left < originalWidth; ++left)
@@ -284,13 +317,33 @@ struct InputImage
 
         offsetY = top;
         offsetX = left;
+
+        return top > 0 || left > 0 || right < originalWidth - 1 || bottom < originalHeight - 1;
+    }
+
+    void reallocBitmap()
+    {
+        bitmap = FreeImage_Copy(bitmap, offsetX, offsetY, offsetX + width, offsetY + height);
+        originalWidth = width;
+        originalHeight = height;
+        offsetX = 0;
+        offsetY = 0;
+    }
+
+    InputImage(int w, int h, FiBitmapPtr _bitmap)
+        : bitmap(_bitmap), originalWidth(w), originalHeight(h), width(w), height(h), offsetX(0), offsetY(0), x(0), y(0),
+          rotate(false)
+    {
     }
 
     InputImage(std::string fpath, std::string fname, std::string dirName, std::string fext)
         : filePath(fpath), fileName(fname), folderName(dirName), ext(fext),
           bitmap(FreeImage_Load(FreeImage_GetFileType(fpath.c_str(), 0), fpath.c_str(), PNG_IGNOREGAMMA))
     {
-        bitmap = FreeImage_ConvertTo32Bits(bitmap);
+        if (FreeImage_GetBPP(bitmap) != 32)
+        {
+            bitmap = FreeImage_ConvertTo32Bits(bitmap);
+        }
 
         aliases.push_back(fname);
         rotate = false;
@@ -299,14 +352,14 @@ struct InputImage
         originalWidth = width = FreeImage_GetWidth(bitmap);
         originalHeight = height = FreeImage_GetHeight(bitmap);
 
-        if (verbose)
-        {
-            fprintf(stderr, "add image %s ( %dx%d )\n", fpath.c_str(), width, height);
-        }
+        LOGV("add image: \"%s\" ( %dx%d )\n", fpath.c_str(), width, height);
 
         bytesCount = originalHeight * FreeImage_GetPitch(bitmap);
 
-        cropImage(/*img*/);
+        if (cropImages)
+        {
+            cropImage();
+        }
 
         // printf ("dirname: %s \n", dirName.c_str()  );
     }
@@ -364,14 +417,17 @@ bool imagesIsEqual(const InputImage &a, const InputImage &b)
 }
 
 int directoryCrawler(std::string dirName, InputImageList &inputImageList, std::string rootDirName,
-                     bool relativeName = true)
+                     bool relativeName = true, bool printError = false)
 {
     struct dirent *dp;
     DIR *dirp;
     dirp = opendir(dirName.c_str());
     if (!dirp)
     {
-        fprintf(stderr, "error open dir (%s)\n", dirName.c_str());
+        if (printError)
+        {
+            LOGE("open dir (%s)\n", dirName.c_str());
+        }
         return 0;
     }
 
@@ -388,10 +444,7 @@ int directoryCrawler(std::string dirName, InputImageList &inputImageList, std::s
 
             if (recursive && strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
             {
-                if (verbose)
-                {
-                    fprintf(stderr, "process dir %s %s\n", fullName, rootDirName.c_str());
-                }
+                LOGV("processing dir %s %s\n", fullName, rootDirName.c_str());
                 directoryCrawler(fullName, inputImageList, rootDirName, relativeName);
             }
             break;
@@ -430,28 +483,43 @@ void saveStringToFile(const char *fileName, const char *data)
 
 std::string readStringFromFile(const char *fileName)
 {
+    const char *fullPath = realpath(fileName, NULL);
 
-    FILE *ifile = fopen(fileName, "r");
-
-    if (ifile)
+    if (fullPath && *fullPath)
     {
+        FILE *ifile = fopen(fullPath, "r");
+        if (ifile)
+        {
 
-        fseek(ifile, 0, SEEK_END);
-        long lSize = ftell(ifile);
-        rewind(ifile);
+            fseek(ifile, 0, SEEK_END);
+            long lSize = ftell(ifile);
+            rewind(ifile);
 
-        std::string result(lSize, '\0');
+            std::string result(lSize, '\0');
 
-        fread(&result[0], 1, lSize, ifile);
+            fread(&result[0], 1, lSize, ifile);
 
-        fclose(ifile);
+            fclose(ifile);
 
-        return result;
+            if (result.empty())
+            {
+                LOGE("images list \"%s\": file not exist!\n", fileName);
+            }
+
+            return result;
+        }
+        LOGE("images list \"%s\" ( \"%s\" ): file not exist!\n", fileName, fullPath);
+
+        return std::string();
     }
+
+    LOGE("images list \"%s\": file not exist!\n", fileName);
+
     return std::string();
 }
 
-double makeAtlas(InputImageList &srcList, InputImageList &dstList, AbstractBinPack *packer, int borderWidth)
+double makeAtlas(InputImageList &srcList, InputImageList &dstList, std::shared_ptr<AbstractBinPack> &packer,
+                 int borderWidth)
 {
     int twoBorderWidth = borderWidth * 2;
 
@@ -469,7 +537,7 @@ double makeAtlas(InputImageList &srcList, InputImageList &dstList, AbstractBinPa
         if (iimg.width == 0 || iimg.height == 0)
         { //  пустая картинка
 
-            fprintf(stderr, "makeAtlas: Absolute Empty Image\n");
+            LOGE("makeAtlas: absolute empty image\n");
 
             iimg.x = 0;
             iimg.y = 0;
@@ -480,10 +548,7 @@ double makeAtlas(InputImageList &srcList, InputImageList &dstList, AbstractBinPa
             continue;
         }
 
-        if (verbose)
-        {
-            fprintf(stderr, "paste: %s\n", iimg.fileName.c_str());
-        }
+        LOGV("%s\n", iimg.fileName.c_str());
 
         Rect r = packer->Insert(iimg.width + twoBorderWidth, iimg.height + twoBorderWidth, packerMethod);
 
@@ -503,77 +568,6 @@ double makeAtlas(InputImageList &srcList, InputImageList &dstList, AbstractBinPa
         }
     }
     return packer->Occupancy();
-}
-
-std::string json2plist(Json::Value atlas)
-{
-    std::string plist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    plist += "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
-             "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n";
-    plist += "<plist version=\"1.0\">\n";
-    plist += "\t<dict>\n";
-
-    plist += "\t\t<key>frames</key>\n";
-    plist += "\t\t<dict>\n";
-    Json::Value &jv = atlas["frames"];
-    Json::Value indexes = jv.indexes();
-    for (int i = 0; i < (int)indexes.size(); ++i)
-    {
-        Json::Value &frame = atlas["frames"][indexes[i].asInt()];
-
-        plist += "\t\t\t<key>" + indexes[i].asString() + "</key>\n";
-        plist += "\t\t\t<dict>\n";
-
-        plist += "\t\t\t\t<key>frame</key>\n";
-        plist += format("\t\t\t\t<string>{{%d,%d},{%d,%d}}</string>\n", frame["rc"][0].asInt(), frame["rc"][1].asInt(),
-                        frame["rc"][2].asInt(), frame["rc"][3].asInt());
-
-        plist += "\t\t\t\t<key>offset</key>\n";
-
-        int croppedWidth = 0;
-        int croppedHeight = 0;
-        // 			if (frame["r"].asBoolean())
-        // 				{
-        // 					croppedWidth = frame["rc"][3].asInt ();
-        // 					croppedHeight = frame["rc"][2].asInt ();
-        // 				}
-        // 			else
-        // 				{
-        croppedWidth = frame["rc"][2].asInt();
-        croppedHeight = frame["rc"][3].asInt();
-        // 				}
-
-        plist += format("\t\t\t\t<string>{%d,%d}</string>\n",
-                        -frame["or"][0].asInt() / 2 + (croppedWidth / 2 + frame["of"][0].asInt()),
-                        frame["or"][1].asInt() / 2 - (croppedHeight / 2 + frame["of"][1].asInt()));
-
-        plist += "\t\t\t\t<key>rotated</key>\n";
-        plist += format("\t\t\t\t%s\n", frame["r"].asBoolean() ? "<true/>" : "<false/>");
-
-        plist += "\t\t\t\t<key>sourceSize</key>\n";
-        plist += format("\t\t\t\t<string>{%d,%d}</string>\n", frame["or"][0].asInt(), frame["or"][1].asInt());
-
-        plist += "\t\t\t</dict>\n";
-    }
-    plist += "\t\t</dict>\n";
-
-    plist += "\t\t<key>metadata</key>\n";
-    plist += "\t\t<dict>\n";
-    plist += "\t\t\t<key>format</key>\n";
-    plist += "\t\t\t<integer>2</integer>\n";
-
-    plist += "\t\t\t<key>size</key>\n";
-    plist += format("\t\t\t<string>{%d,%d}</string>\n", atlas["texture"]["width"].asInt(),
-                    atlas["texture"]["height"].asInt());
-
-    plist += "\t\t\t<key>textureFileName</key>\n";
-    plist += format("\t\t\t<string>%s</string>\n", atlas["texture"]["fileName"].asString().c_str());
-    plist += "\t\t</dict>\n";
-
-    plist += "\t</dict>\n";
-    plist += "</plist>\n";
-
-    return plist;
 }
 
 void extrudeImage(FIBITMAP *bitmap, int x, int y, int width, int height, int borderWidth)
@@ -607,28 +601,12 @@ void saveAtlas(InputImageList &srcList, std::string filePath, std::string fileNa
                double occupancy)
 {
 
-    printf("saving atlas: %s ( %s ) %dx%d\n", filePath.c_str(), fileName.c_str(), width, height);
+    LOGV("saving atlas: %s ( %s ) %dx%d\n", filePath.c_str(), fileName.c_str(), width, height);
 
-    FIBITMAP *bitmap = FreeImage_Allocate(width, height, 32);
+    FiBitmapPtr bitmap(FreeImage_Allocate(width, height, 32));
     RGBQUAD color = {0, 0, 0, 0};
     FreeImage_FillBackground(bitmap, &color, FI_COLOR_IS_RGBA_COLOR);
     Json::Value atlas;
-
-    if (atlasFormat == "verbose")
-    {
-        auto &atexture = atlas["texture"];
-        atexture["width"] = width;
-        atexture["height"] = height;
-        if (relPathFileName)
-        {
-            atexture["relPathFileName"] = fileName + ".png";
-        }
-        else
-        {
-            atexture["fileName"] = fileName + ".png";
-        }
-        atlas["occupancy"] = occupancy;
-    }
 
     Json::Value framesNamesCheck;
     Json::Value framesNamesErrors;
@@ -662,8 +640,8 @@ void saveAtlas(InputImageList &srcList, std::string filePath, std::string fileNa
         {
             for (auto it = o->begin(); it != o->end(); it++)
             {
-                fprintf(stderr, "Doublicate frame names with different images (%d) for \"%s\": \n",
-                        (int)it->second.size(), it->first.c_str());
+                LOGE("Doublicate frame names with different images (%d) for \"%s\": \n", (int)it->second.size(),
+                     it->first.c_str());
                 auto a = it->second.asArray();
                 for (auto it2 = a->begin(); it2 != a->end(); it2++)
                 {
@@ -777,10 +755,7 @@ void saveAtlas(InputImageList &srcList, std::string filePath, std::string fileNa
     for (InputImagePtr &_iimg : srcList)
     {
         auto &iimg = *(_iimg.get());
-        if (verbose)
-        {
-            fprintf(stderr, "prepare: %s\n", iimg.fileName.c_str());
-        }
+        LOGV("prepare: %s\n", iimg.fileName.c_str());
 
         for (const auto &imageFileName : iimg.aliases)
         {
@@ -795,8 +770,8 @@ void saveAtlas(InputImageList &srcList, std::string filePath, std::string fileNa
             continue;
         }
 
-        FIBITMAP *cbm = FreeImage_Copy(iimg.bitmap, iimg.offsetX, iimg.offsetY, iimg.offsetX + iimg.width,
-                                       iimg.offsetY + iimg.height);
+        FiBitmapPtr cbm(FreeImage_Copy(iimg.bitmap, iimg.offsetX, iimg.offsetY, iimg.offsetX + iimg.width,
+                                       iimg.offsetY + iimg.height));
 
         if (iimg.rotate)
         {
@@ -812,44 +787,66 @@ void saveAtlas(InputImageList &srcList, std::string filePath, std::string fileNa
             // 	iimg.offsetY
             // 	);
 
-            FIBITMAP *rotated = FreeImage_Rotate(cbm, -90);
-            FreeImage_Unload(cbm);
-            cbm = rotated;
+            cbm = FreeImage_Rotate(cbm, -90);
         }
 
         if (!FreeImage_Paste(bitmap, cbm, iimg.x, iimg.y, -1))
         {
-            fprintf(stderr, "ERROR PASTE: %s (%dx%d), try convert to 32 bits\n", iimg.fileName.c_str(), iimg.x, iimg.y);
+            LOGE("PASTE: %s (%dx%d), try convert to 32 bits\n", iimg.fileName.c_str(), iimg.x, iimg.y);
             cbm = FreeImage_ConvertTo32Bits(cbm);
             if (!FreeImage_Paste(bitmap, cbm, iimg.x, iimg.y, -1))
             {
-                fprintf(stderr, "ERROR PASTE 2: %s\n", iimg.fileName.c_str());
+                LOGE("PASTE2: %s\n", iimg.fileName.c_str());
             }
         }
 
-        int width = FreeImage_GetWidth(cbm);
-        int height = FreeImage_GetHeight(cbm);
-        FreeImage_Unload(cbm);
-
         if (extrude)
         {
-            extrudeImage(bitmap, iimg.x, iimg.y, width, height, borderWidth);
+            int xwidth = FreeImage_GetWidth(cbm);
+            int xheight = FreeImage_GetHeight(cbm);
+            extrudeImage(bitmap, iimg.x, iimg.y, xwidth, xheight, borderWidth);
+        }
+    }
+
+    if (npotAtlas)
+    {
+        InputImage tocrop(width, height, bitmap);
+        if (tocrop.cropImage())
+        {
+            tocrop.reallocBitmap();
+            bitmap = tocrop.bitmap;
+            width = tocrop.width;
+            height = tocrop.height;
+            LOGV("cropped atlas image dimension: %dx%d\n", width, height);
         }
     }
 
     // TODO: check errors
-    FreeImage_Save(FIF_PNG, bitmap, (filePath + ".png").c_str(), PNG_DEFAULT);
-    FreeImage_Unload(bitmap);
 
-    if (needJson)
+    // TODO: check memory leaks!
+
+    FreeImage_Save(FIF_PNG, bitmap, (filePath + ".png").c_str(), PNG_DEFAULT);
+
+    if (atlasFormat == "verbose")
     {
-        saveStringToFile((filePath + ".json").c_str(),
-                         beauty ? Json::prettyStringify(atlas).c_str() : Json::stringify(atlas).c_str());
+        auto &atexture = atlas["texture"];
+        atexture["width"] = width;
+        atexture["height"] = height;
+        if (relPathFileName)
+        {
+            atexture["relPathFileName"] = fileName + ".png";
+        }
+        else
+        {
+            atexture["fileName"] = fileName + ".png";
+        }
+        atlas["occupancy"] = occupancy;
     }
-    if (needPlist && atlasFormat == "verbose")
-    {
-        saveStringToFile((filePath + ".plist").c_str(), json2plist(atlas).c_str());
-    }
+
+    saveStringToFile((filePath + ".json").c_str(),
+                     beauty ? Json::prettyStringify(atlas).c_str() : Json::stringify(atlas).c_str());
+
+    printf("atlas saved at: %s ( %s ) %dx%d\n", filePath.c_str(), fileName.c_str(), width, height);
 }
 
 unsigned long getPowerOfTwoGT(unsigned long v)
@@ -897,17 +894,28 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
 
     printf("Total square: %d, maxMax: %d, maxMin: %d\n", totalSquare, maxMax, maxMin);
 
-    int i = getPowerOfTwoGT(maxMax);
-    int j = getPowerOfTwoGT(maxMin);
+    int aw = getPowerOfTwoGT(maxMax);
+    int ah = getPowerOfTwoGT(maxMin);
 
     // размеры заданы, считать не нужно
     // главное, чтобы минимальный из заданных размеров
     // был больше или равный maxMin
+
     if (width && height)
     {
+        if (atlasMaxWidth > 0)
+        {
+            maxMax = min(max(atlasMaxWidth, atlasMaxHeight), maxMax);
+        }
+
+        if (atlasMaxHeight > 0)
+        {
+            maxMin = min(max(atlasMaxWidth, atlasMaxHeight), maxMin);
+        }
+
         if ((max(width, height) < maxMax) || (min(width, height) < maxMin))
         {
-            fprintf(stderr, "Recommended atlas dimensions %dx%d\n", (1 << i), (1 << j));
+            LOGE("Wrong atlas size. Recommended atlas dimensions %dx%d\n", aw, ah);
             exit(1);
         }
 
@@ -915,26 +923,39 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
         return;
     }
 
-    // if ((*width==0) && (*height==0)) // нужно вычислить оба размера
-    else
+    if (imglst.size() == 1)
     {
+        width = aw;
+        height = ah;
+        return;
+    }
+
+    double squareWithReserveOf15Percent = totalSquare * 1.25;
+
+    if (width == 0 && height == 0) // нужно вычислить оба размера
+    {
+        atlasSizeIsCalculated = true;
         // printf ("default %dx%d\n", *width, *height);
-        int aw = 1 << (i - 1);
-        int ah = 1 << (j - 1);
+        int i = max(log2(aw), 1);
+        int j = max(log2(ah), 1);
 
-        if (imglst.size() == 1)
+        for (; i < 15 && j < 15; ++i, ++j)
         {
-            width = aw << 1;
-            height = ah << 1;
-            return;
-        }
+            if (atlasMaxWidth > 0 && aw > atlasMaxWidth)
+            {
+                aw = atlasMaxWidth;
+            }
 
-        double squareWithReserveOf15Percent = totalSquare * 1.25;
+            if (atlasMaxHeight > 0 && ah > atlasMaxHeight)
+            {
+                ah = atlasMaxHeight;
+            }
 
-        for (; i < 12 && j < 12; ++i, ++j)
-        {
-            aw <<= 1;
-            ah <<= 1;
+            if (aw == atlasMaxWidth && ah == atlasMaxHeight)
+            {
+                break;
+            }
+
             if ((aw * ah) > squareWithReserveOf15Percent)
             {
                 if (!forceSquare)
@@ -946,20 +967,88 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
                 }
                 break;
             }
+            aw <<= 1;
+            ah <<= 1;
         }
+
+        // aw = atlasMaxWidth > 0 ? min(atlasMaxWidth, aw << 1) : aw << 1;
+        // ah = atlasMaxHeight > 0 ? min(atlasMaxHeight, ah << 1) : ah << 1;
 
         printf("Calculated atlas dimension: %dx%d\n", aw, ah);
         width = aw;
         height = ah;
         return;
     }
-    // 	else  // нужно вычислить один размер
-    // 		{
-    // 		}
-    //
-    // 	*width = *width ? *width : 1024;
-    // 	*height = *height ? *height : 1024;
-    fprintf(stderr, "Recommended atlas dimensions %dx%d\n", (1 << i), (1 << j));
+
+    if (width == 0)
+    {
+        ah = height;
+        int i = max(log2(aw), 1);
+
+        for (; i < 15; ++i)
+        {
+            if (atlasMaxWidth > 0 && aw > atlasMaxWidth)
+            {
+                aw = atlasMaxWidth;
+                break;
+            }
+
+            if ((aw * ah) > squareWithReserveOf15Percent)
+            {
+                if (!forceSquare)
+                {
+                    while ((ah * (aw / 2)) > squareWithReserveOf15Percent)
+                    {
+                        aw >>= 1;
+                    }
+                }
+                break;
+            }
+            aw <<= 1;
+        }
+
+        aw = atlasMaxWidth > 0 ? min(atlasMaxWidth, aw << 1) : aw << 1;
+
+        printf("Calculated atlas dimension: %dx%d\n", aw, ah);
+        width = aw;
+        return;
+    }
+
+    if (height == 0)
+    {
+        aw = atlasWidth;
+        int j = max(log2(ah), 1);
+
+        for (; j < 15; ++j)
+        {
+            if (atlasMaxHeight > 0 && ah > atlasMaxHeight)
+            {
+                ah = atlasMaxHeight;
+                break;
+            }
+
+            if ((aw * ah) > squareWithReserveOf15Percent)
+            {
+                if (!forceSquare)
+                {
+                    while ((aw * (ah / 2)) > squareWithReserveOf15Percent)
+                    {
+                        ah >>= 1;
+                    }
+                }
+                break;
+            }
+            ah <<= 1;
+        }
+
+        ah = atlasMaxHeight > 0 ? min(atlasMaxHeight, ah << 1) : ah << 1;
+
+        printf("Calculated atlas dimension: %dx%d\n", aw, ah);
+        height = ah;
+        return;
+    }
+
+    LOGE("Undefined behaviour. Recommended atlas dimensions %dx%d\n", aw, ah);
     exit(1);
 }
 
@@ -1008,13 +1097,18 @@ int main(int argc, char *argv[])
     int c;
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "aAxrfvqRJPDw:h:b:s:d:m:p:l:L:g:n:u:S:")) != -1)
+    while ((c = getopt(argc, argv, "vaAxrfqRD2cw:h:b:s:d:m:p:l:L:g:n:u:S:W:H:")) != -1)
         switch (c)
         {
         case '?':
-            fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            LOGE("Option -%c requires an argument.\n", optopt);
             return 1;
-
+        case 'c':
+            cropImages = false;
+            break;
+        case '2':
+            npotAtlas = true;
+            break;
         case 'a':
             arrayFormat = true;
             break;
@@ -1056,21 +1150,14 @@ int main(int argc, char *argv[])
                 }
             }
             break;
-        case 'h':
-            atlasHeight = atoi(optarg);
-            break;
-        case 'J':
-            needJson = false;
-            break;
         case 'l':
             fileList = optarg;
             break;
         case 'L':
             // TODO: free char*?
-            fileList = readStringFromFile(realpath(optarg, NULL));
+            fileList = readStringFromFile((char *)optarg);
             if (fileList.empty())
             {
-                fprintf(stderr, "Use file for file list: %s\nERROR: file not exist or empty\n\n", (char *)optarg);
                 exit(1);
             }
             break;
@@ -1082,9 +1169,6 @@ int main(int argc, char *argv[])
             break;
         case 'p':
             prefixPath = optarg;
-            break;
-        case 'P':
-            needPlist = false;
             break;
         case 'r':
             relativeName = true;
@@ -1108,8 +1192,17 @@ int main(int argc, char *argv[])
         case 'v':
             verbose = true;
             break;
+        case 'h':
+            atlasHeight = max(0, atoi(optarg));
+            break;
         case 'w':
-            atlasWidth = atoi(optarg);
+            atlasWidth = max(0, atoi(optarg));
+            break;
+        case 'W':
+            atlasMaxWidth = max(0, atoi(optarg));
+            break;
+        case 'H':
+            atlasMaxHeight = max(0, atoi(optarg));
             break;
         case 'x':
             extrude = true;
@@ -1123,6 +1216,7 @@ int main(int argc, char *argv[])
         prefixPath = "";
     }
 
+    /*
     if (!atlasWidth)
     {
         atlasWidth = DEFAULT_ATLAS_SIZE;
@@ -1132,6 +1226,7 @@ int main(int argc, char *argv[])
     {
         atlasHeight = DEFAULT_ATLAS_SIZE;
     }
+    */
 
     // надо бы освобождать результат realpath
     const char *rp = path.empty() ? "" : realpath(path.c_str(), NULL);
@@ -1139,6 +1234,11 @@ int main(int argc, char *argv[])
 
     dstPath = drp ? drp : "";
     path = rp ? rp : "";
+
+    if (atlasMaxWidth > 0 && atlasWidth > 0)
+        atlasWidth = min(atlasWidth, atlasMaxWidth);
+    if (atlasMaxHeight > 0 && atlasHeight > 0)
+        atlasHeight = min(atlasHeight, atlasMaxHeight);
 
     if ((opterr > 0) || (path.empty() && fileList.empty()) || dstPath.empty())
     {
@@ -1153,19 +1253,20 @@ OPTIONS:
     a - array json format ( for short )
     A - no aliases by string
     b - width of border between images in atlas
+    c - do not crop images
     d - destination. Directory for the result files
     D - relPathFileName - use relative texture filename instead of fileName (full dir)
     f - force square atlas
     g - atlas format ( verbose / short / shortWithOffset )
-    h - atlas height
     J - do not save json
-    l - file list sources (in quotes).
-    m - name mask. Used to construct the names of the atlas files (.png .json .plist) as the first argument
+    l - file list sources (in quotes, split by file list delimiter)
+    F - file list delimiter character ( \\n by default )
+    L - file list sources file (split by file list delimiter)
+    m - name mask. Used to construct the names of the atlas files (.png .json) as the first argument
         to function printf, where the second argument is integer sequence number
         of the atlas. For example: atlas_%%03d
     n - packer type (int 0, 1, 2, 3, 4)
-    p - prefix for atlas fileName in json/plist files (default: destination path)
-    P - do not save plist
+    p - prefix for atlas fileName in json files (default: destination path)
     r - relative name flag. If set, to the name the picture in the file
         description adds the path relative to the root directory.
     R - disable recursive source directory reading
@@ -1173,17 +1274,20 @@ OPTIONS:
     S - output path separator
     u - packer method (int 0, 1, 2, 3, 4)
     v - verbose
-    w - atlas width
-    x - extrude flag
+    h - atlas height
+    H - atlas max height (if no height)
+    w - atlas width 
+    W - atlas max width (if no width)
+    x - extrude flag    
 )");
 
         if (path.empty() && fileList.empty())
         {
-            fprintf(stderr, "Error: src path is empty\n");
+            LOGE("src path is empty\n");
         }
         if (dstPath.empty())
         {
-            fprintf(stderr, "Error: dst path is empty\n");
+            LOGE("dst path is empty\n");
         }
 
         return 1;
@@ -1214,18 +1318,19 @@ OPTIONS:
     }
     else
     {
+        LOGV("fileList:\n%s\n", fileList.c_str());
 
-        if (verbose)
+        if (fileListDelimiters.empty())
         {
-            printf("fileList: %s\n", fileList.c_str());
+            fileListDelimiters = "\n";
         }
 
-        tokenize(fileList, realFilesList, " ", true);
+        tokenize(fileList, realFilesList, fileListDelimiters, true);
 
         for (std::string fn : realFilesList)
         {
 
-            if (!directoryCrawler(fn, inputImageList, fn, relativeName))
+            if (!directoryCrawler(fn, inputImageList, fn, relativeName, false))
             {
                 // not a directory
                 struct stat st;
@@ -1263,10 +1368,7 @@ OPTIONS:
                                     }
                                 }
 
-                                if (verbose)
-                                {
-                                    printf("push image: %s ->  %s \n", fullName.c_str(), fn.c_str());
-                                }
+                                LOGV("push image: \"%s\" -> \"%s\" \n", fullName.c_str(), fn.c_str());
 
                                 // fullName
                                 inputImageList.push_back(std::make_shared<InputImage>(fullName, fn, dirname(rp), fext));
@@ -1275,12 +1377,12 @@ OPTIONS:
                     }
                     else
                     {
-                        fprintf(stderr, "no file %s  error: %d : %s\n", rp, errno, strerror(errno));
+                        LOGE("no file \"%s\" err: %d : %s\n", rp, errno, strerror(errno));
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "no real path to %s\n", c_fn);
+                    LOGE("no real path to \"%s\"\n", c_fn);
                 }
             }
         }
@@ -1328,68 +1430,88 @@ OPTIONS:
         auto save = [&](InputImageList &dstImageList, float occupancy) {
             if (dstImageList.size())
             {
+                if (atlasSizeIsCalculated && atlasMaxHeight == 0 && atlasMaxWidth == 0 && atlasNumber > 0)
+                {
+                    LOGE("Undefined behaviour. More than one atlas! Other Images:\n", atlasNumber);
+                    for (InputImagePtr &i : dstImageList)
+                    {
+                        fprintf(stderr, "%s, ", i->fileName.c_str());
+                    }
+                    exit(1);
+                    return;
+                }
+
                 std::string atlasFileName = format(mask.c_str(), atlasNumber);
                 std::string atlasFilePath =
                     !dstPath.empty() ? dstPath + outputDirectorySeparator + atlasFileName : atlasFileName;
                 std::string atlasFilePath2 =
                     !prefixPath.empty() ? prefixPath + outputDirectorySeparator + atlasFileName : atlasFileName;
+
+                if (atlasSizeIsCalculated && atlasNumber > 0)
+                {
+                    currentAtlasWidth = 0;
+                    currentAtlasHeight = 0;
+                    calculateAtlasDimension(currentAtlasWidth, currentAtlasHeight, dstImageList, borderWidth);
+                }
+
                 saveAtlas(dstImageList, atlasFilePath, atlasFilePath2, currentAtlasWidth, currentAtlasHeight,
                           occupancy);
+
                 atlasNumber++;
             }
         };
 
-        int totalImagesSquare = getTotalImagesSquare(inputImageList, borderWidth);
-        if (totalImagesSquare <= (currentAtlasWidth * currentAtlasHeight))
+        int step = 0;
+
+        while (1)
         {
             InputImageList dstImageList;
-            AbstractBinPack *packer = createPacker(packerType, currentAtlasWidth, currentAtlasHeight);
+            std::shared_ptr<AbstractBinPack> packer(createPacker(packerType, currentAtlasWidth, currentAtlasHeight));
 
             double occupancy = makeAtlas(inputImageList, dstImageList, packer, borderWidth);
-            save(dstImageList, occupancy);
-            delete packer;
-        }
-        else
-        {
-            currentAtlasWidth = atlasWidth;
-            currentAtlasHeight = atlasHeight;
-            int step = 0;
 
-            while (1)
+            if (inputImageList.size() == 0 ||
+                (!atlasSizeIsCalculated &&
+                 ((currentAtlasWidth == atlasWidth) && (currentAtlasHeight == atlasHeight))) ||
+                ((currentAtlasWidth == atlasMaxWidth) && (currentAtlasHeight == atlasMaxHeight)))
             {
-                InputImageList dstImageList;
-                AbstractBinPack *packer = createPacker(packerType, currentAtlasWidth, currentAtlasHeight);
-
-                double occupancy = makeAtlas(inputImageList, dstImageList, packer, borderWidth);
-                if (inputImageList.size() == 0 ||
-                    ((currentAtlasWidth == atlasWidth) && (currentAtlasHeight == atlasHeight)))
+                save(dstImageList, occupancy);
+                break;
+            }
+            else
+            {
+                // auto grow atlas size
+                if ((step++ % 2) == 0)
                 {
-                    printf("Real atlas dimension: %dx%d\n", currentAtlasWidth, currentAtlasHeight);
-                    save(dstImageList, occupancy);
-                    delete packer;
-                    break;
+                    currentAtlasWidth *= 2;
+                    if (!atlasSizeIsCalculated && currentAtlasWidth > atlasWidth)
+                    {
+                        currentAtlasWidth = atlasWidth;
+                    }
+
+                    if (atlasMaxWidth > 0)
+                    {
+                        currentAtlasWidth = min(atlasMaxWidth, currentAtlasWidth);
+                    }
                 }
                 else
                 {
-                    if ((step++ % 2) == 0)
+                    currentAtlasHeight *= 2;
+                    if (!atlasSizeIsCalculated && currentAtlasHeight > atlasHeight)
                     {
-                        currentAtlasWidth *= 2;
-                        if (currentAtlasWidth > atlasWidth)
-                            currentAtlasWidth = atlasWidth;
-                    }
-                    else
-                    {
-                        currentAtlasHeight *= 2;
-                        if (currentAtlasHeight > atlasHeight)
-                            currentAtlasHeight = atlasHeight;
+                        currentAtlasHeight = atlasHeight;
                     }
 
-                    for (InputImageList::iterator i = dstImageList.begin(); i != dstImageList.end(); ++i)
+                    if (atlasMaxHeight > 0)
                     {
-                        inputImageList.push_back(*i);
+                        currentAtlasHeight = min(atlasMaxHeight, currentAtlasHeight);
                     }
                 }
-                delete packer;
+
+                for (InputImageList::iterator i = dstImageList.begin(); i != dstImageList.end(); ++i)
+                {
+                    inputImageList.push_back(*i);
+                }
             }
         }
     }
