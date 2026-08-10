@@ -1,63 +1,63 @@
 var PlayerState = null;
 
-var __defaultTextProperties, 
-    
+var __defaultTextProperties,
+
     options = {
 
-    __default: {
-        __timeMultiplier: 1,
+        __default: {
+            __timeMultiplier: 1,
 
-        __minimalTapArea: 35,
-        __baseFontsFolder: '',
-        __baseSoundsFolder: '',
-        __baseImgFolder: 'img/',
-        __baseConfigsFolder: 'conf/',
-        __baseLayoutsFolder: 'layouts/',
-        __baseShadersFolder: 'shaders/',
-        __baseParticlesFolder: 'particles/',
-        __baseDragonBonesFolder: 'db/',
-        __baseSpineFolder: 'spine/',
-        __baseLive2dFolder: 'live2d/',
-        __baseCssFolder: 'css/',
-        __baseHtmlFolder: 'html/',
-        __goodResolution: { x: 640, y: 960 },
-        __disableCache: 0,
-        __disableCacheByVer: 1,
-        //debug
-        __soundDisabled: 1,
-        //undebug
-        __scaleFactor: 0,
-        __prepareJsons: 0,
-        __fpsLimit: 100,
-        __projectServerPath: '',
-        __allServerPath: '',
-        __particlesCurveValuesCacheSize: 100,
-        __preventDefaultEvents: 1,
-        __localesDir: 'lang/',
-        __atlasFramesPrefix: '',
-        __autoRemoveKeyFrameAnimation: 1,
-        __doubleTapTimeout: 0.3,
+            __minimalTapArea: 35,
+            __baseFontsFolder: '',
+            __baseSoundsFolder: '',
+            __baseImgFolder: 'img/',
+            __baseConfigsFolder: 'conf/',
+            __baseLayoutsFolder: 'layouts/',
+            __baseShadersFolder: 'shaders/',
+            __baseParticlesFolder: 'particles/',
+            __baseDragonBonesFolder: 'db/',
+            __baseSpineFolder: 'spine/',
+            __baseLive2dFolder: 'live2d/',
+            __baseCssFolder: 'css/',
+            __baseHtmlFolder: 'html/',
+            __goodResolution: { x: 640, y: 960 },
+            __disableCache: 0,
+            __disableCacheByVer: 1,
+            //debug
+            __soundDisabled: 1,
+            //undebug
+            __scaleFactor: 0,
+            __prepareJsons: 0,
+            __fpsLimit: 100,
+            __projectServerPath: '',
+            __allServerPath: '',
+            __particlesCurveValuesCacheSize: 100,
+            __preventDefaultEvents: 1,
+            __localesDir: 'lang/',
+            __atlasFramesPrefix: '',
+            __autoRemoveKeyFrameAnimation: 1,
+            __doubleTapTimeout: 0.3,
 
-        __storeChildsAsObject: 0,
-        __disablePacking: 0,
+            __storeChildsAsObject: 0,
+            __disablePacking: 0,
 
-        __loadingPolicies: {
-            __retryIfErrorTimeout: 0,
-            __retryIfErrorTimeoutMultiplier: 2,
-            __retryIfErrorTries: 0,
-            __callErrorEveryTime: 0
+            __loadingPolicies: {
+                __retryIfErrorTimeout: 0,
+                __retryIfErrorTimeoutMultiplier: 2,
+                __retryIfErrorTries: 0,
+                __callErrorEveryTime: 0
+            },
+
+            __supportedLangs: ['en']
+
         },
 
-        __supportedLangs: ['en']
+        __reset: function () {
+            mergeObjectDeep(this, this.__default);
+        }
 
-    },
 
-    __reset: function () {
-        mergeObjectDeep(this, this.__default);
     }
-
-
-}
     , defaultUVSBuffer
     , defaultIndecesBuffer1
     , defaultIndecesBuffer2
@@ -226,7 +226,7 @@ function onWindowResize(force) {
         , a = setupWindowOptions(force, w, h, pixelRatio);
 
     if (isArray(a)) { w = a[0] || w; h = a[1] || h; }
-    
+
     if (!force && (w == _cszw && h == _cszh))
         return;
 
@@ -291,7 +291,7 @@ function cheatsAdjustSystemTime() {
 
         if (PlayerState) {
 
-            cheatsAdjustedTimeAdd = get1(PlayerState,'_cata') || 0;
+            cheatsAdjustedTimeAdd = get1(PlayerState, '_cata') || 0;
 
             cheatsAdjustSystemTime = function () {
 
@@ -384,7 +384,7 @@ function updateFramesRoutine(t) {
     }
 
     __currentFrameDeltaTime = options.__fixedDeltaTimeMs || clamp(t - __realLastOnFrameTime, 0, 200);
-    
+
     //cheats
     __currentFrameDeltaTime *= options.__timeMultiplier;
     //endcheats
@@ -704,7 +704,7 @@ function getUIClass(v) {
     return deepclone(c);
 }
 
-function registerClass(j, name1, name2, clearname){
+function registerClass(j, name1, name2, clearname) {
     name1 ? globalConfigsData.__classes[name1] = j : 0;
     name2 ? globalConfigsData.__classes[name2] = j : 0;
     if (clearname) {
@@ -720,7 +720,7 @@ function registerClasses(j) {
     else if (isObject(j)) {
         if (j.name) {
             if (j.name == 'classes') {
-                var storeNames = ((j.__userData||{}).__save_options||{}).__storeClassNames;
+                var storeNames = ((j.__userData || {}).__save_options || {}).__storeClassNames;
                 if (isObject(j.__childs)) {
                     for (var i in j.__childs) {
                         var ci = j.__childs[i]
@@ -1267,7 +1267,7 @@ function setFrameUV(frame, uvscale, rotated, sizeScale) {
     if (!img) {
         return frame;
     }
-    
+
     var r = frame.r
         , ox = img.width
         , oy = img.height
@@ -1431,35 +1431,45 @@ function computeAtlasTexture(atlas) {
     }
 }
 
+function destroyFrame(frame, skipOtherChecks) {
+    var tex = frame.tex;
+    if (tex) {
+        tex.__destruct();
+        tex.__bufferTexture = tex.__bufferTexture && tex.__bufferTexture.__destruct();
+    }
 
-function destroyImage(img) {
-    var frame = globalConfigsData.__frames[img];
+    $each(frame.__uvsBuffers, b => {
+        b.__destruct();
+    });
+
+    if (frame.__isSimpleImage && !skipOtherChecks) {
+        // delete all other frames with same texture
+        var toDelete = $filterObject(globalConfigsData.__frames, function (f) {
+            return (f || 0).tex == tex
+        });
+        $each(toDelete, function (v, f) {
+            destroyFrame(frame, 1);
+            delete globalConfigsData.__frames[f];
+        });
+    }
+
+    delete frame.tex;
+}
+
+function destroyImage(imgName) {
+    if (!imgName) return;
+
+    var cachedImage = getCachedData(imgName, globalConfigsData.__images);
+    if (cachedImage) {
+        debugger;
+        destroyFrame(cachedImage);
+        setCachedData(imgName, null, globalConfigsData.__images);
+    }
+
+    var frame = getCachedData(imgName, globalConfigsData.__frames);
     if (frame) {
-        var tex = frame.tex;
-        if (tex) {
-            //debug
-            consoleLog('destroyImage', img);
-            //undebug
-
-            //TODO: clear __uvsBuffers!!!
-
-            tex.__destruct();
-
-            if (tex.__bufferTexture) {
-                tex.__bufferTexture.__destruct();
-                tex.__bufferTexture = 0;
-            }
-
-        }
-
-        if (frame.__isSimpleImage) {
-            var toDelete = $filterObject(globalConfigsData.__frames, function (f) {
-                return (f || 0).tex == tex
-            });
-            $each(toDelete, function (v, f) {
-                delete globalConfigsData.__frames[f];
-            })
-        }
+        destroyFrame(frame);
+        setCachedData(imgName, null, globalConfigsData.__frames);
     }
 }
 
