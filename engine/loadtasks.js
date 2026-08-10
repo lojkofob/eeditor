@@ -117,7 +117,7 @@ function getJson(filename, onload, onprogress, usePacking, onerror) {
 function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
     tablesCache[t] = {};
     var table = getDataTableSources(t);
-    if (!table) return;    
+    if (!table) return;
     var format = table.__format;
     var subformats = table.__subformats;
     if (format) {
@@ -285,8 +285,6 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
 }
 
 
-
-
 function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     if (!filename) {
         onError && onError();
@@ -313,8 +311,8 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
                 , tex = new Texture(img);
 
             tex.__src = "_b64i_" + _b64i;
-            _b64i++; 
- 
+            _b64i++;
+
             if (nodeWaitingsForThis) {
                 tex.__nodesWaitingsForThis = [nodeWaitingsForThis];
             }
@@ -339,7 +337,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
             img.src = url;
             // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
             var isJPEG = url.indexOf("data:image/jpeg") === 0;
-            tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 }); 
+            tex.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __needsUpdate: 1 });
             return tex;
         }
     }
@@ -377,7 +375,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
             cache.__onload = 0;
             $each(_onload, a => result ? a[0] && a[0](result) : a[1] && a[1]());
             if (!result) {
-                setCachedData(srcurl, undefined, globalConfigsData.__images); 
+                setCachedData(srcurl, undefined, globalConfigsData.__images);
             }
         };
     }
@@ -401,7 +399,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
 
             }, onProgress, a => {
                 final();
-                tex.__nodesWaitingsForThis = 0;                
+                tex.__nodesWaitingsForThis = 0;
             }, urlGotModUrl, opts);
 
     setCachedData(srcurl, { tex: tex, __isLoading: 1, __onload: [[onload, onError]] }, globalConfigsData.__images);
@@ -948,7 +946,7 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
                             computeAtlasTexture(atlas);
                         }, 1);
                     } else {
-                        if (!getCachedData(atlas.__atlasDataFile)){
+                        if (!getCachedData(atlas.__atlasDataFile)) {
                             t.__loadTaskOne(TASKS_CONFIG, atlas.__atlasDataFile);
                             t.__addOnCompleted(a => {
                                 computeAtlasTexture(atlas);

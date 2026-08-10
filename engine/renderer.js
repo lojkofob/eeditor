@@ -128,8 +128,8 @@ var gl
     , GL_EQUAL
     , GL_GEQUAL
     , GL_GREATER
-    , GL_NOTEQUAL 
- 
+    , GL_NOTEQUAL
+
     , blendingsList
     , glAttributes
     , textureRepeatsList
@@ -137,7 +137,7 @@ var gl
     , _shader_precision
     , _shader_defines_str = "#ifdef GL_ES\n#define LOWP lowp\n#define MEDIUMP mediump\n#define HIGHP highp\n#else\n#define LOWP\n#define MEDIUMP\n#define HIGHP\n#endif\n"
     , depthBuffer
-    , setErrorReportingFlagWEBGL = a => {};
+    , setErrorReportingFlagWEBGL = a => { };
 
 function __setGLGlobals(gl) {
 
@@ -157,7 +157,7 @@ function __setGLGlobals(gl) {
 
     GL_LINEAR = gl.LINEAR;
     GL_NEAREST = gl.NEAREST;
-    
+
     GL_NEAREST_MIPMAP_NEAREST = gl.NEAREST_MIPMAP_NEAREST;
     GL_LINEAR_MIPMAP_NEAREST = gl.LINEAR_MIPMAP_NEAREST;
     GL_NEAREST_MIPMAP_LINEAR = gl.NEAREST_MIPMAP_LINEAR;
@@ -296,7 +296,7 @@ function Texture(image, params) {
 
     _texturesCache[textureIdCount] = this;
     params = params || 0;
-    
+
     this.__init(mergeObj({
         __magFilter: GL_LINEAR,
         __minFilter: (params.__generateMipmaps || params.__manualMipmaps) ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR,
@@ -355,6 +355,10 @@ Texture.prototype = {
 
         if (!keepInCache) {
             delete _texturesCache[this.id];
+        }
+
+        if (isFunction(this.__abort)) {
+            this.__abort();
         }
     },
 
@@ -541,7 +545,7 @@ var gl_alpha = false
     , gl_attributesCount = 4;
 
 function WebGLRenderer() {
-    
+
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
 
@@ -1026,7 +1030,7 @@ function WebGLRenderer() {
         return image;
 
     }
-     
+
 
     function __clampImageToMaxSize(image, maxSize) {
 
@@ -1052,7 +1056,7 @@ function WebGLRenderer() {
         return image;
 
     }
-  
+
     function __isImagePowerOfTwo(image) {
 
         return isPowerOfTwo(image.width) && isPowerOfTwo(image.height);
@@ -1086,15 +1090,15 @@ function WebGLRenderer() {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.__flipY);
         gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.__premultiplyAlpha);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.__unpackAlignment);
- 
+
         __setTextureParameters(texture);
-        
+
         if (image.data instanceof Uint8Array) {
             __texImage2D(GL_TEXTURE_2D, 0, glFormat, image.width, image.height, 0, glFormat, glType, image.data);
         } else {
             __texImage2D(GL_TEXTURE_2D, 0, glFormat, glFormat, glType, image);
         }
-  
+
         __checkGLErrors(1);
 
         texture.__version = texture.v;
@@ -1326,7 +1330,7 @@ function WebGLRenderer() {
         return 'lowp';
     }
 
-    function __setClearColor(c, a){
+    function __setClearColor(c, a) {
         _clearColor = c;
         _clearAlpha = a || c.a || 0;
     }
@@ -1355,7 +1359,7 @@ function WebGLRenderer() {
                 if (_enabledAttributes[i] === 1) {
                     gl.disableVertexAttribArray(i);
                 }
-            }            
+            }
             _enabledAttributes.fill(0);
             _enabledInstancingAttributes.fill(0);
         }
@@ -1469,7 +1473,7 @@ function WebGLRenderer() {
         _shadersCache = { f: {}, v: {} };
 
         _currentBoundTextures = {};
- 
+
         _colorBuffer.__reset();
 
     }
@@ -1690,7 +1694,7 @@ function WebGLRenderer() {
 
     function __setRenderTarget(renderTarget) {
 
-         
+
         var framebuffer;
 
         if (renderTarget) {
@@ -1705,24 +1709,24 @@ function WebGLRenderer() {
                 renderTarget.__manualMipmaps = texture.__manualMipmaps;
 
                 texture.__checkGLTexture();
-  
+
                 // Setup framebuffer
 
                 renderTarget.__webglFramebuffer = gl.createFramebuffer();
 
                 __checkGLErrors(renderTarget.__webglFramebuffer);
- 
+
                 __bindTexture(texture.__webglTexture);
                 __setTextureParameters(texture);
 
                 __texImage2D(GL_TEXTURE_2D, 0, glFormat, renderTarget.width, renderTarget.height, 0, glFormat, glType, null);
-                
+
                 gl.bindFramebuffer(GL_FRAMEBUFFER, renderTarget.__webglFramebuffer);
 
                 gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.__webglTexture, 0);
-                
+
                 gl.bindFramebuffer(GL_FRAMEBUFFER, null);
-                 
+
                 __checkGLErrors(renderTarget.__webglFramebuffer);
 
                 __bindTexture(null);
@@ -1745,34 +1749,34 @@ function WebGLRenderer() {
 
                 var texture = _currentRenderTarget.__texture;
                 if (_currentRenderTarget.__manualMipmaps) {
-                           
+
                     gl.bindTexture(GL_TEXTURE_2D, texture.__webglTexture);
- 
+
 
                     gl.generateMipmap(gl.TEXTURE_2D);
- 
- 
-                    
-                     
- 
+
+
+
+
+
                     $each(_currentRenderTarget.__manualMipmaps, (mm, i) => {
                         var w = mm.width, h = mm.height, mipmap_level = i + 1;
 
-                        __texImage2D(GL_TEXTURE_2D, mipmap_level, texture.__format, w, h, 0, texture.__format, texture.__type, null );
+                        __texImage2D(GL_TEXTURE_2D, mipmap_level, texture.__format, w, h, 0, texture.__format, texture.__type, null);
 
                         gl.bindFramebuffer(gl.FRAMEBUFFER, mm.__webglFramebuffer);
 
                         gl.copyTexSubImage2D(GL_TEXTURE_2D, mipmap_level, 0, 0, 0, 0, w, h);
-    
+
                     });
 
                 }
                 else
-                if (_currentRenderTarget.__generateMipmaps) {
-                    __bindTexture(texture.__webglTexture);
-                    _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, gl_mipmap_texture_max_level);
-                    gl.generateMipmap(GL_TEXTURE_2D);
-                }
+                    if (_currentRenderTarget.__generateMipmaps) {
+                        __bindTexture(texture.__webglTexture);
+                        _texParameteri(GL_TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, gl_mipmap_texture_max_level);
+                        gl.generateMipmap(GL_TEXTURE_2D);
+                    }
 
             }
 
@@ -1874,7 +1878,7 @@ function WebGLRenderer() {
         __resetGLState();
         __setDefaultGLState();
     }
- 
+
 
     function __draw(object, count, forceShader, start) {
 
@@ -1933,7 +1937,7 @@ function WebGLRenderer() {
         renderInfo.calls++;
         renderInfo.vertices += count;
         //endcheats
-                
+
         //3d
         __setFaceCulling(object.__cullFace, object.__frontFaceDirection || 1);
         depthBuffer.__setTest(object.__useDepth || 0);
@@ -1966,9 +1970,9 @@ function WebGLRenderer() {
             }
 
             //cheats
-            renderInfo.drawTime += ( Date.now() - tm ) / ONE_SECOND;
+            renderInfo.drawTime += (Date.now() - tm) / ONE_SECOND;
             //endcheats
- 
+
         }
 
 
@@ -1996,8 +2000,8 @@ function WebGLRenderer() {
         }
     }
 
-    function __init(_readyCallback){
-        
+    function __init(_readyCallback) {
+
         _currentScissor.set(0, 0, _width * _pixelRatio, _height * _pixelRatio);
 
         for (var i in _shaderDefines)
@@ -2016,16 +2020,16 @@ function WebGLRenderer() {
             'webglcontextlost', onContextLost,
             'webglcontextrestored', onContextRestored
         ));
-    
+
         __resetGLState();
         __setDefaultGLState(_readyCallback);
-        
+
     }
 
-    
+
     function __generateMipmap(tex) {
         tex.__checkGLTexture();
-        
+
         if (tex.__webglTexture) {
             tex.__minFilter = GL_LINEAR_MIPMAP_LINEAR;
             if (tex.v > 0 && tex.__version !== tex.v) {
@@ -2041,13 +2045,13 @@ function WebGLRenderer() {
 
     //cheats
     function __handleGLErrors(val) {
-        debugOnGLError = val ? function(){
+        debugOnGLError = val ? function () {
             var e = gl.getError();
             if (e) {
                 debugger;
                 // alert(err);
             }
-        } : function(){}
+        } : function () { }
     }
     //endcheats
 

@@ -14,12 +14,12 @@ var PDM = createDeobfuscatingMap({
 
 })
 
-, _xy_hz_ = [PDM.x, PDM.y]
-, _rt_hz_ = [PDM.rad, PDM.trans]
-, _xyz_hz_ = [PDM.x, PDM.y, PDM.z]
-, _rgba_hz_ = [PDM.r, PDM.g, PDM.b, PDM.a]
-, _wh_hz_ = [PDM.width, PDM.height];
- 
+    , _xy_hz_ = [PDM.x, PDM.y]
+    , _rt_hz_ = [PDM.rad, PDM.trans]
+    , _xyz_hz_ = [PDM.x, PDM.y, PDM.z]
+    , _rgba_hz_ = [PDM.r, PDM.g, PDM.b, PDM.a]
+    , _wh_hz_ = [PDM.width, PDM.height];
+
 
 function defaultZeroFunction() { return 0 }
 function defaultOneFunction() { return 1 }
@@ -508,7 +508,7 @@ function updateColorsBuffer2(emitter, sz) {
             var p = emitter.__particles[sz - i - 1]
                 , color_factor = emitter.__colorEmitterComponent.g.color_factor(p.__part)
                 , cofs = i * 8
-                , color = p.__start_color 
+                , color = p.__start_color
                 , current_color = p.__current_color
 
             colors[cofs] = colors[cofs + 4] = current_color.x = color.x * color_factor.x;
@@ -552,7 +552,7 @@ var NormalUVSBuilder = {
         emitter.__uvs = new Float32Array(getFrameUVS(frame));
 
         if (emitter.__uvsBuffer) {
-            emitter.__uvsBuffer = emitter.__addAttributeBuffer('uv', 2);            
+            emitter.__uvsBuffer = emitter.__addAttributeBuffer('uv', 2);
         }
 
     }
@@ -565,7 +565,7 @@ function NormalGeometryBuilder(emitter) {
     var sz = emitter.__particles.length;
 
     if (!sz || !emitter.__uvs) return 1;
-    
+
     var vertices = emitter.__verticesBuffer.__getArrayOfSize(sz * 8)
         , vertofs = 0;
 
@@ -787,7 +787,7 @@ EffectComponentsFactory.__registerComponent('d',
 
         __initEmitter(emitter) {
 
-            if (!emitter.__verticesBuffer){
+            if (!emitter.__verticesBuffer) {
                 emitter.__verticesBuffer = emitter.__addAttributeBuffer('position', 2);
             }
 
@@ -1237,7 +1237,7 @@ EffectComponentsFactory.__registerComponent('tgt',
                     var root = node.__root || node.__getRoot();
                     if (root) {
                         var tmp = [];
-                        $each(tgt, (v, k)=>{
+                        $each(tgt, (v, k) => {
                             var n = root.__alias(k) || root.__alias(v);
                             if (n) {
                                 tmp.push(n.__worldPosition);
@@ -1247,7 +1247,7 @@ EffectComponentsFactory.__registerComponent('tgt',
                     } else tgt = 0;
                 } else tgt = 0;
             }
-            
+
             if (tgt && tgt.length) {
                 t.__targetPositions = tgt;
             }
@@ -1837,7 +1837,7 @@ makeClass(Particle, {
             return v;
         }
     },
- 
+
     __node: {
         get() {
             return this.__emitter.__parent.__node;
@@ -1907,7 +1907,7 @@ function ParticleEmitter(effect, parent) {
     t.__uvsBuilder = NormalUVSBuilder;
     t.__changesListeners = {};
     //cheats
-    renderInfo.__emitters++;
+    renderInfo.emitters++;
     //endcheats
 }
 
@@ -1955,7 +1955,7 @@ var ParticleEmitterPrototype =
             if (!t.__defaultComponent) {
                 if (!components && !t.__components.length) {
                     t.__defaultComponent = t.__addComponent(EffectComponentsFactory.__createByType('d'))
-                } 
+                }
             }
 
             for (var i in parameters) {
@@ -2018,7 +2018,7 @@ var ParticleEmitterPrototype =
 
         __destruct() {
             //cheats
-            renderInfo.__emitters--;
+            renderInfo.emitters--;
             renderInfo.particles -= this.__particles.length;
             //endcheats
 
@@ -2070,12 +2070,12 @@ var ParticleEmitterPrototype =
                 return 1;
             }
 
-            if (t.__parent) { 
-                t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; 
+            if (t.__parent) {
+                t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep;
             }
 
             //cheats
-            renderInfo.__emittersRendered++;
+            renderInfo.emittersRendered++;
             //endcheats
 
             var count = t.__renderVertexCount;
@@ -2089,22 +2089,22 @@ var ParticleEmitterPrototype =
                     t.__projectionMatrix = t.__projectionMatrix.__clone();
                     // t.__projectionMatrix.__multiply(mw);
                     t.__projectionMatrix.__multiplyMatrices4(t.__projectionMatrix, mw);
-                } else 
+                } else
                 // particle
                 {
                     t.__projectionMatrix = t.__projectionMatrix.__clone();
-            
+
                     var q = mw.__current_angle,
                         o = mw.__current_position,
                         s = sin(q),
                         c = cos(q);
 
-                        _prtM4_e[0] = c;
-                        _prtM4_e[1] = s;
-                        _prtM4_e[4] = -s;
-                        _prtM4_e[5] = c;
-                        _prtM4_e[12] = o.x;
-                        _prtM4_e[13] = o.y;
+                    _prtM4_e[0] = c;
+                    _prtM4_e[1] = s;
+                    _prtM4_e[4] = -s;
+                    _prtM4_e[5] = c;
+                    _prtM4_e[12] = o.x;
+                    _prtM4_e[13] = o.y;
 
                     t.__projectionMatrix.__multiply(_prtM4_);
 
@@ -2124,7 +2124,7 @@ var ParticleEmitterPrototype =
                 , particlesLength = particles.length;
 
             //cheats
-            renderInfo.__emittersUpdated++;
+            renderInfo.emittersUpdated++;
             //endcheats
 
 
@@ -2590,20 +2590,20 @@ function smartToFixedDeep(obj) {
         if (aobj < 0.1) {
             obj = Number(obj.toFixed(6));
         } else
-        if (aobj < 1) {
-            obj = Number(obj.toFixed(4));
-        } else 
-        if (aobj < 10) {
-            obj = Number(obj.toFixed(2));
-        } else {
-            obj = parseInt(obj.toFixed(0));
-        }
+            if (aobj < 1) {
+                obj = Number(obj.toFixed(4));
+            } else
+                if (aobj < 10) {
+                    obj = Number(obj.toFixed(2));
+                } else {
+                    obj = parseInt(obj.toFixed(0));
+                }
     }
     else if (typeof obj == 'object') {
         for (var i in obj) obj[i] = smartToFixedDeep(obj[i]);
     }
     return obj;
-} 
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
