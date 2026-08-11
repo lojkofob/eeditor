@@ -12,6 +12,7 @@ module.exports = (function () {
             .options('target', { alias: 't', 'default': '', describe: 'build target' })
             .options('help', { alias: 'h', describe: 'Show this help message.' })
             .options('colorize', { 'default': '', describe: 'set to 1 of need colors' })
+            .options('on_error', { 'default': 'exit', describe: 'exit = stop building if error' })
         , argv = optimist.argv
         , glob = require('./glob')
         , unwind = require('./unwind.js').unwind
@@ -57,6 +58,12 @@ module.exports = (function () {
                     return true;
                 }
             });
+        },
+        _on_error = argv.on_error == "exit" ? function () {
+            process.exitCode = 1;
+            process.exit(1);
+        } : function () {
+
         },
         env;
 
@@ -691,13 +698,15 @@ module.exports = (function () {
 
         configure(d) {
             var src = collectSources(d.src)
-                , spawnFunc = d.spawn;
+                , spawnFunc = ifdef(d.spawn, spawnFunc);
 
             $each(src, filename => {
                 var content = readFileSync(filename);
-                var new_content = unwind(content, env, spawnFunc ? spawn : 0, project_json);
-                if (new_content != content) {
-                    fs.writeFileSync(filename, new_content);
+                if (content) {
+                    var new_content = unwind(content, env, spawnFunc, project_json);
+                    if (new_content != content) {
+                        fs.writeFileSync(filename, new_content);
+                    }
                 }
             });
         },
@@ -831,6 +840,14 @@ module.exports = (function () {
 
                     echo = subtarget.echo;
 
+                    if (subtarget.skip) {
+                        winston.info('Skip subtarget ' + i + ' type: ' + stype);
+                        if (subtarget.description) {
+                            winston.info(subtarget.description);
+                        }
+                        continue;
+                    }
+
                     var stype = String(subtarget.type).toLowerCase();
                     winston.debug('Build subtarget ' + i + ' type: ' + stype + ' content: ' + JSON.stringify(subtarget));
 
@@ -841,7 +858,7 @@ module.exports = (function () {
                     if (subtargetsBuilders[stype]) {
                         subtargetsBuilders[stype](subtarget);
                     } else {
-                        winston.error('No builder for subtarget type ' + stype);
+                        throw ('No builder for subtarget type ' + stype)
                     }
                 } else {
                     winston.debug(i + ' : ' + JSON.stringify(target));
@@ -854,6 +871,7 @@ module.exports = (function () {
             winston.error('Error while building target content');
             winston.error(e.stack || e);
 
+            _on_error();
 
         }
     }
@@ -930,6 +948,7 @@ module.exports = (function () {
                 } catch (e) {
                     winston.error('Error opening ' + projectFile);
                     winston.error(e);
+                    _on_error();
                 }
 
                 if (project_json) {

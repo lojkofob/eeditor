@@ -1,5 +1,3 @@
-var _spawnFunction;
-
 function unwindMagicVariables(env, data, src, dst, tmp) {
 
     //     console.log('unwindMagicVariables', data, src, dst);
@@ -10,13 +8,13 @@ function unwindMagicVariables(env, data, src, dst, tmp) {
                 data = unwindMagicVariables(env, data, key, env[key], tmp);
             });
         }
-        else if(isArray(data)) {
+        else if (isArray(data)) {
             data = $map(data, d => unwindMagicVariables(env, d, src, dst, tmp));
         }
         else if (isObject(data)) {
             var o = {};
             for (var i in data) {
-                o[ unwindMagicVariables(env, i, src, dst, tmp) ] = unwindMagicVariables(env, data[i], src, dst, tmp);
+                o[unwindMagicVariables(env, i, src, dst, tmp)] = unwindMagicVariables(env, data[i], src, dst, tmp);
             }
             data = o;
         } else if (isString(data)) {
@@ -68,8 +66,8 @@ function _unwindObject(o) {
 
 }
 
-function unwindCommands(data, ud) {
-    
+function unwindCommands(data, ud, _spawnFunction) {
+
     if (isObject(data) || isArray(data)) {
         return $map(data, (v, k) => {
             return unwindCommands(v, ud)
@@ -83,19 +81,20 @@ function unwindCommands(data, ud) {
                 } else {
                     if (_spawnFunction) {
                         var opts;
-                        data = data.replace(/`([^`]*)`(\?[^;]+;)?/g, function(d, command, ooo) {
+
+                        data = data.replace(/`([^`]*)`(\?[^;]+;)?/g, function (d, command, ooo) {
                             var d = _spawnFunction([command], 1)
                             ud.changed = ud.changed + 1;
                             opts = ooo;
                             return d;
                         });
 
-                        if (isString(opts)){
+                        if (isString(opts)) {
                             opts = opts.substr(1, opts.length - 2);
                             opts = new URLSearchParams(opts);
                             opts = Object.fromEntries(opts.entries());
-                            if (opts.format == "json"){
-                                data = JSON.parse(data);                                
+                            if (opts.format == "json") {
+                                data = JSON.parse(data);
                             }
                         }
 
@@ -206,7 +205,7 @@ function unwindLinks(data, basedata) {
 
                 var di = data.indexOf('@');
                 if (di >= 0) {
- 
+
                     var foundedObject = 0;
                     var newdata = data.replace(/@\/([\w\d_\-\/\$]+)(\\@)?/g, function (d, key) {
 
@@ -216,7 +215,7 @@ function unwindLinks(data, basedata) {
                         }
 
                         founded++;
-                        
+
                         if (isObject(r) || isArray(r)) {
                             foundedObject = r;
                         }
@@ -254,10 +253,9 @@ function unwindLinks(data, basedata) {
 }
 
 
-function unwind(data, env, spawnFunction, basedata) {
+function unwind(data, env, _spawnFunction, basedata) {
     var changed = 0;
-    
-    _spawnFunction = spawnFunction;
+
     var lch = -1, tmp;
 
     while (lch != changed) {
@@ -281,12 +279,12 @@ function unwind(data, env, spawnFunction, basedata) {
         }
 
         var tmp = { changed: 0 };
-        data = unwindCommands(data, tmp);
+        data = unwindCommands(data, tmp, _spawnFunction);
         if (tmp.changed) {
-            lch = -1;            
+            lch = -1;
         }
     }
- 
+
 
     // if (founded > changed) {
     /// ???
