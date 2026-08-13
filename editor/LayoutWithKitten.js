@@ -42,10 +42,10 @@ makeClass(LayoutWithKitten, {
         this.activateOptions();
 
         if (!options.__enableEventsOnLayout) {
-            if (!this.layoutView.hasOwnProperty('__eventsDisabled')){
+            if (!this.layoutView.hasOwnProperty('__eventsDisabled')) {
                 ObjectDefineProperty(this.layoutView, '__eventsDisabled', {
-                    set(){ /* sorry, nope */},
-                    get(){ return Editor.ui.__visible }
+                    set() { /* sorry, nope */ },
+                    get() { return Editor.ui.__visible }
                 })
             }
         }
@@ -98,15 +98,33 @@ makeClass(LayoutWithKitten, {
 
     close() {
 
-        if (this.nodeEditWithKitten) {
-            this.nodeEditWithKitten.deactivate();
-            this.nodeEditWithKitten.view.__removeFromParent();
-            this.nodeEditWithKitten.view.__destruct();
+        var nodeEditWithKitten = this.nodeEditWithKitten || 0
+            , view = nodeEditWithKitten.view
+            , layoutView = this.layoutView;
+
+        if (nodeEditWithKitten) {
+            nodeEditWithKitten.deactivate();
+
+            if (view) {
+                if (!view.__destructed) {
+                    view.__removeFromParent();
+                }
+                if (!view.__destructed) {
+                    view.__destruct();
+                }
+            }
+
         }
 
         this.deactivateOptions();
-        this.layoutView.__removeFromParent();
-        this.layoutView.__destruct();
+        if (layoutView) {
+            if (!layoutView.__destructed) {
+                layoutView.__removeFromParent();
+            }
+            if (!layoutView.__destructed) {
+                layoutView.__destruct();
+            }
+        }
 
         this.history.deactivate();
 

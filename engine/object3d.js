@@ -196,24 +196,26 @@ mergeObj(Object3DPrototype, {
             this.__onDestruct = [];
             this.__onDestruct.push(cb);
         }
-        else
+        else {
             if (isFunction(this.__onDestruct)) {
                 //DEPRECATED !
+                consoleDebug("legacy __onDestruct function detected");
                 this.__onDestruct = overloadMethod(this.__onDestruct, cb);
             } else {
                 this.__onDestruct.push(cb);
             }
+        }
 
         return this;
     },
 
     __removeAfter(sec) {
-        var t = this;
-        var f = function () { if (t.__removingTimeout) _clearTimeout(t.__removingTimeout); };
+        var t = this
+            , f = function () { t.__removingTimeout && _clearTimeout(t.__removingTimeout); };
         f();
-        t.__removingTimeout = _setTimeout(t.__removeFromParentFunction(), sec);
+        t.__removingTimeout = _setTimeout(function () { !t.__destructed && t.__removeFromParent(); }, sec);
         t.__addOnDestruct(f);
-        return this;
+        return t;
     },
 
     __removeFromParentFunction() {
