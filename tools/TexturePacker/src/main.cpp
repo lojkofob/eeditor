@@ -938,8 +938,8 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
     {
         atlasSizeIsCalculated = true;
         // printf ("default %dx%d\n", *width, *height);
-        int i = max(log2(aw), 1);
-        int j = max(log2(ah), 1);
+        int i = max((int)log2(aw), 1);
+        int j = max((int)log2(ah), 1);
 
         for (; i < 15 && j < 15; ++i, ++j)
         {
@@ -985,7 +985,7 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
     if (width == 0)
     {
         ah = height;
-        int i = max(log2(aw), 1);
+        int i = max((int)log2(aw), 1);
 
         for (; i < 15; ++i)
         {
@@ -1019,7 +1019,7 @@ void calculateAtlasDimension(int &width, int &height, const InputImageList &imgl
     if (height == 0)
     {
         aw = atlasWidth;
-        int j = max(log2(ah), 1);
+        int j = max((int)log2(ah), 1);
 
         for (; j < 15; ++j)
         {
