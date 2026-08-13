@@ -1,5 +1,7 @@
 #include <FreeImage.h>
 
+#include <cmath>
+
 #ifdef _MSC_VER
 #include <getopt.h>
 #include <msc_dirent.h>
