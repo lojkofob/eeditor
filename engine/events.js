@@ -13,7 +13,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
             return new Vector2(v.x / layoutsResolutionMult / __screenCenter.x - 1, 1 - v.y / layoutsResolutionMult / __screenCenter.y)
         },
 
-        __traverse(f, n, a){
+        __traverse(f, n, a) {
             if (n) {
                 //debug
                 if (n.__eventsDisabled) return;
@@ -23,7 +23,7 @@ var HitTestObjects = makeClass(function (f, propertyArray) {
                 }
                 var childs = n.__childs;
                 if (childs) {
-                    for (var i = 0; i < childs.length; i++){ 
+                    for (var i = 0; i < childs.length; i++) {
                         this.__traverse(f, childs[i], a);
                     }
                 }
@@ -207,11 +207,11 @@ function setCurrentDraggingObject(n, withoutUpdate) {
             if (specialEventHandler) specialEventHandler.eventHandler(curDraggingObject, '__dragEnd');
             //endcheats
             curDraggingObject.__dragEnd();
-        }        
+        }
     }
 
     curDraggingObject = n;
-    if (n){
+    if (n) {
         if (!withoutUpdate) {
             curDraggingObject.mousedown = mouse.__clone().__divideScalar(layoutsResolutionMult);
             curDraggingObject.__lastMousePosition = mouse.__clone();
@@ -230,6 +230,7 @@ function onDocumentMouseDown(e) {
 function onDocumentTouchDown(e) {
     isTouchEvent = 1;
     if (gestures.__touchProcess) {
+        checkKeyboardFocus();
         return gestures.__touchProcess(getTouches(e));
     } else {
         return _onDocumentMouseDown(e);
@@ -239,7 +240,9 @@ function onDocumentTouchDown(e) {
 function _onDocumentMouseDown(e) {
 
     var button = e.button || 0;
-    
+
+    checkKeyboardFocus();
+
     if (button != 0 && !options.__multitouch) {
         return;
     }
@@ -315,7 +318,7 @@ function highlightSubobj(subobj, a, t) {
         if (!subobj.__baseColor) {
             subobj.__baseColor = brightColor(color, 0);
         }
-        t = t || 0.1;        
+        t = t || 0.1;
         var targetColor = highlightTargetColor(subobj, a);
         if (targetColor) {
             if (averageFPS > 30) {
@@ -397,7 +400,7 @@ function _onDocumentMouseUp(e, isout) {
     if (button != 0 && !options.__multitouch) {
         return;
     }
-    
+
     mouseButtons[button] = 0;
 
     draggableObjects.__startDragPosition = 0;
@@ -454,7 +457,7 @@ function _onDocumentMouseUp(e, isout) {
                         __window.contextMenuFired = 0;
                         catched = 1;
                     } else {
-                        var tapEvent = mouse.__clone();                        
+                        var tapEvent = mouse.__clone();
                         catched = tappableObjects.__traverseHit(tapEvent, function (obj, w) {
                             if (isFunction(obj.____onTapFunc)) {
                                 //                                 consoleLog("obj.____onTapFunc", obj);
@@ -486,7 +489,7 @@ function _onDocumentMouseUp(e, isout) {
         } // else consoleError( 'no tap because Date.now() - downTime > 500', Date.now(), downTime, isout );
     }
 
-    if (isout){
+    if (isout) {
         if (gestures.__onPointerOut) gestures.__onPointerOut();
     } else if (gestures.__onPointerUp) gestures.__onPointerUp();
 
@@ -760,7 +763,7 @@ function _onDocumentMouseMove(e) {
     mouse.__normalized = tappableObjects.__normalize(mouse);
 
     if (curDraggingObject) {
- 
+
         var z = 1;
         //debug
         var c = curDraggingObject.__camera || (curDraggingObject.__root || 0).camera;
@@ -801,7 +804,7 @@ function _onDocumentMouseMove(e) {
     }
 
     if (!curDraggingObject && gestures.__drag && (isTouchEvent || mouseButtons[0])) {
-            
+
         if (gestures.__drag(mdx, mdy))
             return;
     }
@@ -837,7 +840,7 @@ function _onDocumentMouseMove(e) {
                         obj.__mouseIn = 1;
                         if (obj.____cursor) {
                             cursor = obj.____cursor;
-                        }                        
+                        }
                         tappableObjects.__b.push(obj);
                         if (obj.__highlight) {
                             obj.__highlight(0.5);
@@ -919,8 +922,8 @@ function onDocumentKeyUp(e) {
 function addEventListenerToElement(i, elem, listener, useCapture) {
     listener = wrapFunctionInTryCatch(listener);
     var cap = !!useCapture;
-    return elem.addEventListener ? elem.addEventListener(i, listener, cap) : 
-           elem.attachEvent ? elem.attachEvent(i, listener, cap) : 0;
+    return elem.addEventListener ? elem.addEventListener(i, listener, cap) :
+        elem.attachEvent ? elem.attachEvent(i, listener, cap) : 0;
 
 }
 
@@ -957,17 +960,17 @@ function addEventListeners(elem) {
     var hiddenNow = false;
     function checkVisibilityChanged() {
         var hn = !!(
-            get(__document, 'hidden') || 
-            get(__document, 'msHidden') || 
+            get(__document, 'hidden') ||
+            get(__document, 'msHidden') ||
             get(__document, 'webkitHidden')
         );
-        
+
         if (hiddenNow != hn) {
             hiddenNow = hn;
             BUS.__post(__ON_VISIBILITY_CHANGED, !hiddenNow);
         }
     }
-    
+
     addEventListenersToElement(__document, set({},
         'visibilitychange', checkVisibilityChanged,
         'msvisibilitychange', checkVisibilityChanged,
@@ -1000,7 +1003,7 @@ var Gamepads = makeClass(function () {
 
     addEventListenersToElement(__window,
         set({},
-            "gamepadconnected", (e) => { t.__addGamepad(e.gamepad); },
+            "gamepadconnected", (e) => { t.__addGamepad(e.gamepad); checkKeyboardFocus(); },
             "gamepaddisconnected", e => { t.__removeGamepad(e.gamepad) }
         ));
 
@@ -1055,3 +1058,16 @@ var Gamepads = makeClass(function () {
     }
 });
 
+var _kb_focus_blured = 1;
+function enableAutoKeyboardFocus() {
+    options.__autoKeyboardFocus = 1;
+    BUS.__addEventListeners(
+        __ON_BLURED, a => { _kb_focus_blured = 1; },
+        __ON_FOCUSED, a => { _kb_focus_blured = 0; }
+    );
+    _kb_focus_blured && __window.focus && __window.focus();
+}
+
+function checkKeyboardFocus() {
+    options.__autoKeyboardFocus && enableAutoKeyboardFocus();
+}
