@@ -1,96 +1,106 @@
- 
 
 
-var sounds = { };
-var soundsLooper = { };
 
-function getSound(s){
+var sounds = {};
+var soundsLooper = {};
+
+function getSound(s) {
     return s && s.howl ? s : sounds[s];
 }
 
-function getSoundHowl(s){
+function getSoundHowl(s) {
     return s && s.howl ? s.howl : sounds[s] ? sounds[s].howl : s instanceof __window.Howl ? s : 0;
 }
 
-function __onSoundEnd(i){ 
-    var s = soundsLooper[i]; 
-    if (s) { 
-        var sound = getSoundHowl(soundsLooper[i]);
-        delete soundsLooper[i]; 
-        
-        playSound(s, 1); 
-        if (sound && sound.__volume != undefined) {
-            changeSoundVolume(sound, sound.__volume)
-        }
-    } 
-};
+function __onSoundEnd(i) {
+    var s = soundsLooper[i];
+    if (s) {
+        var sound = getSound(s)
+            , howl = getSoundHowl(sound)
+            , soundGroup = sound.__group || sound;
 
-function changeSoundVolume(s, volume, fadeTime){
-    if (!options.__soundDisabled) {
-        s = getSoundHowl(s);
-        if (s){
-            s.__volume = volume;
-            if (fadeTime && s.fade){
-                s.fade( s._volume, volume, fadeTime * ONE_SECOND );
-            } else 
-            if (s.volume) {
-                if (s._sounds && s._sounds[0]){
-                    s.volume(volume, s._sounds[0]._id);
-                } else {
-                    s.volume(volume);
+        delete soundsLooper[i];
+        delete soundsLooper[s];
+
+        looperPost(a => {
+            if (!howl.playing(i)) {
+                playSound(s, 1, soundGroup.__smartUniqueTime);
+                if (howl && howl.__volume != undefined) {
+                    changeSoundVolume(howl, howl.__volume)
                 }
             }
+        });
+    }
+};
+
+function changeSoundVolume(s, volume, fadeTime) {
+    if (!options.__soundDisabled) {
+        s = getSoundHowl(s);
+        if (s) {
+            s.__volume = volume;
+            if (fadeTime && s.fade) {
+                s.fade(s._volume, volume, fadeTime * ONE_SECOND);
+            } else
+                if (s.volume) {
+                    if (s._sounds && s._sounds[0]) {
+                        s.volume(volume, s._sounds[0]._id);
+                    } else {
+                        s.volume(volume);
+                    }
+                }
         }
     }
 }
- 
-var _canPlayMusic = function(){ return 1; },
-    _canPlaySingleSound = function(){ return 1; };
 
-function canPlaySound(s, loop, delay){
-    if (s && !options.__soundDisabled){
+var _canPlayMusic = function () { return 1; },
+    _canPlaySingleSound = function () { return 1; };
+
+function canPlaySound(s, loop, delay) {
+    if (s && !options.__soundDisabled) {
         return loop ? _canPlayMusic() : _canPlaySingleSound()
     }
 }
 
-function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
-//     console.log('===================================== playSound', s, loop, delay, smartUniqueTime);
- 
+function playSound(s, loop, delay, smartUniqueTime, fadeInTime) {
+    //     console.log('===================================== playSound', s, loop, delay, smartUniqueTime);
+
     if (!canPlaySound(s, loop, delay)) {
         return;
     }
-    
+
     if (delay) {
         //TODO: stopSound must catch timeout
-        _setTimeout(function(){ 
+        _setTimeout(function () {
             playSound(s, loop, 0, smartUniqueTime);
         }, delay);
     }
     else {
         var sound = getSound(s);
-        if (sound) { 
-            
+        if (sound) {
+
             var soundGroup = sound.__group || sound;
 
-            if (smartUniqueTime){
-                if (soundGroup.__lastPlayed > TIME_NOW - smartUniqueTime ){
+            if (smartUniqueTime) {
+                soundGroup.__smartUniqueTime = smartUniqueTime;
+                if (soundGroup.__lastPlayed > TIME_NOW - smartUniqueTime) {
                     return;
                 }
             }
-            
+
             soundGroup.__lastPlayed = TIME_NOW;
             var howl = sound.howl;
             if (!howl) return;
 
-            var i = howl.play( sound.__name );
-            
+            var i = howl.play(sound.__name);
+
             soundGroup.__lastPlayedId = i;
-            
+
             if (fadeInTime) {
                 howl.fade(0, 1, fadeInTime * ONE_SECOND, i);
             }
-            
+
             if (loop) {
+                howl.loop(true, i);
                 soundsLooper[i] = s;
             }
 
@@ -98,7 +108,7 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
                 var visible = 1, muted, _tmp1, _tmp2, chk = a => {
                     _tmp1 = !(visible && !muted);
                     if (_tmp1 != _tmp2) howl.mute(_tmp2 = _tmp1);
-                };                
+                };
                 BUS.__addEventListeners(
                     __ON_VISIBILITY_CHANGED, (t, _visible) => chk(visible = _visible),
                     __MUTE_SOUND, (m, _muted) => chk(muted = _muted)
@@ -110,24 +120,25 @@ function playSound(s, loop, delay, smartUniqueTime, fadeInTime){
 
 }
 
-function stopSound(sid, fadeOutTime){ 
-//         console.log('===================================== stopSound', s);
+function stopSound(sid, fadeOutTime) {
+    //         console.log('===================================== stopSound', s);
     var sound = getSound(sid);
-    if (sound) { 
+    if (sound) {
         var soundGroup = sound.__group || sound;
         if (soundGroup.__lastPlayedId >= 0) {
-            if (fadeOutTime){
+            if (fadeOutTime) {
                 delete soundsLooper[sid];
-                sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId );
-                return _setTimeout(a => { 
+                delete soundsLooper[soundGroup.__lastPlayedId];
+
+                sound.howl.fade(1, 0, fadeOutTime * ONE_SECOND, soundGroup.__lastPlayedId);
+                return _setTimeout(a => {
                     stopSound(sid);
                 }, fadeOutTime);
             }
             else {
-                sound.howl.stop( soundGroup.__lastPlayedId );
+                sound.howl.stop(soundGroup.__lastPlayedId);
             }
         }
     }
 }
 
- 
