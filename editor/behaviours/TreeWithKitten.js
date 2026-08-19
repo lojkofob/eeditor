@@ -78,10 +78,10 @@ TreeEntry.prototype = {
 
         if (entry.treeItem) {
             if (entry.treeItem.__removeFromParent) {
-                entry.treeItem.__removeFromParent();
+                entry.treeItem = entry.treeItem.__removeFromParent();
             } else
                 if (entry.treeItem.content) {
-                    entry.treeItem.content.__removeFromParent();
+                    entry.treeItem.content = entry.treeItem.content.__removeFromParent();
                 }
         }
 
