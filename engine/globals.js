@@ -39,6 +39,11 @@ try {
 function ifdef(a, b) {
     return a === undefined ? b : a;
 }
+function ifdefa() {
+    for (var i = 0; i < arguments.length; i++) {
+        if (arguments[i] !== undefined) return arguments[i];
+    }
+}
 
 // Get key from local storage
 function LocalGetKey(key, defValue) {
@@ -247,7 +252,7 @@ var M = Math, __document = document, __window = window, __mraid,
     acos = M.acos, mmax = M.max, mmin = M.min, floor = M.floor, abs = M.abs, ceil = M.ceil, trunc = M.trunc,
     LN2 = M.LN2, tan = M.tan, atan = M.atan, log = M.log, atan2 = M.atan2, asin = M.asin,
     random = M.random, sqrt = M.sqrt, pow = M.pow, sqrt = M.sqrt, sin = M.sin, cos = M.cos, PI = M.PI, PI2 = PI / 2,
-    EPSILON = Number.EPSILON || pow(2, - 52), round = M.round,
+    EPSILON = Number.EPSILON || pow(2, - 52), round = M.round, imul = M.imul,
     ONE_SECOND = 1000, ONE_MINUTE = ONE_SECOND * 60, ONE_HOUR = ONE_MINUTE * 60, ONE_DAY = ONE_HOUR * 24,
     DEG2RAD = PI / 180,
     RAD2DEG = 180 / PI,
@@ -328,7 +333,7 @@ function parseJson(v, onerror, usePacking) {
 function shuffle(a) {
     if (!a) return [];
     if (!a.length) return a;
-    
+
     var j, x, i = a.length - 1;
 
     while (i > 0) {
