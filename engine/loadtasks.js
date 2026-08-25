@@ -118,8 +118,9 @@ function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
     tablesCache[t] = {};
     var table = getDataTableSources(t);
     if (!table) return;
-    var format = table.__format;
-    var subformats = table.__subformats;
+    var format = table.__format || get1(table, 'format')
+        , subformats = table.__subformats || get1(table, 'subformats')
+        , data = table.__table || get1(table, 'table');
     if (format) {
 
         var arr;
@@ -129,18 +130,17 @@ function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
 
         if (table.__multiplySheets) {
             arr = byObject ? {} : [];
-            for (var i in table.__table) {
-                arr[i] = writeDataTableArray(t, table.__table[i], format, byObject, ignoreNullFields, 0, subformats);
-            }
+            $each(data, (v, i) => {
+                arr[i] = writeDataTableArray(t, v, format, byObject, ignoreNullFields, 0, subformats);
+            });
         } else {
-            arr = writeDataTableArray(t, table.__table, format, byObject, ignoreNullFields, 0, subformats);
+            arr = writeDataTableArray(t, data, format, byObject, ignoreNullFields, 0, subformats);
         }
 
         setCachedData(t, arr);
         return arr;
     }
-
-    return table.__table || table;
+    return data || table;
 }
 
 
