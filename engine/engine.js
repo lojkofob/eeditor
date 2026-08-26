@@ -1133,12 +1133,7 @@ function base64ImageFromNormalTexture(texture, outputFormat) {
 }
 
 function base64ImageFromImage(img, outputFormat  /* 'image/png', 'image/jpeg', 'image/webp' */) {
-    var canvas = __document.createElement('canvas'),
-        ctx = canvas.getContext('2d');
-    canvas.height = img.height;
-    canvas.width = img.width;
-    ctx.drawImage(img, 0, 0);
-    return canvas.toDataURL(outputFormat || 'image/png');
+    return __convertToCanvas(img).toDataURL(outputFormat || 'image/png');
 }
 
 function createCanvasFromRenderTarget(bufferTexture) {

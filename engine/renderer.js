@@ -211,7 +211,8 @@ function __setGLGlobals(gl) {
 
         // 1, __blendSrc __blendDst __blendEquation __blendSrcAlpha __blendDstAlpha __blendEquationAlpha
 
-        , [1, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD, GL_ONE, GL_ONE, GL_FUNC_ADD] // NormalBlending
+        , [0, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD, GL_ONE, GL_ONE, GL_FUNC_ADD] // NormalBlending
+        // , [1, GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD, GL_ONE_MINUS_DST_ALPHA, GL_ONE, GL_FUNC_ADD] // NormalBlending
 
         , [0, GL_ONE, GL_ONE, GL_FUNC_ADD] // AdditiveBlending
         , [1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD] // SubtractiveBlending
@@ -548,6 +549,7 @@ function WebGLRenderer() {
 
     var __domElement = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
         , _this = this
+        , _api
 
         , gl_instanced_ext
         , _currentProgram
@@ -1013,13 +1015,10 @@ function WebGLRenderer() {
     function __makePowerOfTwo(image) {
 
         if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
-
-            var canvas = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-            canvas.width = nearestPowerOfTwo(image.width);
-            canvas.height = nearestPowerOfTwo(image.height);
-
-            var context = canvas.getContext('2d');
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            var canvas = __convertToCanvas(image,
+                nearestPowerOfTwo(image.width),
+                nearestPowerOfTwo(image.height)
+            );
             //debug
             consoleWarn('WebGL: image is not power of two (' + image.width + 'x' + image.height + '). Resized to ' + canvas.width + 'x' + canvas.height, image);
             //undebug
@@ -1039,14 +1038,8 @@ function WebGLRenderer() {
             // Warning: Scaling through the canvas will only work with images that use
             // premultiplied alpha.
 
-            var scale = maxSize / mmax(image.width, image.height);
-
-            var canvas = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-            canvas.width = floor(image.width * scale);
-            canvas.height = floor(image.height * scale);
-
-            var context = canvas.getContext('2d');
-            context.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+            var scale = maxSize / mmax(image.width, image.height)
+                , canvas = __convertToCanvas(image, 0, 0, scale)
 
             image.__scaled = 1 / scale;
             return canvas;
@@ -1073,6 +1066,45 @@ function WebGLRenderer() {
 
     }
 
+    // Some browsers (seen in Samsung Internet) run an extra color conversion when
+    // uploading an HTMLImageElement, so opaque white arrives as ~179 instead of 255.
+    // A 2d canvas is plain sRGB and uploads intact, so images are blitted through one
+    // when this is detected. Checked with an opaque white pixel instead of the user
+    // agent, which is unreliable across webviews and vendor builds.
+    function __probeTextureUploadColor() {
+
+        function __uploadsAsWhite(source) {
+            var probeTexture = gl.createTexture()
+                , pixel = new Uint8Array(4)
+                , framebuffer = gl.createFramebuffer()
+                , complete;
+            __bindTexture(probeTexture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+            __texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, source);
+            gl.bindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, probeTexture, 0);
+            if (complete = gl.checkFramebufferStatus(GL_FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+                gl.readPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+            }
+            gl.bindFramebuffer(GL_FRAMEBUFFER, _currentFramebuffer || null);
+            gl.deleteFramebuffer(framebuffer);
+            gl.deleteTexture(probeTexture);
+            _currentBoundTextures[_currentTextureSlot] = 0;
+            return complete && pixel[0] > 250;
+        }
+
+        var image = new Image();
+        image.onload = function () {
+            image.onload = undefined;
+            try {
+                _api.__needsCanvasFallbackForTextures = !__uploadsAsWhite(image) && __uploadsAsWhite(__convertToCanvas(image));
+            } catch (e) {
+
+            }
+        };
+        image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    }
 
     function __uploadTexture(texture, slot) {
 
@@ -1452,6 +1484,8 @@ function WebGLRenderer() {
         depthBuffer.__setClear(0);
 
         __glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, _clearAlpha);
+
+        __probeTextureUploadColor();
 
         if (callback) {
             callback();
@@ -2055,7 +2089,7 @@ function WebGLRenderer() {
     }
     //endcheats
 
-    return {
+    return _api = {
         __domElement: __domElement
         , __init: __init
         , __bindTexture: __bindTexture

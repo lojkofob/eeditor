@@ -215,6 +215,20 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
 }
 
+function __convertToCanvas(image, w, h, scale) {
+    var canvas = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+    w = canvas.width = w || image.width;
+    h = canvas.height = h || image.height;
+    var ctx = canvas.getContext('2d');
+    scale ? ctx.drawImage(image, 0, 0, w, h, 0, 0, floor(w * scale), floor(h * scale)) : ctx.drawImage(image, 0, 0, w, h);
+    return canvas;
+}
+
+// browsers that shift colors while uploading an HTMLImageElement get a canvas instead
+function correctedImage(img) {
+    return img && renderer.__needsCanvasFallbackForTextures ? __convertToCanvas(img) : img;
+}
+
 function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
 
     var texture = new Texture(new Image());
@@ -240,7 +254,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
             // JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
             var isJPEG = url.search(/\.(jpg|jpeg)$/) > 0 || url.startsWith("data:image/jpeg");
 
-            texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: img, __needsUpdate: 1 });
+            texture.__init({ format: isJPEG ? GL_RGB : GL_RGBA, __image: correctedImage(img), __needsUpdate: 1 });
 
             texture.__requests = 0;
 
@@ -319,6 +333,9 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
 
             img.onload = a => {
                 var w = img.width, h = img.height;
+
+                tex.__image = correctedImage(img);
+
                 globalConfigsData.__frames[tex.__src] = {
                     __isSimpleImage: true,
                     tex: tex,
