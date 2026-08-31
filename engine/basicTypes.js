@@ -18,6 +18,7 @@ function MyBufferAttribute(name, arrayType, itemSize, type, array, notDestruct, 
         __name: name,
         __type: type,
         __needNewBuffer: 1,
+        __start: 0,
         id: currentBufferId
     });
 
@@ -152,7 +153,7 @@ makeClass(MyBufferAttribute, {
 
             renderer.__enableAttribute(programAttribute, t.__instansingDivisor);
 
-            gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, t.__stride, 0);
+            gl.vertexAttribPointer(programAttribute, t.__itemSize, gl.FLOAT, false, t.__stride, t.__start);
 
             return t.__webglBuffer !== undefined
         } else {
