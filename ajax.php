@@ -192,7 +192,7 @@ if (is_array($json)) {
     $project = @$json['project'];
     if (!$project) $project = "";
     
-    $pname = preg_replace('/[^\w\d]/i', '', $project);
+    $pname = preg_replace('/[^\w\d-]/i', '', $project);
     
     $pfolder = $projectsDir.$pname."/";
     $realProjectFolder = $pfolder;
