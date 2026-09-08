@@ -679,8 +679,9 @@ NodeEditWithKitten.prototype = {
             case __ON_NODE_UNSELECTED:
                 var node = e;
 
-                if (node.wireframed)
-                    node.wireframed = node.wireframed.__removeFromParent();
+                if (node.wireframed) {
+                    node.wireframed = node.wireframed.__destructed ? 0 : node.wireframed.__removeFromParent();
+                }
 
                 break;
         }

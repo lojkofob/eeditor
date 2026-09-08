@@ -715,36 +715,37 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
         for (var k = 1; k < l.length; k++) {
             var dd = l[k], is_obj = isObject(dd), path = is_obj && isString(dd.path) ? dd.path : dd;
-
-            if (isString(path)) {
-                path = path.indexOf('/') == 0 ? path.substring(1) : namefunc(path);
-                if (ext) {
-                    path = path + '.' + ext;
-                }
-                var alias = is_obj && isString(dd.alias) ? dd.alias : path;
-
-                var j = getCachedData(alias);
-                if (j) {
-                    if (ignoreIfFromCache) {
-                        if (j === 1) {
-                            return
-                        } else {
-                            setCachedData(alias, 1);
-                        }
+            if (path) {
+                if (isString(path)) {
+                    path = path.indexOf('/') == 0 ? path.substring(1) : namefunc(path);
+                    if (ext) {
+                        path = path + '.' + ext;
                     }
-                    if (cb) {
-                        cb(j, alias);
+                    var alias = is_obj && isString(dd.alias) ? dd.alias : path;
+
+                    var j = getCachedData(alias);
+                    if (j) {
+                        if (ignoreIfFromCache) {
+                            if (j === 1) {
+                                return
+                            } else {
+                                setCachedData(alias, 1);
+                            }
+                        }
+                        if (cb) {
+                            cb(j, alias);
+                        }
+                    } else {
+                        if (is_obj) {
+                            dd.path = path;
+                        } else {
+                            dd = path;
+                        }
+                        t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
                     }
                 } else {
-                    if (is_obj) {
-                        dd.path = path;
-                    } else {
-                        dd = path;
-                    }
                     t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
                 }
-            } else {
-                t.__loadTaskOne(type || TASKS_CONFIG, dd, cb);
             }
         }
     },
