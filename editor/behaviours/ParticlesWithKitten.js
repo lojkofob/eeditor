@@ -137,6 +137,12 @@
                             if (prop.__name) {
 
                                 value = prop.__name ? object[prop.__name] : object[pname];
+
+                                if (prop.type != 'number') {
+                                    if (value == undefined) value = [0];
+                                    if (isNumeric(value)) value = [value];
+                                }
+
                                 if (isObject(value)) {
                                     return value[pname];
                                 }
@@ -202,6 +208,14 @@
 
         var type = ParticlesComponentsTypesMap[component.t];
         var proxyObject = {};
+
+
+        ObjectDefineProperties(proxyObject, {
+            __enabled: {
+                get() { return !!component.__enabled; },
+                set(v) { component.__enabled = v; }
+            }
+        });
 
         fillpanel(componentPanel.panel, particlesPropertiesDescriptions[type], 0, component, proxyObject);
 

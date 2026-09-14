@@ -375,6 +375,27 @@ var ComponentDefaultsProtoMethods = {
     __setNeedUpdate() { this.__needReinit = 1 }
 };
 
+options.__defaultParticleEmitterComponentProperties = {
+    __enabled: {
+        get() { return ifdef(this.p.__enabled, 1); },
+        set(v, e, c) {
+            c = this.__enabled ? 1 : 0;
+            v = v ? 1 : 0;
+            if (c != v) {
+                this.p.__enabled = v;
+                if (e = this.__emitter) {
+                    if (v) {
+                        this.__initEmitter(e);
+                    } else {
+                        this.__destruct(e);
+                    }
+                    e.__updateEnabledComponents();
+                }
+            }
+        }
+    }
+};
+
 var EffectComponentsFactory = makeSingleton({
 
     __registeredComponents: {}
@@ -404,16 +425,14 @@ var EffectComponentsFactory = makeSingleton({
     },
 
     __componentsToJson(c) {
-        var p = [];
-        for (var i in c) p[i] = this.__componentToJson(c[i]);
-        return p;
+        return $map(c, v => this.__componentToJson(v))
     },
 
     __registerComponent(shorttype, c, proto, properties) {
 
         ObjectDefineProperties(
             mergeObjects([{ t: shorttype, constructor: c }, ComponentDefaultsProtoMethods, proto], c.prototype),
-            properties || {}
+            mergeObjects([options.__defaultParticleEmitterComponentProperties, properties])
         );
         this.__registeredComponents[shorttype] = c;
 
@@ -1899,6 +1918,7 @@ function ParticleEmitter(effect, parent) {
     t.__effect = effect;
     t.__particles = [];
     t.__components = [];
+    t.__enabledComponents = [];
     t.__reset();
     t.__dtPositionGap = new Vector2(0, 0);
     t.__nodePosition = new Vector2(0, 0);
@@ -1988,20 +2008,32 @@ var ParticleEmitterPrototype =
 
         __addComponent(component) {
 
-            if (component) {
+            if (component && !inArray(component, this.__components)) {
+
+                component.__emitter = this;
                 this.__components.push(component);
 
-                component.__initEmitter(this);
+                if (component.__enabled) {
 
-                for (var i = 0, l = this.__particles.length; i < l; i++) {
-                    component.__initParticle(this.__particles[i]);
+                    this.__enabledComponents.push(component);
+
+                    component.__initEmitter(this);
+
+                    for (var i = 0, l = this.__particles.length; i < l; i++) {
+                        component.__initParticle(this.__particles[i]);
+                    }
                 }
+
             }
             return component;
         },
 
         __getComponentByType(type) {
             return $find(this.__components, function (c) { return c.t == type });
+        },
+
+        __updateEnabledComponents() {
+            this.__enabledComponents = $filter(this.__components, c => c.__enabled);
         },
 
         __removeComponent(index) {
@@ -2011,6 +2043,7 @@ var ParticleEmitterPrototype =
                 if (components[index]) {
                     components[index].__destruct(this);
                     components.splice(index, 1);
+                    this.__updateEnabledComponents();
                 }
             }
             return this;
@@ -2126,7 +2159,9 @@ var ParticleEmitterPrototype =
             var updated = 0
                 , part = t.__part = ((t.duration > 0 ? floor(options.__particlesCurveValuesCacheSize * mmin(1, t.__elapsed / t.duration)) : 0))
                 , components = t.__components
-                , componentsLenght = components.length;
+                , componentsLenght = components.length
+                , enabledComponents = t.__enabledComponents
+                , enabledComponentsLenght = enabledComponents.length;
 
             for (var i = 0; i < componentsLenght; i++) {
                 if (components[i].__needReinit) {
@@ -2193,8 +2228,8 @@ var ParticleEmitterPrototype =
 
             }
 
-            for (var i = 0; i < componentsLenght; i++) {
-                if (components[i].__update(t, dt)) {
+            for (var i = 0; i < enabledComponentsLenght; i++) {
+                if (enabledComponents[i].__update(t, dt)) {
                     return false;
                 }
             }
@@ -2205,8 +2240,8 @@ var ParticleEmitterPrototype =
                     particles[i].__update(dt, t);
                 }
 
-                for (var i = 0; i < componentsLenght; i++) {
-                    var component = components[i];
+                for (var i = 0; i < enabledComponentsLenght; i++) {
+                    var component = enabledComponents[i];
                     if (component.__reverseParticlesUpdate) {
                         for (var j = particlesLength - 1; j >= 0; j--) {
                             component.__updateParticle(particles[j], dt);
@@ -2343,11 +2378,14 @@ options.__defaultParticleEmitterProperties = {
         set(v) {
             var t = this;
 
-            // object is DEPRECATED 
-            if (isObject(v)) v = v.name;
             if (v == undefined) {
-                t.map = undefined;
-                return;
+                return t.map = undefined;
+            }
+
+            // object is DEPRECATED 
+            if (isObject(v)) {
+                v = v.name;
+                consoleDebug('object as texture for emitter is DEPRECATED');
             }
 
             v = tryFindImage(v);
@@ -2359,14 +2397,9 @@ options.__defaultParticleEmitterProperties = {
                 if (frame.__loading) {
                     map = frame.tex;
                 } else if (!frame) {
-                    // looperPost(function(){ 
-                    //   if (!t.__animatedTexture){
-                    // __window.__loadImageStack = 'p';
                     if (!this.__tl) {
                         map = loadImage(v, a => { if (t.texture == v) t.texture = v; });
                     }
-                    //  }
-                    // });
                 }
                 if (map) {
                     map.__nodesWaitingsForThis = (map.__nodesWaitingsForThis || []);
@@ -2731,7 +2764,8 @@ var emmpropopts = {
     power: [undefined, 20, [20]],
     origin: [undefined, 0, [0]],
     __target: [undefined, null, 0, ''],
-    __subEmitter: [undefined, null, 0, '']
+    __subEmitter: [undefined, null, 0, ''],
+    __enabled: [undefined,1]
 
 };
 
