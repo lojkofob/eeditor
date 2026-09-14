@@ -292,7 +292,12 @@ var EditorEventsWithKitten = {
         if (Editor.currentLayout) {
             eachSelected(function (selectedNode) {
                 if (!selectedNode.__someParentSelected()) {
-                    changes.push({ type: '-', node: selectedNode, parent: selectedNode.__parent, index: selectedNode.__realIndex });
+                    changes.push({ 
+                        type: '-', 
+                        node: selectedNode, 
+                        __parent: selectedNode.__parent, 
+                        index: selectedNode.__realIndex 
+                    });
                     if (selectedNode.__parent) {
                         p = selectedNode.__parent;
                     }

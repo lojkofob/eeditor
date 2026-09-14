@@ -794,19 +794,18 @@ var EditFieldsWithKitten = {
 
                 n.__propertyBinding = baseprop;
 
-
-                try {
+                if (isString(propertyVal)) {
+                    if (propertyVal == '!') {
+                        n.__operation = 'inverse';
+                    } else
                     if (propertyVal == "undefined") {
                         propertyVal = undefined;
                     }
                     else {
-                        propertyVal = JSON.parse(propertyVal);
-                    }
-                } catch (e) {
-                    if (propertyVal == '!') {
-                        n.__operation = 'inverse';
+                        propertyVal = parseJson(propertyVal, e => propertyVal);
                     }
                 }
+                
 
                 if (propertyVal && propertyVal.__operation) {
                     n.__operation = propertyVal.__operation;

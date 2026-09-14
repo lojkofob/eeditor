@@ -101,9 +101,8 @@ var minify = (function (undefined) {
       var isNPMv2 = dirExistsSync(nodeModulesV2);
       var dirToScan = isNPMv2 ? nodeModulesV2 : '';
       var getPath = function (bin) {
-        var binPath = glob.sync(dirToScan + '**/.bin/' + bin +
-          ((platform === 'win32') ? '.cmd' : ''), { realpath: false })[0];
-        if (!binPath) {
+        var binPath = glob.sync(dirToScan + '**/.bin/' + bin, { realpath: false })[0];
+        if (!binPath) {          
           throw new Error(bin + ' not found !');
         }
         // resolve symbolic links

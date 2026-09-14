@@ -110,8 +110,13 @@ HistoryWithKitten.prototype = {
 
                             case '-':
                                 if (change.node) {
-                                    change.node.restore(change);
-                                    changes.push({ type: '+', node: change.node });
+                                    
+                                    change.__parent.__insertChild(change.node, change.index);
+                                    // changes.push({ type: '+', node: change.node });
+
+                                    eachSelected( n => n.__unselect() );
+
+                                    change.node.__select();
                                 }
                                 break;
 
@@ -196,11 +201,6 @@ HistoryWithKitten.prototype = {
 
         }
     }
-}
-
-NodePrototype.restore = function (change) {
-    change.__parent.__insertChild(change.nod, change.index);
-    this.__select();
 }
 
 NodePrototype.remove = function (change) {

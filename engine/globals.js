@@ -553,7 +553,7 @@ function objectKeys(obj) { var data = []; for (var key in obj) data.push(key); r
 function mergeObj(data, merged) { for (var key in merged) data[key] = merged[key]; return data; }
 function mergeObjExclude(data, merged) { for (var key in merged) if (!data.hasOwnProperty(key)) data[key] = merged[key]; return data; }
 
-function mergeObjects(data, base) { base = base || {}; for (var i in data) mergeObj(base, data[i]); return base; }
+function mergeObjects(data, base) { base = base || {}; $each(data, d => mergeObj(base, d)); return base; }
 
 function mergeObjectsBy(objects, mod) { for (var i in objects) mergeObj(objects[i], mod); }
 

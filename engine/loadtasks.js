@@ -153,14 +153,21 @@ function onTextureLoaded(tex) {
 
 function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) {
 
-    var video = document.createElement('video');
-    opts = opts || 0;
+    opts = opts || {};
 
-    video.playsInline = true;
-    video.crossorigin = 'anonymous';
-    video.autoplay = ifdef(opts.__autoplay, true);
-    video.muted = ifdef(opts.__muted, true);
-    video.loop = ifdef(opts.__loop, true);
+    var video = html.__createElement('video', {
+        playsInline: true,
+        crossorigin: 'anonymous',
+        autoplay: ifdef(opts.__autoplay, true),
+        muted: ifdef(opts.__muted, true),
+        loop: ifdef(opts.__loop, true)
+    });
+      
+    if (video.setAttribute) {
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+    }
+
     var texture = new Texture(video);
 
     video.addEventListener('loadeddata', wrapFunctionInTryCatch(function () {
