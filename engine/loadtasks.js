@@ -188,14 +188,16 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
         if (video.autoplay) {
             // ios autoplay bug hack
-            _setTimeout(a => {
-                if (!video.currentTime) {
-                    texture.__update = function (t, dt) {
-                        video.currentTime += dt / 1000;
-                    };
-                    updatable.push(texture)
-                }
-            }, 0.1);
+            if (_bowser && _bowser.ios) {
+                _setTimeout(a => {
+                    if (!video.currentTime) {
+                        texture.__update = function (t, dt) {
+                            video.currentTime += dt / 1000;
+                        };
+                        updatable.push(texture)
+                    }
+                }, 0.1);
+            }
         }
 
     }), true);
