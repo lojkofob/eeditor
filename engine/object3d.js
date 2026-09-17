@@ -241,6 +241,8 @@ mergeObj(Object3DPrototype, {
                 if (isFunction(t.__onDestruct)) {
                     t.__onDestruct();
                 }
+                
+            t.__onDestruct = 0;
         }
         t.__destructed = 1;
 
