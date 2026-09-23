@@ -254,13 +254,15 @@ var html = (function () {
         __init: html_init,
 
         __addScript: html_addScript,
-        __removeElement: function (e) {
-            var pn = (e || 0).parentNode;
-            if (pn) pn.removeChild(e);
-            return e;
+        __removeElement(e) {
+            if (e) {
+                var pn = e.parentNode;
+                if (pn && pn.removeChild) pn.removeChild(e); else if (e.remove) e.remove();
+                return e;
+            }
         },
 
-        __close: function (e) {
+        __close(e) {
             return html.__removeElement(e);
         },
 
