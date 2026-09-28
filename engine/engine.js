@@ -825,7 +825,7 @@ function basename(path) { return path.replace(/.*\//, "") || ''; }
 function dirname(path) { return (path.match(/.*\//) || [''])[0]; }
 function fileext(path) { var i = path.lastIndexOf('.') + 1; return i ? path.substring(i) : ''; }
 
-function modUrl(path, defdir) {
+var modUrl = function(path, defdir) {
 
     if (!isString(path)) {
         //debug
@@ -857,7 +857,7 @@ function modUrl(path, defdir) {
     return options.__allServerPath + modUrlCache(path);
 }
 
-function modUrlCache(path) {
+, modUrlCache = function(path) {
 
     if (options.__disableCache) {
         path = addParameterToPath(path, 't', (new Date()).getTime());
@@ -870,7 +870,7 @@ function modUrlCache(path) {
     return path;
 }
 
-function loadData(path, onLoad, onError, onProgress, params, beforesend, urlGotModUrl) {
+, loadData = function(path, onLoad, onError, onProgress, params, beforesend, urlGotModUrl) {
 
     var errorCalled;
     path = urlGotModUrl ? path : modUrl(path);
@@ -908,7 +908,7 @@ function loadData(path, onLoad, onError, onProgress, params, beforesend, urlGotM
     return xhr;
 }
 
-function _loadDataRaw(path, onload, onerror, cachename, onprogress, responseType) {
+, _loadDataRaw = function(path, onload, onerror, cachename, onprogress, responseType) {
     return loadData(path, function (j) {
         if (cachename) {
             if (isString(cachename)) {
@@ -922,15 +922,16 @@ function _loadDataRaw(path, onload, onerror, cachename, onprogress, responseType
         responseType: responseType
     });
 }
-function loadDataBuffer(path, onload, onerror, cachename, onprogress) {
+
+, loadDataBuffer = function(path, onload, onerror, cachename, onprogress) {
     return _loadDataRaw(path, onload, onerror, cachename, onprogress, "arraybuffer");
 }
 
-function loadDataTxt(path, onload, onerror, cachename, onprogress) {
+, loadDataTxt = function(path, onload, onerror, cachename, onprogress) {
     return _loadDataRaw(path, onload, onerror, cachename, onprogress, "text");
 }
 
-function loadDataJson(path, onload, onerror, onprogress, usePacking) {
+, loadDataJson = function(path, onload, onerror, onprogress, usePacking) {
     var params = {}, alias = path;
 
     if (isObject(path)) {
@@ -959,7 +960,7 @@ function loadDataJson(path, onload, onerror, onprogress, usePacking) {
     }, onerror, onprogress, params);
 }
 
-function _getRawData(filename, onload, cachename, onprogress, onerror, needBuffer) {
+, _getRawData = function(filename, onload, cachename, onprogress, onerror, needBuffer) {
     cachename = cachename || filename;
     var cachedData = globalConfigsData[cachename];
     if (cachedData != undefined) {
@@ -975,16 +976,15 @@ function _getRawData(filename, onload, cachename, onprogress, onerror, needBuffe
 }
 
 
-function getRawTxt(filename, onload, cachename, onprogress, onerror) {
+, getRawTxt = function(filename, onload, cachename, onprogress, onerror) {
     return _getRawData(filename, onload, cachename, onprogress, onerror);
 }
 
-function getRawBuffer(filename, onload, cachename, onprogress, onerror) {
+, getRawBuffer = function(filename, onload, cachename, onprogress, onerror) {
     return _getRawData(filename, onload, cachename, onprogress, onerror, 1);
 }
 
-
-function extractLayoutFromLayout(sublayoutName, l1, lname) {
+, extractLayoutFromLayout = function(sublayoutName, l1, lname) {
     var lname;
 
 
@@ -1033,7 +1033,7 @@ function extractLayoutFromLayout(sublayoutName, l1, lname) {
     }
 }
 
-function getLayoutByName(cl, withoutClone, withoutEmpty) {
+, getLayoutByName = function(cl, withoutClone, withoutEmpty) {
     var n = options.__baseLayoutsFolder + cl + '.json', l = globalConfigsData[n];
 
     if (!l) {
@@ -1051,14 +1051,12 @@ function getLayoutByName(cl, withoutClone, withoutEmpty) {
     return deepclone(l);
 }
 
-function getEffectByName(cl) {
+, getEffectByName = function(cl) {
     return (globalConfigsData[options.__baseParticlesFolder + cl + '.effect.json'] || {});
 }
+ 
 
-
-
-
-function renderOverTexture(width, height, params) {
+, renderOverTexture = function(width, height, params) {
     params = params || {};
     if (width && height)
         params.__size = { x: width, y: height };
@@ -1071,7 +1069,7 @@ function renderOverTexture(width, height, params) {
 }
 
 
-function renderNodeToTexture(node, params) {
+, renderNodeToTexture = function(node, params) {
 
     if (!node)
         return;
@@ -1126,7 +1124,8 @@ function renderNodeToTexture(node, params) {
 
     return bufferTexture;
 
-}
+};
+
 
 function base64ImageFromNormalTexture(texture, outputFormat) {
     return base64ImageFromImage(texture.__image, outputFormat);

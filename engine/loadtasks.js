@@ -23,19 +23,18 @@ var tablesCache = {},
     TASKS_SPINE = 'spine',
     TASKS_3D = '3d',
     TASKS_RAWBUFFER = 'buffer',
-    TASKS_LIVE2D = 'live2d';
+    TASKS_LIVE2D = 'live2d'
 
-
-function getItemFromTableById(t, id) {
+, getItemFromTableById = function(t, id) {
     var conf = globalConfigsData[t];
     return (conf && tablesCache[t]) ? conf[tablesCache[t][id]] : null;
 }
 
-function getDataTableSources(t) {
+, getDataTableSources = function(t) {
     return globalConfigsData[t] || globalConfigsData[options.__baseConfigsFolder + t + '.json'];
 }
 
-function writeDataTableArray(t, tbl, format, byObject, ignoreNullFields, clearMod, subformats) {
+, writeDataTableArray = function(t, tbl, format, byObject, ignoreNullFields, clearMod, subformats) {
     var arr = byObject ? {} : [];
     t = tablesCache[t] || t;
     $each(tbl, function (o, i) {
@@ -61,7 +60,7 @@ function writeDataTableArray(t, tbl, format, byObject, ignoreNullFields, clearMo
     return arr;
 }
 
-function getCachedData(name, obj) {
+, getCachedData = function(name, obj) {
 
     var obj = obj || globalConfigsData;
     if (isString(name)) {
@@ -82,7 +81,7 @@ function getCachedData(name, obj) {
     return obj[name];
 }
 
-function setCachedData(name, j, obj) {
+, setCachedData = function(name, j, obj) {
     var obj = obj || globalConfigsData;
     if (isString(name)) {
         if (name.indexOf('?')) name = name.split('?')[0];
@@ -92,7 +91,7 @@ function setCachedData(name, j, obj) {
 }
 
 
-function getJson(filename, onload, onprogress, usePacking, onerror) {
+, getJson = function(filename, onload, onprogress, usePacking, onerror) {
     var alias = isObject(filename) ? filename.alias : 0
         , cachedData;
     if (alias) {
@@ -114,7 +113,7 @@ function getJson(filename, onload, onprogress, usePacking, onerror) {
 }
 
 
-function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
+, getDataTable = function(t, byObject, ignoreNullFields, storeSrc) {
     tablesCache[t] = {};
     var table = getDataTableSources(t);
     if (!table) return;
@@ -144,14 +143,14 @@ function getDataTable(t, byObject, ignoreNullFields, storeSrc) {
 }
 
 
-function onTextureLoaded(tex) {
+, onTextureLoaded = function(tex) {
     $each(tex.__nodesWaitingsForThis, function (n) {
         n.__onTextureLoaded(tex);
     });
     tex.__nodesWaitingsForThis = 0;
-};
+}
 
-function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) {
+, loadVideoTexture = function(url, onload, onProgress, onError, urlGotModUrl, opts) {
 
     opts = opts || {};
 
@@ -224,7 +223,7 @@ function loadVideoTexture(url, onload, onProgress, onError, urlGotModUrl, opts) 
 
 }
 
-function __convertToCanvas(image, w, h, scale) {
+, __convertToCanvas = function(image, w, h, scale) {
     var canvas = __document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
     w = canvas.width = w || image.width;
     h = canvas.height = h || image.height;
@@ -234,15 +233,16 @@ function __convertToCanvas(image, w, h, scale) {
 }
 
 // browsers that shift colors while uploading an HTMLImageElement get a canvas instead
-function correctedImage(img) {
+, correctedImage = function(img) {
     return img && renderer.__needsCanvasFallbackForTextures ? __convertToCanvas(img) : img;
 }
 
-function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
+, loadTexture = function(url, onload, onProgress, onError, urlGotModUrl) {
 
-    var texture = new Texture(new Image());
+    var texture = new Texture(new Image())
+        , img = texture.__image;
 
-    texture.__image.crossOrigin = 'anonymous';
+    img.crossOrigin = 'anonymous';
 
     texture.__abort = texture.abort = function () {
         if (this.__requests) {
@@ -255,7 +255,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
         }
     };
 
-    texture.__image.onload = wrapFunctionInTryCatch(function () {
+    img.onload = wrapFunctionInTryCatch(function () {
         var img = texture.__image;
         if (img) {
             URL.revokeObjectURL(img.src);
@@ -275,21 +275,16 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
         }
     });
 
-    //     if ( url.indexOf && url.indexOf( 'data:' ) === 0 /*|| url.indexOf('http') === 0 -- some CORS problems here */) {
-    // 
-    //         image.src = url;
-    // 
-    //     } else {
-
     var cached = getCachedData(url, globalConfigsData.__images)
         , onLoad = function (blob) {
-            if (texture.__image) {
-                texture.__image.src = URL.createObjectURL(blob);
+            var img = texture.__image;
+            if (img) {
+                img.src = URL.createObjectURL(blob);
             }
         }
 
     if (isString(cached)) { // like blob:
-        texture.__image.src = cached;
+        img.src = cached;
     } else {
 
         if (options.__onLoadImageError) {
@@ -308,7 +303,7 @@ function loadTexture(url, onload, onProgress, onError, urlGotModUrl) {
 }
 
 
-function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
+, loadImage = function(filename, onload, nodeWaitingsForThis, onProgress, onError) {
     if (!filename) {
         onError && onError();
         return;
@@ -448,7 +443,7 @@ function loadImage(filename, onload, nodeWaitingsForThis, onProgress, onError) {
 
 }
 
-var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
+, LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
     var t = this;
     t.____progress = 0;
     t.__data = data;
@@ -644,11 +639,11 @@ var LoadTaskOne = makeClass(function (type, data, baseTask, onLoad, onError) {
             }
         return t;
     }
-});
+})
 
-var LoadTask__loaders = {};
+, LoadTask__loaders = {}
 
-var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
+, LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
     var t = this;
     mergeObj(t, {
         __completed: [],
@@ -1178,19 +1173,18 @@ var LoadTask = makeClass(function (onLoad, onError, consist, onProgress) {
 
         }
     }
-});
+})
 
 
-function TASKS_RUN(list, onLoad, onError, consist, onProgress) {
+, TASKS_RUN = function(list, onLoad, onError, consist, onProgress) {
     if (list && list.length) {
         return (new LoadTask(onLoad, onError, consist, onProgress)).__run(list);
     } else {
         onLoad();
     }
-};
+}
 
-
-var ParallelTasks = makeClass(function ParallelTasks(params) {
+, ParallelTasks = makeClass(function ParallelTasks(params) {
     var t = this;
     mergeObj(t,
         mergeObj({
