@@ -527,10 +527,10 @@
         return;
       }
 
-      if (self.state === 'running' && self.ctx.state !== 'interrupted' && self._suspendTimer) {
+      if (self.state === 'running' && self.ctx.state === 'running' && self._suspendTimer) {
         clearTimeout(self._suspendTimer);
         self._suspendTimer = null;
-      } else if (self.state === 'suspended' || self.state === 'running' && self.ctx.state === 'interrupted') {
+      } else if (self.state === 'suspended' || self.state === 'running' && self.ctx.state !== 'running') {
         self.ctx.resume().then(function() {
           self.state = 'running';
 
