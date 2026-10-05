@@ -561,14 +561,16 @@ function checkPinchEnd() {
     }
 }
 
-var getTouches = e => e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches : e.touches ? e.touches : e.targetTouches;
+var __getLastTouch = list => list && list.length && [ list[list.length - 1] ]
+    , __getTouches = e => e ? options.__multitouch ? e.targetTouches || e.touches || e.changedTouches : __getLastTouch(e.changedTouches || e.targetTouches || e.touches) : 0
+    , getTouches = e => __getTouches(e.originalEvent) || __getTouches(e);
 
 //debug
 // touches simulation for debugging
 
-var ctrlTouch;
+var ctrlTouch, _old_getTouches = getTouches;
 getTouches = (e) => {
-    var touches = e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches : e.touches ? e.touches : e.targetTouches;
+    var touches = _old_getTouches(e);
     if (touches && touches.length) {
         if (isCtrlPressed) {
             if (!ctrlTouch) {
