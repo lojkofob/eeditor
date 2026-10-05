@@ -2489,6 +2489,8 @@ mergeObj(NodePrototype, {
             __imgRepeatX: [0],
             __imgRepeatY: [0],
 
+            __onTapHighlight: [0, undefined],
+
             __uniforms(list) {
                 if ($find(list, (vv) => {
                     if (vv !== 0 && !vv) {
@@ -2832,7 +2834,9 @@ mergeObj(NodePrototype, {
                     __notNormalNode: undefined,
                     __behaviour: undefined,
                     __propertyBinding: undefined,
-                    __tooltip: undefined
+                    __tooltip: undefined,
+
+                    __onTapHighlight: undefined
 
                 }, t.__selfProperties);
 
@@ -3173,7 +3177,7 @@ var NodeCloneProperties = {
     __shader: 1, __userData: 1, __animatronix: 1,
     __text: 1, __uvsTransform: 1, __dragonBones: 1, __spine: 1, __disabled: 1,
     __onTap: 1, __uniforms: 1, __tableAlignRows: 1, __tableAlignColumns: 1, __tableAlignColumnWidth: 1, __tableAlignRowHeight: 1,
-    __drag: 1, __useMaxSizeForScale: 1,
+    __drag: 1, __useMaxSizeForScale: 1, __onTapHighlight: 1,
     //debug
     __description: 1, __selectable: 1, __onKey: 1, __onLoad: 1, __propertyBinding: 1,
     __behaviour: 1, __classesObj: 1, __physics: 1, __numericInputStep: 1, __contextMenu: 1, __wheel: 1,
@@ -5347,6 +5351,9 @@ var NodeCloneProperties = {
                 var t = this;
                 if (!v) {
                     BUS.__removeEventListener(t);
+                    if (t.__on && t.__on.__auto){
+                        t.__on = 0; // clears auto on func
+                    }
                 } else {
                     if (t.__on) {
                         BUS.__removeEventListener(objectKeys(t.____busObservers), t);
@@ -5360,10 +5367,11 @@ var NodeCloneProperties = {
 
                     if (!t.__on) {
                         t.__on = function (type) {
-                            var bo = (t.____busObservers || 0)[type];
-                            return bo ? bo.apply(t, arguments) : 1;
+                            var bo = (this.____busObservers || 0)[type];
+                            return bo ? bo.apply(this, arguments) : 1;
                         };
-                        t.__addOnDestruct(BUS.__removeEventListener.bind(BUS, t));
+                        t.__on.__auto = 1;
+                        t.__addOnDestruct(function(){ this.__busObservers = 0; });
                     }
 
                     BUS.__addEventListener(objectKeys(t.____busObservers), t);
@@ -5372,19 +5380,24 @@ var NodeCloneProperties = {
             }
         ),
 
-        __onTapHighlight: createSomePropertyWithGetterAndSetter(0,
-            function (v) {
+        __onTapHighlight: {
+            get() {
+                return this.____onTapHighlight;
+            },
+            set(v) {
+                this.____onTapHighlight = v;
                 if (v) {
                     onTapHighlight(this, isNumeric(v) || isFunction(v) ? 0 : this.$(v), isFunction(v) ? v : 0);
+                } else {
+                    this.__highlight = 0;
                 }
-
                 //cheats
                 if (v == 2) {
                     this.__minimalTapArea = 20;
                 }
                 //endcheats
             }
-        ),
+        },
 
         __cursor: {
             set(v) {

@@ -89,7 +89,7 @@ var BUS = {
         var type = arguments[0], listeners = busEventsListeners[type];
         if (listeners) {
             var args = arguments;
-            $each(listeners.slice(), l => l.__needToRemove = l.__on.apply(l, args));
+            $each(listeners.slice(), l => l.__needToRemove = l.__on ? l.__on.apply(l, args) : 1);
             busEventsListeners[type] = $filter( listeners, l => !l.__needToRemove );
         }
     },
