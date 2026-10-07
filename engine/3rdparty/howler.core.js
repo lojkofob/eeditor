@@ -496,6 +496,9 @@
         }
 
         self._suspendTimer = null;
+
+        if (self.ctx.state !== 'running') return;
+
         self.state = 'suspending';
 
         // Handle updating the state of the audio context after suspending.
