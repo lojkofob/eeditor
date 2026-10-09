@@ -156,12 +156,12 @@ var tablesCache = {},
 
     var video = html.__createElement('video', {
         playsInline: true,
-        crossorigin: 'anonymous',
+        crossOrigin: 'anonymous',
         autoplay: ifdef(opts.__autoplay, true),
         muted: ifdef(opts.__muted, true),
         loop: ifdef(opts.__loop, true)
     });
-      
+
     if (video.setAttribute) {
         video.setAttribute('playsinline', '');
         video.setAttribute('webkit-playsinline', '');
@@ -170,6 +170,9 @@ var tablesCache = {},
     var texture = new Texture(video);
 
     video.addEventListener('loadeddata', wrapFunctionInTryCatch(function () {
+        if (texture.__inited) return;
+
+        texture.__inited = 1;
 
         video.currentTime = 0;
         texture.v = 1;
@@ -185,18 +188,54 @@ var tablesCache = {},
             onload(texture);
         }
 
-        if (video.autoplay) {
-            // ios autoplay bug hack
-            if (_bowser && _bowser.ios) {
-                _setTimeout(a => {
-                    if (!video.currentTime) {
-                        texture.__update = function (t, dt) {
-                            video.currentTime += dt / 1000;
-                        };
-                        updatable.push(texture)
+        if (_bowser && _bowser.ios) {
+            _setTimeout(() => {
+                texture.__currentTime = texture.__lastVideoTime = video.currentTime;
+
+                texture.__update = function (t, dt) {
+                    if (!video.autoplay || video.ended) return;
+
+                    var currentVideoTime = video.currentTime;
+
+                    if (!(currentVideoTime <= texture.__maxVideoTime)) {
+                        texture.__maxVideoTime = currentVideoTime;
                     }
-                }, 0.1);
-            }
+
+                    var isLoop = currentVideoTime <= 0.3 && texture.__currentTime >= texture.__maxVideoTime - 0.3;
+
+                    if (!isLoop && abs(currentVideoTime - texture.__currentTime) > 0.3) {
+                        video.currentTime = currentVideoTime = texture.__currentTime;
+                    }
+
+                    if (texture.__currentTime > currentVideoTime + 0.1) {
+                        texture.__currentTime = currentVideoTime;
+                    } else if (texture.__currentTime < currentVideoTime) {
+                        texture.__currentTime = currentVideoTime;
+                    } else {
+                        texture.__currentTime += dt / ONE_SECOND;
+                    }
+
+                    if (video.paused || texture.__lastVideoTime == currentVideoTime) {
+                        if (!(TIME_NOW < texture.__lastVideoPlayTime + 1)) {
+                            texture.__lastVideoPlayTime = TIME_NOW;
+                            video.play();
+                        }
+
+                        if (video.paused) {
+                            // low power mode hack
+                            if (TIME_NOW > texture.__lastFrameTime + 1) {
+                                video.load();
+                            }
+                            texture.__lastFrameTime = TIME_NOW;
+                            video.currentTime = texture.__currentTime;
+                        }
+                    }
+
+                    texture.__lastVideoTime = currentVideoTime;
+                };
+
+                updatable.push(texture);
+            }, 0.1);
         }
 
     }), true);
@@ -217,6 +256,7 @@ var tablesCache = {},
     texture.__isVideo = 1;
     texture.__abort = texture.abort = function () {
         //TODO: abort loading
+        updatable.__pop(this);
     };
 
     return texture;
