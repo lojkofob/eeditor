@@ -5386,6 +5386,12 @@ var NodeCloneProperties = {
             },
             set(v) {
                 this.____onTapHighlight = v;
+                //multiclass
+                if (!__propertiesAppliedByClass) {
+                    this.__selfProperties.__onTapHighlight = v;
+                }
+                //unmulticlass
+                
                 if (v) {
                     onTapHighlight(this, isNumeric(v) || isFunction(v) ? 0 : this.$(v), isFunction(v) ? v : 0);
                 } else {
