@@ -1253,6 +1253,21 @@ function getFrameUVS(frame, uvsTransform) {
         return getFrameUv(frame.v[0], frame.v[1], frame.v[2], frame.v[3], frame.R, uvsTransform);
 }
 
+// uv кадра, сжатые внутрь на pad пикселей атласа:
+// фильтрация текстуры на краях кадра не захватывает соседние (прозрачные) пиксели атласа
+function padFrameUVS(frame, pad, uvsTransform) {
+    var v = frame && frame.v
+        , img = v && (frame.tex || 0).__image;
+
+    if (!img) return getFrameUVS(frame, uvsTransform);
+
+    var px = pad / img.width
+        , py = pad / img.height;
+
+    // v = [x1, x2, y1, y2]: x1 < x2, y1 > y2
+    return getFrameUv(v[0] + px, v[1] - px, v[2] - py, v[3] + py, frame.R, uvsTransform);
+}
+
 
 function setFrameUV(frame, uvscale, rotated, sizeScale) {
 

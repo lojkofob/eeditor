@@ -1773,3 +1773,5 @@ var defaultZeroVector3 = new Vector3(0, 0, 0)
     , jsonToVector3 = v => new Vector3(0,0,0).__fromJson(v)
     , jsonToVector4 = v => new Vector4(0,0,0,0).__fromJson(v)
     , toJson = v => v ? v.__toJson ? v.__toJson() : deepclone(v) : v
+    , colorToVector3 = c => new Vector3(c.r, c.g, c.b)
+    , colorToVector4 = c => new Vector3(c.r, c.g, c.b, c.a);

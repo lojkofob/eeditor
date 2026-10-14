@@ -651,7 +651,7 @@ function stringifyTypeOfObject(o) {
             (((constructor || o).toString().match(/function (.{1,})\(/)) || [])[1] || ""
         )
         if (result == 'Function') {
-            result = ((o).toString().match(/function (.{1,})\(/) || []) || "Function";
+            result = ((o).toString().match(/function (.{1,})\(/) || [])[1] || o.name || "Function";
         }
         return result;
     }

@@ -1429,7 +1429,7 @@ var CameraPerspective = makeClass(
 			t.__near = -10000;
 			t.__far = 10000;
 
-            ENode3d.call(this)
+            ENode3d.apply(this, arguments);
             
             t.____projectionMatrix = new Matrix4(0, 1);
             

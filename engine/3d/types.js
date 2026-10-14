@@ -2106,9 +2106,9 @@ makeClass(Quaternion, {
         }
 
         const sinHalfTheta = sqrt(sqrSinHalfTheta);
-        const halfTheta = __onChangeCallbackatan2(sinHalfTheta, cosHalfTheta);
-        const ratioA = __onChangeCallbacksin((1 - t) * halfTheta) / sinHalfTheta,
-            ratioB = __onChangeCallbacksin(t * halfTheta) / sinHalfTheta;
+        const halfTheta = atan2(sinHalfTheta, cosHalfTheta);
+        const ratioA = sin((1 - t) * halfTheta) / sinHalfTheta,
+            ratioB = sin(t * halfTheta) / sinHalfTheta;
 
         this._w = (w * ratioA + this._w * ratioB);
         this._x = (x * ratioA + this._x * ratioB);
