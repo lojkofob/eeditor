@@ -645,7 +645,9 @@ function addProps(props, obj, cb) {
 }
 
 function stringifyTypeOfObject(o) {
-    if (o) {
+    if (typeof o === 'number') {
+        return "Number";
+    } else if (o) {
         var constructor = o.constructor;
         var result = constructor && constructor.name ? o.constructor.name : (
             (((constructor || o).toString().match(/function (.{1,})\(/)) || [])[1] || ""

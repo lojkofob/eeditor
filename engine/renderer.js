@@ -437,7 +437,9 @@ function WebGLRenderTarget(width, height, params) {
         __scissor: new Vector4(0, 0, width, height),
         __scissorTest: false,
         __viewport: new Vector4(0, 0, width, height),
-        __texture: new Texture(img, params)
+        __texture: new Texture(img, params),
+        // буфер глубины: нужен, если в текстуру рисуются 3d-объекты с __useDepth
+        __depth: params.__depth
     });
 
     _renderTargetsId++;
@@ -488,6 +490,11 @@ WebGLRenderTarget.prototype = {
             delete this.__webglFramebuffer;
         }
 
+        if (this.__webglDepthbuffer) {
+            gl.deleteRenderbuffer(this.__webglDepthbuffer);
+            delete this.__webglDepthbuffer;
+        }
+
     },
 
 
@@ -498,7 +505,10 @@ WebGLRenderTarget.prototype = {
         if (this.__webglFramebuffer && gl) {
             gl.deleteFramebuffer(this.__webglFramebuffer);
         }
-        this.__webglFramebuffer = 0;
+        if (this.__webglDepthbuffer && gl) {
+            gl.deleteRenderbuffer(this.__webglDepthbuffer);
+        }
+        this.__webglFramebuffer = this.__webglDepthbuffer = 0;
 
     },
 
@@ -1759,6 +1769,14 @@ function WebGLRenderer() {
 
                 gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.__webglTexture, 0);
 
+                if (renderTarget.__depth) {
+                    renderTarget.__webglDepthbuffer = gl.createRenderbuffer();
+                    gl.bindRenderbuffer(gl.RENDERBUFFER, renderTarget.__webglDepthbuffer);
+                    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, renderTarget.width, renderTarget.height);
+                    gl.framebufferRenderbuffer(GL_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderTarget.__webglDepthbuffer);
+                    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+                }
+
                 gl.bindFramebuffer(GL_FRAMEBUFFER, null);
 
                 __checkGLErrors(renderTarget.__webglFramebuffer);
@@ -2101,6 +2119,7 @@ function WebGLRenderer() {
         , __render: __render
         , __finishRender: __finishRender
         , __clear: __clear
+        , __clearDepth: a => depthBuffer.__clear()
         , __setClearColor: __setClearColor
         , __glClearColor: __glClearColor
         , __setRenderTarget: __setRenderTarget

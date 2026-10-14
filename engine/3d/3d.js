@@ -1049,9 +1049,11 @@ makeClass(ENode3d, {
         },
 
         __hierarchyColor: {
-            enumerable: false, get() {
-                return this.__EditorColors[Editor.uiTheme]
-            }
+            enumerable: false, 
+            get() {
+                return this.____hierarchyColor || this.__EditorColors[Editor.uiTheme]
+            },
+            set(v){ this.____hierarchyColor = v; }
         },
         //endcheats
 

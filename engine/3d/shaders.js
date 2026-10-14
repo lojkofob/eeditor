@@ -220,6 +220,11 @@ var ComputeShaderFor = (function () {
                 }
             }
 
+            if (opts.__opacity && result_color) {
+                result_color = result_color + '*opacity';
+                set(opts.__uniforms_f, 'opacity', float);
+            }            
+
             if (!result_color) {
                 // result_color = 'vec4(1.0,0.0,0.0,1.0)'; // red error color
                 result_color = 'v_gl_Position';
