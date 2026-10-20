@@ -866,7 +866,7 @@ mergeObj(TextPrototype, {
             var text = t.__text;
             if (text == undefined) return;
 
-            text = t.__dontLocalize ? text : "" + TR(text);
+            text = "" + (t.__dontLocalize ? text : TR(text));
             //              consoleLog( 'generate ', text);
             if (text == undefined || !text.length) {
                 t.____visible = 0;

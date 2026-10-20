@@ -90,8 +90,8 @@ function __showWindow__(_window, qlen) {
 
         BUS.__post(__ON_WINDOW_CLOSE, wnd);
 
-        // pop and show next
-        if (!__showWindow__(windowManager.__pop(_window))) {
+        // pop and show next (now the first one of its queue: qlen 1, like showWindow into an empty queue)
+        if (!__showWindow__(windowManager.__pop(_window), 1)) {
             if (!windowManager.__hasOpenedWindow()){
                 BUS.__post(__ON_CLOSE_ALL_WINDOWS);
             }

@@ -88,6 +88,7 @@ var normalizeTimeWithZero = (d) => ((d < 10 ? '0' : '') + d)
             var h = floor(time/60/60)
                 , m = floor(time/60)
                 , s = time - m * 60;
+            if (format.indexOf('h') >= 0 || format.indexOf('H') >= 0) { m = m % 60; }
             format = format.replace('h', h);
             format = format.replace('m', m);
             format = format.replace('s', s);
