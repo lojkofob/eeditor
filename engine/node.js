@@ -2156,10 +2156,11 @@ mergeObj(NodePrototype, {
 
                                 var gsz = node.__geomSize;
                                 if (gsz) {
+                                    // y up: bottom spacing below, top spacing above — the gaps the flows lay out
                                     var y = node.__layoutPositionY;
                                     changed = 1;
-                                    min = mmin(min, y - gsz.y / 2 - ((node.____spacing || 0)[0] || 0));
-                                    max = mmax(max, y + gsz.y / 2 + ((node.____spacing || 0)[2] || 0));
+                                    min = mmin(min, y - gsz.y / 2 - ((node.____spacing || 0)[2] || 0));
+                                    max = mmax(max, y + gsz.y / 2 + ((node.____spacing || 0)[0] || 0));
                                     return 1;
                                 }
 
@@ -2196,7 +2197,7 @@ mergeObj(NodePrototype, {
                                     var x = node.__layoutPositionX;
                                     changed = 1;
                                     min = mmin(min, x - gsz.x / 2 - ((node.____spacing || 0)[1] || 0));
-                                    max = mmax(max, x + gsz.x / 2 - ((node.____spacing || 0)[3] || 0));
+                                    max = mmax(max, x + gsz.x / 2 + ((node.____spacing || 0)[3] || 0));
                                     return 1;
                                 }
 
