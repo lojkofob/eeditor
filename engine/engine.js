@@ -1507,7 +1507,7 @@ function exitFullScreen(elem) {
 }
 
 //cheats
-// function now works well for all devices and web-views, need detection by window/screen size
+// function not works well for all devices and web-views, need detection by window/screen size
 function getSafeAreaPaddings() {
     if (options.__safeArea == undefined) {
         options.__safeArea = 0;
