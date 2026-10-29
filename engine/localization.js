@@ -57,10 +57,9 @@ var localizationDict,
                 __smallKana: 'ァィゥェォッャュョヶぁぅぇぉっゃゅょ々',
                 __canWrapSymRegexp: new RegExp(/[^\w;\\#]/)
             }
-        });
+        })
 
-
-var localizationLang
+, localizationLang
 , __loc_cache = {}
 , __check_lang_o = l => options.__supportedLangs[l] ? __loc_cache[l] = options.__supportedLangs[l] : 0
 , __check_lang_a = l => inArray(l, options.__supportedLangs) ? __loc_cache[l] = l : 0
@@ -84,7 +83,7 @@ var localizationLang
 ,  __checkUserLanguages = languages => $findResult(languages, __checkUserLanguage)
 
 
-function getUserLanguage() {
+, getUserLanguage = function() {
     var nav = __window.navigator;
     return __checkUserLanguage(getUserSavedLanguage()) ||
         __checkUserLanguage(options.__lang) ||
@@ -93,7 +92,7 @@ function getUserLanguage() {
         __checkUserLanguage(options.__defaultLang || 'en');
 }
 
-function setLocalization(l, force, lname) {
+, setLocalization = function(l, force, lname) {
 
     localizationLang = l;
 
@@ -118,7 +117,7 @@ function setLocalization(l, force, lname) {
 }
 
 
-function setTempLocalization(lang, cb) {
+, setTempLocalization = function(lang, cb) {
 
     TASKS_RUN([[TASKS_LOCALIZATION, lang]], function () {
         setLocalization(lang);
@@ -128,9 +127,9 @@ function setTempLocalization(lang, cb) {
 
 }
 
-function __pluralize(d, a, i) { if (a) { d = d + a.t; if (a.a[i]) d = d + a.a[i]; } return d; }
+, __pluralize = function(d, a, i) { if (a) { d = d + a.t; if (a.a[i]) d = d + a.a[i]; } return d; }
 
-function autoReplaceLocalsInLocals(k, dict, str, recursive) {
+, autoReplaceLocalsInLocals = function(k, dict, str, recursive) {
     if (dict && str && str.replace) {
         var i = 0;
         str = str.replace(/{(\w+[\d_\w]*)}/gm, (wordSk, word) => {
@@ -150,7 +149,7 @@ function autoReplaceLocalsInLocals(k, dict, str, recursive) {
     return str;
 }
 
-function prepareLocalizationDict(dict) {
+, prepareLocalizationDict = function(dict) {
   
     dict = plainArrayToObject(dict);
  
@@ -202,7 +201,7 @@ function prepareLocalizationDict(dict) {
     return dict;
 }
 
-function __TR(k) {
+, __TR = function(k) {
     var t = localizationDict[k], args = arguments;
     if (t && t.replace) {
         // Since 1592 Duncan MacLeod kills {0} mans, {1} womans, {2} childs and {3} dogs
@@ -251,14 +250,14 @@ function __TR(k) {
     return t;    
 }
 
-function TR(k) {
+, TR = function(k) {
     if (localizationDict && localizationDict.hasOwnProperty(k)) {
         return __TR.apply(this, arguments);     
     }
     return k;
-};
+}
 
-function localizeNumberInt(d, thousandSeparator, zeroPadding) {
+, localizeNumberInt = function(d, thousandSeparator, zeroPadding) {
 
     if (isNumber(d)) {
 
@@ -305,7 +304,7 @@ function localizeNumberInt(d, thousandSeparator, zeroPadding) {
 }
 
 
-function localizeNumberFloat(d, digitsAfterDot, thousandSeparator, decimalMark, intZeroPadding) { //digitsAfterDot - now it is min and max
+, localizeNumberFloat = function(d, digitsAfterDot, thousandSeparator, decimalMark, intZeroPadding) { //digitsAfterDot - now it is min and max
 
     if (isNumber(d)) {
 
@@ -347,8 +346,7 @@ function localizeNumberFloat(d, digitsAfterDot, thousandSeparator, decimalMark, 
     return d;
 }
 
-
-function convertExpNumberViewToNormalView(num) {
+, convertExpNumberViewToNormalView = function(num) {
 
     var numSign = num < 0 ? "-" : "";
     num = abs(num);

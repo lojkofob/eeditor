@@ -255,6 +255,7 @@ module.exports = (function () {
         setup(d) {
             if (!project_json && d.root) project_json = d.root;
             else mergeObjectDeep(project_json, d.root);
+            
             if (d.verbose) {
                 // console.log("--------------------------------------------------------- d.root = ");
                 // console.log(d.root);
@@ -262,8 +263,11 @@ module.exports = (function () {
                 // console.log("--------------------------------------------------------- project_json = ");
                 // console.log(project_json);
 
-                console.log("--------------------------------------------------------- env = ");
-                console.log(env);
+                // console.log("--------------------------------------------------------- env = ");
+                // console.log(env);
+
+                console.log("--------------------------------------------------------- buildFlags = ");
+                console.log(mergeObj(mergeObj({}, project_json.buildFlags), additionalArguments));
             }
         },
 
