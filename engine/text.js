@@ -4,11 +4,17 @@ var globalTextCache = []
     , colorStringProperty = {
         get() { return color_to_string(this.__color); },
         set(v) { this.__color = jsonToColor(v); }
-    };
+    }
+    // same whitespace set as es6-shim String.prototype.trim
+    , trimWhitespace = '\x09-\x0D\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF'
+    , trimStartRegexp = new RegExp('^[' + trimWhitespace + ']+')
+    , trimEndRegexp = new RegExp('[' + trimWhitespace + ']+$')
+    , trimEnd = function(){return String(this).replace(trimEndRegexp, '');}
+    , trimStart = function(){return String(this).replace(trimStartRegexp, '');};
 
 // gcc shim
-String.prototype.trimEnd = String.prototype.trimEnd || get1(String.prototype, 'trimEnd');
-String.prototype.trimStart = String.prototype.trimStart || get1(String.prototype, 'trimStart');
+String.prototype.trimEnd = String.prototype.trimEnd || get1(String.prototype, 'trimEnd') || trimEnd;
+String.prototype.trimStart = String.prototype.trimStart || get1(String.prototype, 'trimStart') || trimStart;
 
 function TextPParameters() {
     Object.apply(this);

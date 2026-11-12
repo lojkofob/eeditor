@@ -457,14 +457,16 @@ function $mapObjectToArray(o, f) { var a = []; if (o) { for (var i in o) a.push(
 function $flatten(a, r, d) {
     for (var i = 0; i < a.length; i++) {
         var element = a[i];
-        isArray(element) && d > 0 ? flatten(element, d - 1, r) : r.push(element);
+        isArray(element) && d > 0 ? $flatten(element, d - 1, r) : r.push(element);
     }
     return r;
 }
-if (!ArrayPrototype.flat) {
-    ArrayPrototype.flat = get1(ArrayPrototype, 'flat') || function (depth) { return $flatten(this, [], ifdef(depth, 1)); };
-}
 
+if (!ArrayPrototype.flat) {
+    ObjectDefineProperties(ArrayPrototype, {
+        flat: { configurable: true, enumerable: false, writable: true, value: get1(ArrayPrototype, 'flat') || function (depth) { return $flatten(this, [], ifdef(depth, 1)); } }
+    });
+}
 
 function __$call_args(a, args) {
     if (isFunction(a)) { a.apply(this, args); } else { $each(a, function (f) { __$call_args.call(a, f, args); }); }
@@ -1609,3 +1611,8 @@ var UpdatableProto = makeClass(
         }
     });
 
+// lottie:
+//debug
+ObjectDefineProperty(__window, 'globalThis', { value: __window.globalThis = __window });
+__window.customElements = __window.customElements || { define(){ consoleDebug('customElements not implemented') } };
+//undebug

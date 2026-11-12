@@ -500,14 +500,14 @@ var AnimationsWithKitten = (function () {
         });
 
         var rem = timeline.__getObjectsByProperty('removeMark', 1);
-        for (var i in rem) {
-            timeline['+' + rem[i].property] = 0;
-            rem[i].__removeFromParent();
-        }
+        $each(rem, r => {
+            timeline['+' + r.property] = 0;
+            r.__removeFromParent();
+        });
 
-        for (var i in timeline.__childs) {
-            timeline.__childs[i].__y = i * 35;
-        }
+        timeline.__eachChild(c => {
+            c.__y = i * 35;
+        });
 
         if (hasSelected) {
 

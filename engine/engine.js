@@ -821,9 +821,9 @@ function addParameterToPath(path, p, val) {
     return path;
 }
 
-function basename(path) { return path.replace(/.*\//, "") || ''; }
-function dirname(path) { return (path.match(/.*\//) || [''])[0]; }
-function fileext(path) { var i = path.lastIndexOf('.') + 1; return i ? path.substring(i) : ''; }
+function basename(path) { return path ? path.replace(/.*\//, "") : ''; }
+function dirname(path) { return path ? (path.match(/.*\//) || [''])[0] : ''; }
+function fileext(path) { if (path) { var i = path.lastIndexOf('.') + 1; return i ? path.substring(i) : ''; } else return ''; }
 
 var modUrl = function(path, defdir) {
 
