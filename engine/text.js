@@ -95,6 +95,11 @@ function getFontDescent() { return (options.__defaultTextProperties || 0).__font
 //   jj   ____v
 
 var shadowBlurTextureSizeMultiplier = 0.6;
+
+// keeps text canvases in software (cpu) rasterization. gpu-accelerated 2d canvas on some
+// windows gpu/driver combos draws glyphs with parts missing (fully transparent holes)
+var textCanvasContextAttributes = set({}, 'willReadFrequently', true);
+
 function parseHexColor(text, k, index, d) {
     text = text.toLowerCase();
     k = k || 0; index = index || 0; d = d || text.charAt(k);
@@ -907,7 +912,7 @@ mergeObj(TextPrototype, {
                         , rwDiff = 0
                         , rhDiff = 0
                         , canvas = t.__canvas || __document.createElement('canvas')
-                        , ctx = t.__ctx = canvas.getContext('2d');
+                        , ctx = t.__ctx = canvas.getContext('2d', textCanvasContextAttributes);
 
                     t.__canvas = canvas;
 
@@ -1031,7 +1036,7 @@ mergeObj(TextPrototype, {
                     canvas.width = rw * sf + lwDiff;
                     canvas.height = rh * sf;
 
-                    var ctx = canvas.getContext('2d');
+                    var ctx = canvas.getContext('2d', textCanvasContextAttributes);
                     t.__ctx = ctx;
 
                     if (shadow) {

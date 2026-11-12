@@ -644,12 +644,14 @@ var tablesCache = {},
                         setCachedData(data, 1);
 
                         loadFont(data, (family, shouldUseNativeLoader, timeout) => {
-                            var tmd = (shouldUseNativeLoader && timeout == 0) ? 100 : 1;
+                            var tmd = (shouldUseNativeLoader && timeout == 0) ? 100 : 1,
+                                safari = _bowser.ios || _bowser.mac || _bowser.safari;
+
                             _setTimeout(a => {
                                 setCachedData(family, family);
                                 updateAllTextsThenFontLoaded(family);
 
-                                if (_bowser.ios) {
+                                if (safari) {
                                     looperPost(a => {
                                         _setTimeout(a => {
                                             looperPost(a => {
@@ -664,7 +666,7 @@ var tablesCache = {},
                                     onLoad();
                                 }
 
-                            }, (_bowser.ios ? 1 : 0.1) / tmd);
+                            }, (safari ? 1 : 0.1) / tmd);
 
                             if (!waitsForRealLoad) {
                                 onLoad();
