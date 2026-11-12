@@ -94,11 +94,14 @@ function getFontDescent() { return (options.__defaultTextProperties || 0).__font
 //     j      | 0.3 descent
 //   jj   ____v
 
-var shadowBlurTextureSizeMultiplier = 0.6;
+var shadowBlurTextureSizeMultiplier = 0.6
+    , textCanvasContextAttributes = {};
 
 // keeps text canvases in software (cpu) rasterization. gpu-accelerated 2d canvas on some
 // windows gpu/driver combos draws glyphs with parts missing (fully transparent holes)
-var textCanvasContextAttributes = set({}, 'willReadFrequently', true);
+if (_bowser.windows) {
+    set(textCanvasContextAttributes, 'willReadFrequently', true);
+}
 
 function parseHexColor(text, k, index, d) {
     text = text.toLowerCase();
