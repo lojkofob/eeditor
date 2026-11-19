@@ -34,6 +34,20 @@ var localizationDict,
             __decimalMark: '.'
         },
 
+        // 3 формы: 1 | 2-4 (кроме 12-14) | 5+, дробные - вторая; строки с 2 формами работают как раньше (prepareForms)
+        'pl', {
+            __pluralizeForm: function (d, n, f) { f = d % 10; n = d % 100; return d != floor(d) ? 1 : d == 1 ? 0 : (f > 1 && f < 5 && (n < 12 || n > 14)) ? 1 : 2; },
+            __thousandsSeparator: ' ',
+            __decimalMark: ','
+        },
+
+        // после числительного существительное в единственном числе: всегда первая форма
+        'tr', {
+            __pluralizeForm: function (d) { return 0; },
+            __thousandsSeparator: '.',
+            __decimalMark: ','
+        },
+
         'ja', {
             __pluralizeForm: function (d, n, f) { return 0; },
 
