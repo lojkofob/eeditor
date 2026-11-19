@@ -1614,5 +1614,5 @@ var UpdatableProto = makeClass(
 // lottie:
 //debug
 ObjectDefineProperty(__window, 'globalThis', { value: __window.globalThis = __window });
-__window.customElements = __window.customElements || { define(){ consoleDebug('customElements not implemented') } };
+if (!__window.customElements) __window.customElements = { define(){ consoleDebug('customElements not implemented') } };
 //undebug
