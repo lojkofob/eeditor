@@ -1619,7 +1619,7 @@ function WebGLRenderer() {
     }
 
 
-    function __projectObject(object, toList, scissorsStack, baseList) {
+    function __projectObject(object, toList, scissorsStack, baseList, parent) {
 
         if (!object.__viewable || !object.____visible)
             return;
@@ -1631,6 +1631,10 @@ function WebGLRenderer() {
 
         if (object.__ignoreScissor)
             toList = baseList;
+
+        if (parent) {
+            object.__opacityDeep = object.__alphaDeep * parent.__opacityDeep;
+        }
 
         if (sciss) {
 
@@ -1680,7 +1684,7 @@ function WebGLRenderer() {
         var childs = object.__childsForRender || object.__childs;
 
         for (var i = 0, l = childs.length; i < l; i++) {
-            __projectObject(childs[i], toList, scissorsStack, baseList);
+            __projectObject(childs[i], toList, scissorsStack, baseList, object);
         }
 
         if (sciss) {

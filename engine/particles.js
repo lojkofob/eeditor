@@ -2098,10 +2098,6 @@ var ParticleEmitterPrototype =
                 return 1;
             }
 
-            if (t.__parent) {
-                t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep;
-            }
-
             //cheats
             renderInfo.emittersRendered++;
             //endcheats
@@ -2180,6 +2176,7 @@ var ParticleEmitterPrototype =
                     , twp = t.__nodePosition;
 
                 if (!t.linked) {
+                    if (!t.__elapsed) twp.__copy(wp);
                     t.__dtPositionGap.set(wp.x - twp.x, wp.y - twp.y);
                 }
 

@@ -1046,8 +1046,6 @@ var CubismObject = (() => {
             if (!model || !t.__parent) return;
             // (t.map || t.____shader)) {
 
-            t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep;
-
             /* автоскейл под экран, это тут не нужно
             var projection = new cubismmatrix44_1.CubismMatrix44();
      

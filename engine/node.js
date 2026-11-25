@@ -1230,7 +1230,6 @@ mergeObj(NodePrototype, {
     __render() {
         var t = this;
 
-        if (t.__parent) { t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; }
         //multiclass
         if (t.__needClassUpdate) {
             consoleLog('class update');

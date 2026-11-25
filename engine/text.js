@@ -730,8 +730,6 @@ mergeObj(TextPrototype, {
                 t.__updateMatrixWorld();
         }
 
-        if (t.__parent) { t.__opacityDeep = t.__alphaDeep * t.__parent.__opacityDeep; }
-
         if (t.__indecesBuffer && !t.__destructed) {
             renderer.__draw(t, t.__indecesBuffer.__realsize, 'base');
         }
