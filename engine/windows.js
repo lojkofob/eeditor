@@ -112,7 +112,7 @@ function __showWindow__(_window, qlen) {
             return 1;
         }
 
-        wnd.__traverseIterator.__disabled = 1;
+        wnd.__traverse(n => n.__disabled = 1);
 
         if (wnd.__closeAnimation) {
             wnd.__closeAnimation.apply(wnd, arguments);
